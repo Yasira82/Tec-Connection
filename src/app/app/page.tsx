@@ -10,6 +10,7 @@ import { Connections } from './components/Connections';
 import { Trust } from './components/Trust';
 import { Notifications } from './components/Notifications';
 import { Collaboration } from './components/Collaboration';
+import { ConnectionPro } from './components/ConnectionPro';
 
 export default function ConnectionHome() {
   const { user, isLoading } = usePiAuth();
@@ -28,6 +29,9 @@ export default function ConnectionHome() {
             (C-107) — you control who you trust and who can see it.
           </p>
         </header>
+
+        {/* Connection Pro — real Pi U2A payment (also the Pi Portal "Process a Transaction" step) */}
+        <ConnectionPro />
 
         {/* Relationship notifications ("X followed you") */}
         <Notifications />
