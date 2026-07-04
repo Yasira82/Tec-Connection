@@ -8,8 +8,8 @@ import { jwtVerify }                 from 'jose';
 //   §3:    VERIFIED ENTRY — the landing script confirms the session is
 //          server-visible (/api/auth/me) BEFORE navigating into the app.
 const ALLOWED_AUDIENCES = [
-  'https://your-app.vercel.app',
-  'https://your-app.tecosystem.app',
+  'https://connection.tecosystem.app',
+  'https://tec-connection.vercel.app',
 ];
 const DEFAULT_REDIRECT = '/app';
 
@@ -89,12 +89,12 @@ export async function GET(req: NextRequest) {
   const esc = (s: string) => s.replace(/</g, '\\u003c');
 
   const html = `<!doctype html>
-<html><head><meta charset="utf-8"><title>TEC App — Signing in…</title>
+<html><head><meta charset="utf-8"><title>TEC Connection — Signing in…</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <noscript><meta http-equiv="refresh" content="0;url=${redirect.replace(/"/g, '')}"></noscript>
 </head>
 <body style="margin:0;background:#050816;color:#FBBF24;font-family:system-ui,sans-serif;display:flex;align-items:center;justify-content:center;height:100vh">
-<div style="text-align:center"><div style="font-size:28px;font-weight:900">🔷 TEC App</div>
+<div style="text-align:center"><div style="font-size:28px;font-weight:900">🔗 TEC Connection</div>
 <div style="font-size:13px;color:#9ca3af;margin-top:8px">Signing you in…</div></div>
 <script>
 (function () {

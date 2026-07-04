@@ -1,15 +1,74 @@
-# TEC Domain App Template — Claude Code Instructions
+# TEC Connection — Claude Code Instructions
 
-## What This Repo Is
+> ⚡ **SESSION START:** اقرأ `knowledge-base/C-02___CURRENT_STATE_.md` + **app charter
+> `knowledge-base/C-107___CONNECTION_INSTITUTIONAL_CHARTER.md`** من `yasira82/tec-knowledge-base`.
 
-The **golden starter template** for a new app in the TEC Federated Platform.
-It ships a correct, Portal-ready skeleton: Hub SSO, dual-mode Pi payments,
-CSRF, legal pages, and CI policy guards. Clone it, run the "New app setup"
-checklist below, and you have a compliant app — no missing pieces.
+## What This App Is
 
-**Reference of record:** `yasira82/tec-knowledge-base` — especially
-`C-12_Dual_Mode_Payment.md` (payment + anti-regression) and
-`audits/PORTAL_SUBMISSION_RUNBOOK_*.md`.
+**System of Record (Relationships)** for the TEC Federated Platform — the
+**Economic Relationship Infrastructure** (the Trust Graph). Connection models how
+users and businesses relate: the **social + business graph** (follow / connect),
+**trust signals** derived from real economic activity, **reputation**, and
+**collaboration context**. It is the relationship baseline the rest of the ecosystem
+reads — without Connection, Explorer has nothing to discover, TEC AI has no social
+context, and Commerce has no reputation signal (C-107).
+
+Built from `tec-template-base` (Next.js 15 frontend). A user's connections are
+**sovereign** — self-declared and private; the user controls who they trust and who
+can see it.
+
+**Current Phase: Phase 0 — customized from template.** Identity/domain/slug/legal +
+themed home shell done. Login (C-123 landing) + the first feature slice (Follow /
+Connect) are the next steps. Not yet deployed.
+
+---
+
+## Pi App Identity
+
+| Field | Value |
+|-------|-------|
+| **App** | TEC Connection |
+| **Domain** | `https://connection.tecosystem.app` |
+| **Pi App ID** | ⏳ Not yet registered · Vercel `NEXT_PUBLIC_PI_APP_ID` |
+| **APP_SOURCE slug** | `connection` (payment-service resolves `PI_API_KEY_CONNECTION`) |
+| **PI_SANDBOX** | `false` (Mainnet) |
+
+---
+
+## Connection-Specific Rules (C-107)
+
+### Data ownership boundary
+Connection **OWNS**: the social graph (follow/connect edges), the business graph,
+trust signals, reputation scores, and collaboration context. Connection does
+**NOT OWN**: identity truth (`tec-auth-service`), payment truth
+(`tec-payment-service`), asset ownership (`tec-asset-service`), discovery/search
+(Explorer, C-108), or recommendations (TEC AI, C-104). Read those as **ID-only
+references** — never re-derive or mutate them.
+
+### Consistency model
+- **Self-declared** edges (follow / connect / block) = **strong** consistency — the user controls them.
+- **Activity-inferred** trust signals (from `payment.completed.v1` etc.) = **eventual** consistency.
+- Reputation is a derived projection — never presented as financial truth.
+
+### Trust is earned, not claimed
+Trust signals derive from **real economic activity** (completed payments,
+fulfilled orders, repeated collaboration) — never vanity metrics. The owning
+service (payment/commerce) is the source of truth; Connection only aggregates the
+*relationship* meaning of those facts.
+
+### Privacy / sovereignty
+- A user's graph is sovereign — the user controls what any other app (esp. TEC AI / Explorer) may see.
+- Right to disconnect / block, and to purge social edges (payment records stay with payment-service).
+- Identity anchor = `tec_user.piUsername` (permanent Pi identity) — edges survive identity migration.
+
+### Isolation (P6)
+A user sees/mutates ONLY their own edges — derive identity from the `tec_user`
+session cookie server-side, **never** from a query param or request body. No session
+→ no data (fail closed).
+
+**Reference of record:** `yasira82/tec-knowledge-base` —
+`C-107___CONNECTION_INSTITUTIONAL_CHARTER.md` (charter) + `C-12_Dual_Mode_Payment.md`
+(payment anti-regression) + `C-123` (session/cookies).
 
 ---
 
@@ -61,48 +120,37 @@ Identity is derived from the `tec_user` cookie server-side — **never from the 
 
 ---
 
-## What's included
+## Setup status + Roadmap (C-107)
 
 ```
-middleware.ts                              CSRF (double-submit OR Origin) + page guard
-src/app/api/auth/sso-callback/route.ts     Hub SSO landing (open-redirect-safe)
-src/app/api/auth/refresh/route.ts          token refresh
-src/app/api/bff/payment/{create,approve,complete,resolve-incomplete}/route.ts
-src/app/api/bff/items/route.ts             example domain route (copy this pattern)
-src/app/api/health/route.ts                health endpoint (C-92/C-96) — fail-safe, public, never 500s
-src/lib/pi-payment.ts                      createPaymentRecord + createU2APayment
-src/lib/pi/PiRuntime.ts                    PAL — single choke-point for window.Pi.* (R1)
-src/lib/pi/PiCircuitBreaker.ts             CLOSED→OPEN→HALF_OPEN (3 fails → 60s)
-src/lib/flags.ts                           feature flags (NEXT_PUBLIC_FLAG_*) + useFlag
-src/lib/observability/logger.ts            structured JSON logger (log.info/warn/error) — no silent failures (C-96)
-src/lib/observability/reportError.ts       Sentry-ready error reporter (single swap-point)
-src/app/privacy/page.tsx · terms/page.tsx  Pi Portal legal pages
-src/styles/tec-design-tokens.css           import in app/layout.tsx
-.github/workflows/ci.yml                   payment-policy + CSRF guard + lint/typecheck/test/build
+Phase 0 — customized from template:
+  ✅ package.json name = tec-connection · APP_SOURCE = 'connection'
+  ✅ sso-callback ALLOWED_AUDIENCES → connection.tecosystem.app + tec-connection.vercel.app
+  ✅ privacy + terms → TEC Connection / connection.tecosystem.app
+  ✅ NEW-A: no NEXT_PUBLIC_API_GATEWAY_URL / Railway host in the client bundle
+  ✅ layout Pi init is hub-entry-aware (C-12 §3 / ADR-007 foreign-session skip)
+  ✅ landing + /app themed as the Connection home shell (Connections · Trust · Collaboration)
+
+Next (before live):
+  □ Pi App ID: register connection.tecosystem.app in the Pi Developer Portal;
+    set Vercel vars (API_GATEWAY_URL · INTERNAL_SECRET · SSO_SECRET ·
+    NEXT_PUBLIC_PI_APP_ID · PI_SANDBOX=false) + add life-style /privacy + /terms URLs.
+  □ Hub SSO: add connection.tecosystem.app + tec-connection.vercel.app to the Hub
+    /api/auth/sso ALLOWED_TARGETS; add Connection to the Hub domain registry (Live Now).
+  □ FEATURE slice 1 — Follow / Connect (self-declared social graph, strong consistency):
+    Connection store (Follow + Connection edges) in a backend service (identity-service
+    pattern, like Life) behind /api/bff/connection/* → gateway. Owner = session identity
+    (never a param). Interactive follow/unfollow + connect/accept in /app.
+  □ FEATURE slice 2 — Trust signals (eventual): consume payment.completed.v1 /
+    order.created.v1 into relationship trust signals; PRESENT them (never re-derive
+    transaction truth — C-107 boundary).
+  □ FEATURE slice 3+ — reputation projection + collaboration context.
 ```
 
-**v2 (production-ready by default):** every new app ships
-- `/api/health` — uniform C-92 signal (platform health runtime + observability scrape + SLO/runtime-evidence loop);
-- structured `log` + `reportError` — use `log.error`/`reportError` in catch blocks (a silent error handler is an invisible failure, C-96; `reportError` is the one place to wire Sentry per app);
-- `PiRuntime` (PAL) + `PiCircuitBreaker` — never call `window.Pi.*` directly; go through PiRuntime so an SDK change is a one-file fix (R1) and flapping is contained;
-- `flags.ts` — feature flags from day one (`NEXT_PUBLIC_FLAG_<NAME>`);
-- coverage gate — `npm run test:coverage` (add devDep `@vitest/coverage-v8`; 60% floor, raise as the app grows).
-
----
-
-## New app setup checklist
-
-```
-□ package.json: set "name"
-□ middleware.ts: adjust PROTECTED_ROUTES
-□ sso-callback/route.ts: set ALLOWED_AUDIENCES + DEFAULT_REDIRECT to your domain
-□ src/lib/pi-payment.ts + payment/create: set APP_SOURCE slug
-□ privacy/page.tsx + terms/page.tsx: set APP / DOMAIN / governing law / contacts
-□ Add ADR-007 isHubNavigation() guard to every buy handler
-□ .env: API_GATEWAY_URL · INTERNAL_SECRET · SSO_SECRET · NEXT_PUBLIC_PI_APP_ID · PI_SANDBOX=false (prod)
-□ Pi Developer Portal: register domain + App ID; set /privacy + /terms URLs
-□ Verify a real Pi payment Mode 1 (via Hub) AND Mode 2 (standalone)
-```
+> Payment scaffold (`src/lib/pi-payment.ts`, ADR-007 guard) is kept for compliance +
+> optionality. Connection monetization is expected to be subscription-via-Hub (like
+> Life/Analytics); if a direct buy is added it MUST keep the `isHubNavigation()` guard,
+> and payment-service MUST have `PI_API_KEY_CONNECTION` wired (C-12 §11 / approve→502).
 
 ---
 
@@ -113,15 +161,16 @@ src/styles/tec-design-tokens.css           import in app/layout.tsx
 - Do NOT skip the ADR-007 `isHubNavigation()` guard before `window.Pi`
 - Do NOT store tokens in localStorage; do NOT derive identity from the body
 - Do NOT add `NEXT_PUBLIC_*` for internal service URLs or `INTERNAL_SECRET`
-- Do NOT use an open `redirect` param without the same-origin guard (open redirect)
+- Do NOT present trust/reputation as financial truth — owning service is the source
+- Do NOT re-derive or mutate identity/payment/asset truth — reference by ID only
 
 ---
 
 ## Commit Convention
 
 ```
-feat(scope):  new feature      fix(payment): payment flow fix (test carefully)
-fix(scope):   bug fix          chore(scope): build/config
+feat(connection):  new relationship feature   fix(payment): payment flow fix (test carefully)
+fix(connection):   bug fix                     chore(scope):  build/config
 ```
 
 ---

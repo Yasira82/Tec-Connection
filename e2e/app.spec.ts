@@ -7,5 +7,5 @@ test('homepage loads', async ({ page }) => {
 
 test('login button visible', async ({ page }) => {
   await page.goto('/');
-  await expect(page.getByText('Login with Pi')).toBeVisible();
+  await expect(page.getByText('Continue with Pi')).toBeVisible();
 });
