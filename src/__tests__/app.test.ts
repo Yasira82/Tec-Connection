@@ -1,14 +1,14 @@
 import { describe, it, expect } from 'vitest';
+import { isHubNavigation } from '@/lib/pi-payment';
 
-describe('Template Health', () => {
+describe('TEC Connection — health', () => {
   it('environment is configured', () => {
     expect(process.env.NODE_ENV).toBeDefined();
   });
 
-  it('gateway URL has fallback', () => {
-    const url =
-      process.env.NEXT_PUBLIC_API_GATEWAY_URL ??
-      'https://api-gateway-production-6a68.up.railway.app';
-    expect(url).toContain('http');
+  it('isHubNavigation degrades safely (no hub referrer)', () => {
+    // Without a hub.tecosystem.app referrer the ADR-007 guard must not throw and
+    // must default to false (so Mode-2 is only ever chosen deliberately).
+    expect(isHubNavigation()).toBe(false);
   });
 });

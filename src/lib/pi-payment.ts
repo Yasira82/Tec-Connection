@@ -29,10 +29,12 @@ export interface PaymentResult {
   message?:   string;
 }
 
-// TODO(new app): set your app slug.
-const APP_SOURCE = 'app';
+// APP_SOURCE slug — payment-service resolves PI_API_KEY_CONNECTION from this (C-12 §11).
+const APP_SOURCE = 'connection';
 
 const HUB_URL = process.env.NEXT_PUBLIC_HUB_URL ?? 'https://hub.tecosystem.app';
+
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://connection.tecosystem.app';
 
 /**
  * ADR-007: true when the user arrived FROM the Hub (Pi session is foreign).
@@ -54,10 +56,12 @@ export const redirectToHubPayment = (params: {
 }): void => {
   if (typeof window === 'undefined') return;
   const q = new URLSearchParams({
-    pay:    '1',
-    source: APP_SOURCE,
-    amount: String(params.amount),
-    item:   params.itemId,
+    pay:        '1',
+    source:     APP_SOURCE,
+    amount:     String(params.amount),
+    product_id: params.itemId,
+    item:       params.itemId, // back-compat
+    return_url: `${APP_URL}/app`,
     ...(params.memo ? { memo: params.memo } : {}),
   });
   window.location.href = `${HUB_URL}/hub?${q.toString()}`;
