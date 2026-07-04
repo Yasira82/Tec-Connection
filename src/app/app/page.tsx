@@ -7,6 +7,7 @@
 import { usePiAuth } from '@yasser172/tec-auth';
 import { TEC_COLORS } from '@yasser172/tec-ui';
 import { Connections } from './components/Connections';
+import { Trust } from './components/Trust';
 
 const card = {
   background:   TEC_COLORS.surface,
@@ -52,13 +53,11 @@ export default function ConnectionHome() {
         {/* Slice 1 — Follow / Connect (live, self-declared social graph) */}
         <Connections />
 
-        {/* Next slices — trust signals + collaboration (still to build) */}
+        {/* Slice 2 — Trust Graph (live, derived from paid orders / order.paid.v1) */}
+        <Trust />
+
+        {/* Next slice — collaboration (still to build) */}
         <div style={{ display: 'grid', gap: 14, marginTop: 24 }}>
-          <Pillar
-            emoji="🛡️"
-            title="Trust"
-            body="Trust built from real economic activity, not vanity metrics. Completed payments and collaborations become verifiable trust signals (eventual)."
-          />
           <Pillar
             emoji="✨"
             title="Collaboration"
