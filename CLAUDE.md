@@ -130,17 +130,20 @@ Phase 0 — customized from template:
   ✅ NEW-A: no NEXT_PUBLIC_API_GATEWAY_URL / Railway host in the client bundle
   ✅ layout Pi init is hub-entry-aware (C-12 §3 / ADR-007 foreign-session skip)
   ✅ landing + /app themed as the Connection home shell (Connections · Trust · Collaboration)
+  ✅ full-bleed dark shell (no white frame): color-scheme dark + theme-color + html/body reset
 
 Next (before live):
   ✅ Pi App ID registered: connection-aa9fba4f11664096 · Vercel vars set
     (API_GATEWAY_URL · INTERNAL_SECRET · SSO_SECRET · NEXT_PUBLIC_PI_APP_ID · PI_SANDBOX=false).
   ✅ Hub SSO: connection.tecosystem.app + tec-connection.vercel.app added to the Hub
     /api/auth/sso ALLOWED_TARGETS; Connection added to the Hub domain registry (Live Now) — merged to tec-app main.
-  □ Deploy to Vercel + runtime-verify login inside Pi Browser.
-  □ FEATURE slice 1 — Follow / Connect (self-declared social graph, strong consistency):
-    Connection store (Follow + Connection edges) in a backend service (identity-service
-    pattern, like Life) behind /api/bff/connection/* → gateway. Owner = session identity
-    (never a param). Interactive follow/unfollow + connect/accept in /app.
+  ✅ FEATURE slice 1 — Follow / Connect (self-declared social graph, strong consistency):
+    Follow store in tec-identity-service (Follow model + @Controller
+    'identity/connection') behind /api/bff/connection/* → /api/identity/connection/*.
+    Interactive follow/unfollow + following/followers counts in /app. Follower =
+    session identity (never a param); followee by Pi username. Needs: identity-service
+    deployed (connection_follows via db push).
+  □ Deploy to Vercel + runtime-verify login + a follow/unfollow round-trip in Pi Browser.
   □ FEATURE slice 2 — Trust signals (eventual): consume payment.completed.v1 /
     order.created.v1 into relationship trust signals; PRESENT them (never re-derive
     transaction truth — C-107 boundary).

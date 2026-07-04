@@ -6,6 +6,7 @@
 // context. Connections are sovereign — the user controls their own graph.
 import { usePiAuth } from '@yasser172/tec-auth';
 import { TEC_COLORS } from '@yasser172/tec-ui';
+import { Connections } from './components/Connections';
 
 const card = {
   background:   TEC_COLORS.surface,
@@ -48,12 +49,11 @@ export default function ConnectionHome() {
           </p>
         </header>
 
+        {/* Slice 1 — Follow / Connect (live, self-declared social graph) */}
+        <Connections />
+
+        {/* Next slices — trust signals + collaboration (still to build) */}
         <div style={{ display: 'grid', gap: 14, marginTop: 24 }}>
-          <Pillar
-            emoji="🤝"
-            title="Connections"
-            body="Follow and connect with people and businesses across TEC. Your social and business graph — one place, portable across every app."
-          />
           <Pillar
             emoji="🛡️"
             title="Trust"
