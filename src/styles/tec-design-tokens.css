@@ -3,6 +3,22 @@
    Foundation layer — all apps inherit from here
 ═══════════════════════════════════════════════════════ */
 
+/* Full-bleed dark shell — kill every source of the "white frame" around the
+   dark app in Pi Browser:
+   - html/body default margin + white background,
+   - the browser's white UA canvas revealed on overscroll (color-scheme: dark),
+   Parity with Commerce/Assets. (theme-color meta in layout tints the browser bar.) */
+html {
+  color-scheme: dark;
+  background: #020205; /* var(--tec-bg) */
+}
+html, body {
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+  background: #020205; /* var(--tec-bg) */
+}
+
 :root {
   /* ── Colors ─────────────────────────────────────────── */
   --tec-bg:          #020205;
