@@ -8,6 +8,7 @@ import { usePiAuth } from '@yasser172/tec-auth';
 import { TEC_COLORS } from '@yasser172/tec-ui';
 import { Connections } from './components/Connections';
 import { Trust } from './components/Trust';
+import { Notifications } from './components/Notifications';
 
 const card = {
   background:   TEC_COLORS.surface,
@@ -49,6 +50,9 @@ export default function ConnectionHome() {
             (C-107) — you control who you trust and who can see it.
           </p>
         </header>
+
+        {/* Relationship notifications ("X followed you") */}
+        <Notifications />
 
         {/* Slice 1 — Follow / Connect (live, self-declared social graph) */}
         <Connections />
