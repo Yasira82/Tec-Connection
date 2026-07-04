@@ -9,29 +9,7 @@ import { TEC_COLORS } from '@yasser172/tec-ui';
 import { Connections } from './components/Connections';
 import { Trust } from './components/Trust';
 import { Notifications } from './components/Notifications';
-
-const card = {
-  background:   TEC_COLORS.surface,
-  border:       `1px solid ${TEC_COLORS.border}`,
-  borderRadius: 16,
-  padding:      '20px 22px',
-} as const;
-
-function Pillar({ emoji, title, body }: { emoji: string; title: string; body: string }) {
-  return (
-    <div style={{ ...card }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-        <span style={{ fontSize: 22 }}>{emoji}</span>
-        <h2 style={{ fontSize: 16, fontWeight: 800, color: TEC_COLORS.text, margin: 0 }}>{title}</h2>
-        <span style={{
-          marginLeft: 'auto', fontSize: 11, fontWeight: 700, color: TEC_COLORS.gold,
-          border: `1px solid ${TEC_COLORS.gold}55`, borderRadius: 999, padding: '2px 10px',
-        }}>Soon</span>
-      </div>
-      <p style={{ fontSize: 13, color: TEC_COLORS.subtext, margin: '10px 0 0', lineHeight: 1.6 }}>{body}</p>
-    </div>
-  );
-}
+import { Collaboration } from './components/Collaboration';
 
 export default function ConnectionHome() {
   const { user, isLoading } = usePiAuth();
@@ -60,14 +38,8 @@ export default function ConnectionHome() {
         {/* Slice 2 — Trust Graph (live, derived from paid orders / order.paid.v1) */}
         <Trust />
 
-        {/* Next slice — collaboration (still to build) */}
-        <div style={{ display: 'grid', gap: 14, marginTop: 24 }}>
-          <Pillar
-            emoji="✨"
-            title="Collaboration"
-            body="Shared context for working together — the relationship baseline that powers discovery, recommendations, and joint ventures across the ecosystem."
-          />
-        </div>
+        {/* Collaboration — shared collections (live) */}
+        <Collaboration />
 
         <p style={{ fontSize: 11, color: TEC_COLORS.subtext, margin: '18px 0 0', lineHeight: 1.5 }}>
           Connection is the Economic Relationship Infrastructure (C-107). It owns the
