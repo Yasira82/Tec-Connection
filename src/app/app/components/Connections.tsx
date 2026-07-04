@@ -3,9 +3,10 @@
 // TEC Connection (C-107) — slice 1: Follow / Connect. The user's own social graph
 // (self-declared, strong consistency). Follower = session identity (server-scoped);
 // the client only ever sends the followee username.
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { TEC_COLORS } from '@yasser172/tec-ui';
 import { useConnection } from '@/lib-client/connection/useConnection';
+import { usePresence } from '@/lib-client/connection/usePresence';
 
 const card = {
   background:   TEC_COLORS.surface,
@@ -37,6 +38,9 @@ function Stat({ label, value }: { label: string; value: number }) {
 export function Connections() {
   const { following, stats, loading, busy, error, follow, unfollow } = useConnection();
   const [username, setUsername] = useState('');
+  const followedNames = useMemo(() => following.map((f) => f.username), [following]);
+  const { isOnline } = usePresence(followedNames);
+  const onlineCount = following.filter((f) => isOnline(f.username)).length;
 
   const submit = async () => {
     const u = username.trim().replace(/^@+/, '');
@@ -50,7 +54,14 @@ export function Connections() {
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 12 }}>
         <span style={{ fontSize: 22 }}>🤝</span>
         <h2 style={{ fontSize: 18, fontWeight: 800, color: TEC_COLORS.text, margin: 0 }}>Connections</h2>
-        <span style={{ fontSize: 12, color: TEC_COLORS.subtext }}>your social graph</span>
+        {onlineCount > 0 ? (
+          <span style={{ fontSize: 12, color: TEC_COLORS.success, display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+            <span style={{ width: 8, height: 8, borderRadius: 999, background: TEC_COLORS.success }} />
+            {onlineCount} online
+          </span>
+        ) : (
+          <span style={{ fontSize: 12, color: TEC_COLORS.subtext }}>your social graph</span>
+        )}
       </div>
 
       <div style={{ ...card }}>
@@ -90,10 +101,18 @@ export function Connections() {
             following.map((f, i) => (
               <div key={f.username}
                 style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 0', borderTop: i === 0 ? 'none' : `1px solid ${TEC_COLORS.border}` }}>
-                <span style={{
-                  width: 30, height: 30, borderRadius: 999, flexShrink: 0, display: 'grid', placeItems: 'center',
-                  background: TEC_COLORS.bg, border: `1px solid ${TEC_COLORS.border}`, color: TEC_COLORS.gold, fontSize: 13, fontWeight: 800,
-                }}>{f.username.charAt(0).toUpperCase()}</span>
+                <span style={{ position: 'relative', flexShrink: 0, width: 30, height: 30 }}>
+                  <span style={{
+                    width: 30, height: 30, borderRadius: 999, display: 'grid', placeItems: 'center',
+                    background: TEC_COLORS.bg, border: `1px solid ${TEC_COLORS.border}`, color: TEC_COLORS.gold, fontSize: 13, fontWeight: 800,
+                  }}>{f.username.charAt(0).toUpperCase()}</span>
+                  {isOnline(f.username) && (
+                    <span title="Online now" style={{
+                      position: 'absolute', right: -1, bottom: -1, width: 10, height: 10, borderRadius: 999,
+                      background: TEC_COLORS.success, border: `2px solid ${TEC_COLORS.surface}`,
+                    }} />
+                  )}
+                </span>
                 <span style={{ flex: 1, minWidth: 0, fontSize: 14, color: TEC_COLORS.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   @{f.username}
                 </span>
