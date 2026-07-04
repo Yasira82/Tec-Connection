@@ -29,7 +29,7 @@ Connect) are the next steps. Not yet deployed.
 |-------|-------|
 | **App** | TEC Connection |
 | **Domain** | `https://connection.tecosystem.app` |
-| **Pi App ID** | ⏳ Not yet registered · Vercel `NEXT_PUBLIC_PI_APP_ID` |
+| **Pi App ID** | `connection-aa9fba4f11664096` ✅ Registered · Vercel `NEXT_PUBLIC_PI_APP_ID` |
 | **APP_SOURCE slug** | `connection` (payment-service resolves `PI_API_KEY_CONNECTION`) |
 | **PI_SANDBOX** | `false` (Mainnet) |
 
@@ -132,11 +132,11 @@ Phase 0 — customized from template:
   ✅ landing + /app themed as the Connection home shell (Connections · Trust · Collaboration)
 
 Next (before live):
-  □ Pi App ID: register connection.tecosystem.app in the Pi Developer Portal;
-    set Vercel vars (API_GATEWAY_URL · INTERNAL_SECRET · SSO_SECRET ·
-    NEXT_PUBLIC_PI_APP_ID · PI_SANDBOX=false) + add life-style /privacy + /terms URLs.
-  □ Hub SSO: add connection.tecosystem.app + tec-connection.vercel.app to the Hub
-    /api/auth/sso ALLOWED_TARGETS; add Connection to the Hub domain registry (Live Now).
+  ✅ Pi App ID registered: connection-aa9fba4f11664096 · Vercel vars set
+    (API_GATEWAY_URL · INTERNAL_SECRET · SSO_SECRET · NEXT_PUBLIC_PI_APP_ID · PI_SANDBOX=false).
+  ✅ Hub SSO: connection.tecosystem.app + tec-connection.vercel.app added to the Hub
+    /api/auth/sso ALLOWED_TARGETS; Connection added to the Hub domain registry (Live Now) — merged to tec-app main.
+  □ Deploy to Vercel + runtime-verify login inside Pi Browser.
   □ FEATURE slice 1 — Follow / Connect (self-declared social graph, strong consistency):
     Connection store (Follow + Connection edges) in a backend service (identity-service
     pattern, like Life) behind /api/bff/connection/* → gateway. Owner = session identity
