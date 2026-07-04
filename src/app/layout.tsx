@@ -15,6 +15,10 @@ export default function RootLayout({
     <html lang="en">
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+        {/* Full-bleed dark shell — tint the browser UI + declare dark canvas so
+            no white frame shows around the app in Pi Browser. */}
+        <meta name="theme-color" content="#020205" />
+        <meta name="color-scheme" content="dark" />
         <script
           src="https://sdk.minepi.com/pi-sdk.js"
           async
