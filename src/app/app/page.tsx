@@ -5,6 +5,7 @@
 // trust signals derived from real activity, reputation, and collaboration
 // context. Connections are sovereign — the user controls their own graph.
 import { usePiAuth } from '@yasser172/tec-auth';
+import { InviteCard } from '@/components/referral/InviteCard';
 import { TEC_COLORS } from '@yasser172/tec-ui';
 import { Connections } from './components/Connections';
 import { Trust } from './components/Trust';
@@ -50,6 +51,7 @@ export default function ConnectionHome() {
           trust graph — never identity, payment, or asset truth, which stay with their
           owning services and are referenced by ID only.
         </p>
+        <InviteCard />
       </div>
     </main>
   );

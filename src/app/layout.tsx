@@ -1,3 +1,5 @@
+import { RefCapture } from '@/components/referral/RefCapture';
+import { RefApply } from '@/components/referral/RefApply';
 import type { Metadata } from 'next';
 import '@/styles/tec-design-tokens.css';
 
@@ -58,7 +60,11 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body>{children}</body>
+      <body>
+        <RefCapture />
+        <RefApply />
+        {children}
+      </body>
     </html>
   );
 }
