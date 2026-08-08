@@ -133,6 +133,22 @@ export async function resolveProStatus(token: string | null): Promise<boolean> {
   } catch { return false; }
 }
 
+export interface Follower { username: string; since?: string; mutual: boolean; }
+
+/** The caller's followers + mutual flag (authenticated, own-scope). count + list. */
+export async function resolveFollowers(token: string | null): Promise<{ count: number; followers: Follower[] }> {
+  if (!GW || !token) return { count: 0, followers: [] };
+  try {
+    const res = await fetch(`${GW}/api/identity/connection/followers`, { headers: gwHeaders(token), cache: 'no-store' });
+    if (!res.ok) return { count: 0, followers: [] };
+    const d = (await res.json().catch(() => ({})))?.data ?? {};
+    const followers = Array.isArray(d.followers)
+      ? d.followers.map((f: Record<string, unknown>) => ({ username: String(f.username ?? ''), since: f.since ? String(f.since) : undefined, mutual: Boolean(f.mutual) }))
+      : [];
+    return { count: Number(d.count ?? followers.length), followers };
+  } catch { return { count: 0, followers: [] }; }
+}
+
 /** Connection Pro — sync FEATURED on the caller's own profile to live Pro (visibility only). */
 export async function setDirectoryFeatured(token: string | null, on: boolean): Promise<boolean> {
   if (!GW || !token) return false;

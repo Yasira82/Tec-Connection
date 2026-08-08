@@ -84,6 +84,40 @@ describe('GET /api/bff/connection/profile/me (own profile + featured reconcile)'
   });
 });
 
+describe('GET /api/bff/connection/followers (Pro Network Insights, gated)', () => {
+  it('401 without a session', async () => {
+    const { GET } = await import('@/app/api/bff/connection/followers/route');
+    const res = await GET(makeReq({ method: 'GET' }));
+    expect(res.status).toBe(401);
+  });
+
+  it('non-Pro sees the COUNT but NOT the follower list (list gated, P5)', async () => {
+    const fetchSpy = vi.spyOn(globalThis, 'fetch')
+      .mockResolvedValueOnce(ok({ count: 3, followers: [{ username: 'a', mutual: false }] })) // backend followers
+      .mockResolvedValueOnce(ok({ plan: 'FREE', isActive: true }));                            // sub = not Pro
+    const { GET } = await import('@/app/api/bff/connection/followers/route');
+    const res  = await GET(makeReq({ method: 'GET', cookies: { tec_access_token: 'tok' } }));
+    const json = await res.json();
+    expect(json.pro).toBe(false);
+    expect(json.count).toBe(3);          // count teaser is shown
+    expect(json.followers).toEqual([]);  // list withheld
+    fetchSpy.mockRestore();
+  });
+
+  it('Pro sees the full follower list with mutual flags', async () => {
+    const fetchSpy = vi.spyOn(globalThis, 'fetch')
+      .mockResolvedValueOnce(ok({ count: 2, followers: [{ username: 'a', mutual: true }, { username: 'b', mutual: false }] })) // backend
+      .mockResolvedValueOnce(ok({ plan: 'PRO', isActive: true, isExpired: false }));                                          // sub = Pro
+    const { GET } = await import('@/app/api/bff/connection/followers/route');
+    const res  = await GET(makeReq({ method: 'GET', cookies: { tec_access_token: 'tok' } }));
+    const json = await res.json();
+    expect(json.pro).toBe(true);
+    expect(json.followers).toHaveLength(2);
+    expect(json.followers[1]).toEqual({ username: 'b', mutual: false });
+    fetchSpy.mockRestore();
+  });
+});
+
 describe('PUT /api/bff/connection/profile/me (save — identity from session, P6)', () => {
   it('forwards editable fields and NEVER an owner/verified/featured field from the body', async () => {
     const fetchSpy = vi.spyOn(globalThis, 'fetch')

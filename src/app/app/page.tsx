@@ -9,6 +9,7 @@ import { InviteCard } from '@/components/referral/InviteCard';
 import { TEC_COLORS } from '@yasser172/tec-ui';
 import { Connections } from './components/Connections';
 import { Discover } from './components/Discover';
+import { NetworkInsights } from './components/NetworkInsights';
 import { Trust } from './components/Trust';
 import { Notifications } from './components/Notifications';
 import { Collaboration } from './components/Collaboration';
@@ -43,6 +44,9 @@ export default function ConnectionHome() {
 
         {/* Discover — opt-in public directory: find + follow people (Pro = Featured reach) */}
         <Discover />
+
+        {/* Network Insights (Connection Pro) — who follows you + mutual + follow-back */}
+        <NetworkInsights />
 
         {/* Slice 2 — Trust Graph (live, derived from paid orders / order.paid.v1) */}
         <Trust />
