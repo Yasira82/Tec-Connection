@@ -151,9 +151,11 @@ export function ConnectionPro() {
         </div>
       </div>
       <div style={{ fontSize: 12, color: TEC_COLORS.subtext, marginTop: 8, lineHeight: 1.5 }}>
-        Grow your network faster — unlimited collections, priority connection
-        requests, and richer trust insights. Your graph stays yours (C-107).
-        Early price, locked in.
+        Two real benefits: <strong style={{ color: TEC_COLORS.text }}>Network Insights</strong> —
+        see who follows you, who you don’t follow back, and follow back in a tap — plus a
+        ⭐ <strong style={{ color: TEC_COLORS.text }}>Featured</strong> card in Discover so more
+        of the Pi community finds you. Reach + insight only: never buys verification or trust
+        (those are earned, C-107). Your graph stays yours.
       </div>
 
       <button
