@@ -151,9 +151,9 @@ export function ConnectionPro() {
         </div>
       </div>
       <div style={{ fontSize: 12, color: TEC_COLORS.subtext, marginTop: 8, lineHeight: 1.5 }}>
-        Grow your network faster — unlimited collections, priority connection
-        requests, and richer trust insights. Your graph stays yours (C-107).
-        Early price, locked in.
+        Get discovered — a ⭐ Featured placement in the Discover directory, so more
+        of the Pi community finds and follows you. Reach only: featuring never buys
+        verification or trust (those are earned, C-107). Your graph stays yours.
       </div>
 
       <button

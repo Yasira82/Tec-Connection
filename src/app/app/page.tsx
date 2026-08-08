@@ -8,6 +8,7 @@ import { usePiAuth } from '@yasser172/tec-auth';
 import { InviteCard } from '@/components/referral/InviteCard';
 import { TEC_COLORS } from '@yasser172/tec-ui';
 import { Connections } from './components/Connections';
+import { Discover } from './components/Discover';
 import { Trust } from './components/Trust';
 import { Notifications } from './components/Notifications';
 import { Collaboration } from './components/Collaboration';
@@ -39,6 +40,9 @@ export default function ConnectionHome() {
 
         {/* Slice 1 — Follow / Connect (live, self-declared social graph) */}
         <Connections />
+
+        {/* Discover — opt-in public directory: find + follow people (Pro = Featured reach) */}
+        <Discover />
 
         {/* Slice 2 — Trust Graph (live, derived from paid orders / order.paid.v1) */}
         <Trust />
