@@ -69,7 +69,7 @@ describe('GET /api/bff/connection/profile/me (own profile + featured reconcile)'
   it('lights up featured when the caller is live Pro + published', async () => {
     const fetchSpy = vi.spyOn(globalThis, 'fetch')
       .mockResolvedValueOnce(ok({ profile: { username: 'maya', headline: 'h', category: 'builder', published: true, verified: false, featured: false } })) // my profile
-      .mockResolvedValueOnce(ok({ plan: 'PRO', isActive: true, isExpired: false }))                                                                      // sub = Pro
+      .mockResolvedValueOnce(ok({ subscription: { plan: 'PRO', isActive: true, isExpired: false } }))                                                                      // sub = Pro
       .mockResolvedValueOnce(ok({ updated: true }));                                                                                                     // featured PATCH
     const { GET } = await import('@/app/api/bff/connection/profile/me/route');
     const res  = await GET(makeReq({ method: 'GET', cookies: { tec_access_token: 'tok' } }));
@@ -94,7 +94,7 @@ describe('GET /api/bff/connection/followers (Pro Network Insights, gated)', () =
   it('non-Pro sees the COUNT but NOT the follower list (list gated, P5)', async () => {
     const fetchSpy = vi.spyOn(globalThis, 'fetch')
       .mockResolvedValueOnce(ok({ count: 3, followers: [{ username: 'a', mutual: false }] })) // backend followers
-      .mockResolvedValueOnce(ok({ plan: 'FREE', isActive: true }));                            // sub = not Pro
+      .mockResolvedValueOnce(ok({ subscription: { plan: 'FREE', isActive: true } }));                            // sub = not Pro
     const { GET } = await import('@/app/api/bff/connection/followers/route');
     const res  = await GET(makeReq({ method: 'GET', cookies: { tec_access_token: 'tok' } }));
     const json = await res.json();
@@ -107,7 +107,7 @@ describe('GET /api/bff/connection/followers (Pro Network Insights, gated)', () =
   it('Pro sees the full follower list with mutual flags', async () => {
     const fetchSpy = vi.spyOn(globalThis, 'fetch')
       .mockResolvedValueOnce(ok({ count: 2, followers: [{ username: 'a', mutual: true }, { username: 'b', mutual: false }] })) // backend
-      .mockResolvedValueOnce(ok({ plan: 'PRO', isActive: true, isExpired: false }));                                          // sub = Pro
+      .mockResolvedValueOnce(ok({ subscription: { plan: 'PRO', isActive: true, isExpired: false } }));                                          // sub = Pro
     const { GET } = await import('@/app/api/bff/connection/followers/route');
     const res  = await GET(makeReq({ method: 'GET', cookies: { tec_access_token: 'tok' } }));
     const json = await res.json();
