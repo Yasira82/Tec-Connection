@@ -23,7 +23,7 @@ export default function ConnectionHome() {
     <main style={{ minHeight: '100vh', background: TEC_COLORS.bg, color: TEC_COLORS.text, padding: '32px 22px', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
       <div style={{ maxWidth: 760, margin: '0 auto' }}>
         <header>
-          <div style={{ fontSize: 12, letterSpacing: 1, color: TEC_COLORS.subtext, textTransform: 'uppercase' }}>TEC Connection · System of Record</div>
+          <div style={{ fontSize: 12, letterSpacing: 1, color: TEC_COLORS.subtext, textTransform: 'uppercase' }}>TEC Connection · Your network</div>
           <h1 style={{ fontSize: 26, fontWeight: 900, color: TEC_COLORS.gold, margin: '6px 0 0' }}>
             {isLoading ? 'Welcome' : `Welcome, ${name}`}
           </h1>
@@ -55,9 +55,9 @@ export default function ConnectionHome() {
         <Collaboration />
 
         <p style={{ fontSize: 11, color: TEC_COLORS.subtext, margin: '18px 0 0', lineHeight: 1.5 }}>
-          Connection is the Economic Relationship Infrastructure. It owns the
-          trust graph — never identity, payment, or asset truth, which stay with their
-          owning services and are referenced by ID only.
+          Connection is where your trusted relationships live — who you follow,
+          connect with, and build trust with across TEC. You&apos;re always in control
+          of your own network.
         </p>
         <InviteCard />
       </div>
