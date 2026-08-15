@@ -127,7 +127,7 @@ export function Connections() {
         </div>
 
         <p style={{ fontSize: 11, color: TEC_COLORS.subtext, margin: '12px 0 0', lineHeight: 1.5 }}>
-          Your graph is yours (C-107). You only ever see and edit your own connections —
+          Your graph is yours. You only ever see and edit your own connections —
           identity is derived from your session, never sent by the app.
         </p>
       </div>

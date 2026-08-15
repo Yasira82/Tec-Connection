@@ -45,7 +45,7 @@ export default function HomePage() {
         <p style={{ fontSize: 14, color: TEC_COLORS.subtext, lineHeight: 1.6, marginBottom: 32 }}>
           Your economic relationship graph on Pi. Follow people and businesses,
           build trust from real activity, and collaborate across the ecosystem —
-          your connections are yours (C-107).
+          your connections are yours.
         </p>
         <button
           onClick={handleLogin}

@@ -29,7 +29,7 @@ export default function ConnectionHome() {
           </h1>
           <p style={{ fontSize: 14, color: TEC_COLORS.subtext, margin: '6px 0 0', lineHeight: 1.6 }}>
             Your relationship graph in the TEC ecosystem. Your connections are yours
-            (C-107) — you control who you trust and who can see it.
+             — you control who you trust and who can see it.
           </p>
         </header>
 
@@ -55,7 +55,7 @@ export default function ConnectionHome() {
         <Collaboration />
 
         <p style={{ fontSize: 11, color: TEC_COLORS.subtext, margin: '18px 0 0', lineHeight: 1.5 }}>
-          Connection is the Economic Relationship Infrastructure (C-107). It owns the
+          Connection is the Economic Relationship Infrastructure. It owns the
           trust graph — never identity, payment, or asset truth, which stay with their
           owning services and are referenced by ID only.
         </p>

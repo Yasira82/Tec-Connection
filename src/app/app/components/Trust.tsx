@@ -75,7 +75,7 @@ export function Trust() {
         )}
         <p style={{ fontSize: 11, color: TEC_COLORS.subtext, margin: 0, lineHeight: 1.5 }}>
           Derived from paid orders (eventual). Connection never re-derives transaction
-          truth — payment &amp; order truth stay with their owning services (C-107).
+          truth — payment &amp; order truth stay with their owning services.
         </p>
       </div>
     </section>

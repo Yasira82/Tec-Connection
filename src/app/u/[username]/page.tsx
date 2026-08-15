@@ -58,7 +58,7 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
 
         <p style={{ fontSize: 11, color: TEC_COLORS.subtext, marginTop: 16, textAlign: 'center', lineHeight: 1.5 }}>
           Verification is presented from Zone / KYC — never minted by Connection. ⭐ Featured is a
-          Connection Pro placement (reach only). Trust is earned, never bought (C-107).
+          Connection Pro placement (reach only). Trust is earned, never bought.
         </p>
       </div>
     </main>
