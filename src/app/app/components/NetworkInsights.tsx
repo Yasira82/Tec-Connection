@@ -66,7 +66,7 @@ export function NetworkInsights() {
           <p style={{ fontSize: 13, color: TEC_COLORS.subtext, margin: '8px 0 0', lineHeight: 1.6 }}>
             You have <strong style={{ color: TEC_COLORS.gold }}>{count}</strong> follower{count === 1 ? '' : 's'}.
             Connection Pro reveals <em>who</em> they are, flags who you don’t follow back, and lets you
-            follow back in one tap. It’s your own graph (C-107) — Pro just surfaces it.
+            follow back in one tap. It’s your own graph — Pro just surfaces it.
           </p>
           <p style={{ fontSize: 12, color: TEC_COLORS.subtext, margin: '10px 0 0' }}>Upgrade above to unlock.</p>
         </div>

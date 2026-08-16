@@ -22,4 +22,19 @@ export const en = {
     appsTitle: 'TEC Ecosystem',
     appsCount: '24 Apps',
   },
+  connection: {
+    brand:       'TEC Connection · Your network',
+    welcome:     'Welcome',
+    welcomeName: 'Welcome, {name}',
+    subtitle:    'Your relationship graph in the TEC ecosystem. Your connections are yours — you control who you trust and who can see it.',
+    nav: { home: 'Home', discover: 'Discover', trust: 'Trust', settings: 'Settings' },
+    footer:      'Connection is where your trusted relationships live — who you follow, connect with, and build trust with across TEC. You are always in control of your own network.',
+    settings: {
+      profile: 'Profile', planFree: 'Free', planPro: 'Pro',
+      connectedPi: 'Connected to Pi', notSignedIn: 'Not signed in', member: 'TEC Member',
+      appearance: 'Appearance', language: 'Language', languageDesc: 'Display language',
+      about: 'About', version: 'Version', domain: 'Domain', ecosystem: 'Ecosystem',
+      builtOn: 'Built on', builtOnPi: 'Pi Network', logout: 'Logout',
+    },
+  },
 };

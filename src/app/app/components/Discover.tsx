@@ -138,7 +138,7 @@ export function Discover() {
             : <span style={{ fontSize: 11, color: TEC_COLORS.subtext, border: `1px solid ${TEC_COLORS.border}`, borderRadius: 999, padding: '2px 10px' }}>Hidden</span>}
         </div>
         <p style={{ fontSize: 12, color: TEC_COLORS.subtext, margin: '6px 0 12px', lineHeight: 1.5 }}>
-          Publish a card so others can find and follow you. Opt-in — your graph stays yours (C-107).
+          Publish a card so others can find and follow you. Opt-in — your graph stays yours.
           {me?.published && me.username && (
             <> Public link: <a href={`/u/${encodeURIComponent(me.username)}`} style={{ color: TEC_COLORS.gold }}>/u/{me.username}</a></>
           )}
@@ -204,7 +204,7 @@ export function Discover() {
 
         <p style={{ fontSize: 11, color: TEC_COLORS.subtext, margin: '14px 0 0', lineHeight: 1.5 }}>
           Verified badges are presented from Zone / KYC — Connection never mints them. ⭐ Featured is
-          Connection Pro (reach only, ranks below verified). Trust is earned, never bought (C-107).
+          Connection Pro (reach only, ranks below verified). Trust is earned, never bought.
         </p>
       </div>
     </section>

@@ -22,4 +22,19 @@ export const ar = {
     appsTitle: 'منظومة TEC',
     appsCount: '24 تطبيق',
   },
+  connection: {
+    brand:       'TEC Connection · شبكتك',
+    welcome:     'أهلاً',
+    welcomeName: 'أهلاً، {name}',
+    subtitle:    'شبكة علاقاتك في منظومة TEC. علاقاتك مِلكك — أنت من يحدّد من تثق به ومن يمكنه رؤيتها.',
+    nav: { home: 'الرئيسية', discover: 'اكتشف', trust: 'الثقة', settings: 'الإعدادات' },
+    footer:      'Connection هو مكان علاقاتك الموثوقة — من تتابعه، وتتواصل معه، وتبني معه الثقة عبر TEC. أنت دائماً المتحكّم في شبكتك.',
+    settings: {
+      profile: 'الملف الشخصي', planFree: 'مجاني', planPro: 'Pro',
+      connectedPi: 'متصل بـ Pi', notSignedIn: 'غير مسجّل الدخول', member: 'عضو TEC',
+      appearance: 'المظهر', language: 'اللغة', languageDesc: 'لغة العرض',
+      about: 'حول', version: 'الإصدار', domain: 'النطاق', ecosystem: 'المنظومة',
+      builtOn: 'مبني على', builtOnPi: 'شبكة Pi', logout: 'تسجيل الخروج',
+    },
+  },
 };
