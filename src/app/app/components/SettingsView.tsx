@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react';
 import { usePiAuth } from '@yasser172/tec-auth';
 import { TEC_COLORS } from '@yasser172/tec-ui';
 import { useTranslation } from '@/lib/i18n';
+import { useMe } from '@/lib-client/hooks/useMe';
 import { InviteCard } from '@/components/referral/InviteCard';
 
 const cardStyle = {
@@ -64,8 +65,11 @@ function Pills<T extends string>({ value, options, onChange }: { value: T; optio
 export function SettingsView() {
   const { t, locale, setLocale } = useTranslation();
   const { user, isAuthenticated, logout } = usePiAuth();
+  const me = useMe();
   const s = t.connection.settings;
-  const username = user?.piUsername ?? null;
+  // Prefer the server-resolved Pi username (/api/auth/me) — Pi Browser hides the
+  // tec_user cookie from client JS, so usePiAuth alone shows no name / "Not signed in".
+  const username = me.username ?? user?.piUsername ?? null;
 
   // Reflect the real subscription (same source ConnectionPro reads).
   const [isPro, setIsPro] = useState(false);
@@ -84,9 +88,9 @@ export function SettingsView() {
     return () => { alive = false; };
   }, []);
 
-  // A live Pro/subscription or an authenticated session means the user IS signed in,
-  // even if the username hasn't hydrated yet — never show "Not signed in" to a member.
-  const signedIn = isAuthenticated || isPro || !!username;
+  // A resolved session, a live Pro subscription, or an authenticated hook state all
+  // mean the user IS signed in — never show "Not signed in" to a member.
+  const signedIn = me.authenticated || isAuthenticated || isPro || !!username;
 
   return (
     <div>

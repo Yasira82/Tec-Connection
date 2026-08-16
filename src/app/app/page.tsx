@@ -8,6 +8,7 @@ import { useState } from 'react';
 import { usePiAuth } from '@yasser172/tec-auth';
 import { TEC_COLORS } from '@yasser172/tec-ui';
 import { useTranslation } from '@/lib/i18n';
+import { useMe } from '@/lib-client/hooks/useMe';
 import { InviteCard } from '@/components/referral/InviteCard';
 import { BottomNav, type ConnTab } from './components/BottomNav';
 import { SettingsView } from './components/SettingsView';
@@ -21,10 +22,12 @@ import { ConnectionPro } from './components/ConnectionPro';
 
 export default function ConnectionHome() {
   const { user, isLoading } = usePiAuth();
+  const me = useMe(); // server-resolved Pi username (Pi Browser hides tec_user from client JS — C-123 §3)
   const { t } = useTranslation();
   const [tab, setTab] = useState<ConnTab>('home');
 
-  const name = user?.piUsername ? `@${user.piUsername}` : '';
+  const piName = me.username ?? user?.piUsername ?? null;
+  const name = piName ? `@${piName}` : '';
   const title =
     tab === 'discover' ? t.connection.nav.discover
     : tab === 'trust'  ? t.connection.nav.trust
