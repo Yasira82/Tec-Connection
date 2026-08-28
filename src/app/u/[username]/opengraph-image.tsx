@@ -1,75 +1,94 @@
 // The share card for a public profile (C-107).
 //
 // A link to /u/<handle> is the app's cheapest acquisition surface — it travels
-// through WhatsApp, Telegram and X where a preview is the whole message. It used
-// to preview as nothing at all.
+// through WhatsApp, Telegram and X where the preview IS the message. It used to
+// preview as nothing at all.
 //
-// Two constraints this file has to respect, both learned the hard way on this
-// platform:
-//   1. Satori (next/og) resolves NO CSS custom properties, so every colour here
-//      must be a literal value. TEC_COLORS is a plain 6-digit hex object, which
-//      is exactly why it is safe to import — see the tec-ui contract test.
+// Three constraints this file has to respect, two of them learned the hard way
+// on this platform:
+//   1. Satori (next/og) renders no stylesheet and resolves no CSS custom
+//      properties, so every colour is a literal and every style is inline. The
+//      avatar gradient is imported from the page's own Avatar so a person is the
+//      same colour in the preview as on the page it links to.
 //   2. Satori needs an explicit `display: flex` on any element with more than one
 //      child; the default `display: block` throws at render time.
+//   3. Verified is green evidence, Featured is a neutral label — the same rule
+//      the pages follow, because a paid placement must not read as verification
+//      in the one place a stranger sees first.
 //
-// An unknown or unpublished handle still renders a card — a branded, honest one
-// with no fabricated name — because the image route must never 500 on a bad link.
+// An unknown or unpublished handle still renders a card — branded, with no
+// fabricated name — because this route must never 500 on a stale link.
 import { ImageResponse } from 'next/og';
-import { TEC_COLORS } from '@yasser172/tec-ui';
+import { avatarGradient } from '@/components/public/Avatar';
 import { resolvePublicProfile } from '@/lib/connection/discovery';
 
 export const alt         = 'TEC Connection profile';
 export const size        = { width: 1200, height: 630 };
 export const contentType = 'image/png';
 
+const BG    = '#050816';
+const GOLD  = '#FBB44A';
+const GREEN = '#22C55E';
+
 export default async function Image({ params }: { params: Promise<{ username: string }> }) {
   const { username } = await params;
   const p = await resolvePublicProfile(username).catch(() => null);
 
   const handle   = p ? `@${p.username}` : 'TEC Connection';
-  const headline = p?.headline || (p ? `${p.category} on the Pi economy` : 'The people of the Pi economy');
+  const headline = p?.headline || (p ? `${p.category} in the Pi economy` : 'The people of the Pi economy');
 
   return new ImageResponse(
     (
       <div style={{
         width: '100%', height: '100%', display: 'flex', flexDirection: 'column',
-        justifyContent: 'center', padding: 80,
-        background: TEC_COLORS.bg, color: TEC_COLORS.text,
-        fontFamily: 'system-ui, sans-serif',
+        justifyContent: 'center', padding: '0 84px',
+        background: BG, color: '#ffffff', fontFamily: 'system-ui, sans-serif',
+        // The page's warm light source, flattened to what Satori supports.
+        backgroundImage: `radial-gradient(1000px 500px at 22% -12%, rgba(251,180,74,0.20), transparent 70%)`,
       }}>
-        <div style={{ display: 'flex', fontSize: 26, letterSpacing: 4, color: TEC_COLORS.gold, textTransform: 'uppercase' }}>
-          TEC Connection
+        <div style={{ display: 'flex', fontSize: 24, letterSpacing: 6, color: GOLD, fontWeight: 700 }}>
+          TEC · CONNECTION
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 32, marginTop: 44 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 36, marginTop: 40 }}>
           <div style={{
-            width: 150, height: 150, borderRadius: 999, display: 'flex',
+            width: 156, height: 156, borderRadius: 999, display: 'flex',
             alignItems: 'center', justifyContent: 'center',
-            background: TEC_COLORS.surface, border: `4px solid ${TEC_COLORS.gold}`,
-            color: TEC_COLORS.gold, fontSize: 72, fontWeight: 900,
+            background: p ? avatarGradient(p.username) : 'linear-gradient(140deg, #FDCF7A, #E8962A)',
+            color: '#0a0812', fontSize: 76, fontWeight: 900,
           }}>
             {(p?.username ?? 'T').charAt(0).toUpperCase()}
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <div style={{ display: 'flex', fontSize: 68, fontWeight: 900, color: TEC_COLORS.text }}>{handle}</div>
-            {p?.verified && (
-              <div style={{ display: 'flex', fontSize: 28, fontWeight: 700, color: TEC_COLORS.gold, marginTop: 8 }}>
-                ✅ Verified
-              </div>
-            )}
+            <div style={{ display: 'flex', fontSize: 66, fontWeight: 900, letterSpacing: -2 }}>{handle}</div>
+            <div style={{ display: 'flex', gap: 12, marginTop: 14 }}>
+              {p?.verified && (
+                <div style={{
+                  display: 'flex', padding: '6px 18px', borderRadius: 999,
+                  fontSize: 24, fontWeight: 800, color: GREEN,
+                  background: 'rgba(34,197,94,0.12)', border: `2px solid rgba(34,197,94,0.35)`,
+                }}>✓ Verified</div>
+              )}
+              {p && (
+                <div style={{
+                  display: 'flex', padding: '6px 18px', borderRadius: 10,
+                  fontSize: 24, fontWeight: 600, color: 'rgba(255,255,255,0.55)',
+                  background: 'rgba(255,255,255,0.05)', border: '2px solid rgba(255,255,255,0.08)',
+                  textTransform: 'capitalize',
+                }}>{p.category}</div>
+              )}
+            </div>
           </div>
         </div>
 
-        <div style={{ display: 'flex', fontSize: 34, color: TEC_COLORS.subtext, marginTop: 40, lineHeight: 1.4 }}>
-          {headline.length > 90 ? `${headline.slice(0, 90)}…` : headline}
+        <div style={{ display: 'flex', fontSize: 32, color: 'rgba(255,255,255,0.66)', marginTop: 42, lineHeight: 1.4 }}>
+          {headline.length > 84 ? `${headline.slice(0, 84)}…` : headline}
         </div>
 
-        {p && (
-          <div style={{ display: 'flex', fontSize: 30, color: TEC_COLORS.gold, marginTop: 26 }}>
-            {p.followers} follower{p.followers === 1 ? '' : 's'} · connection.tecosystem.app
-          </div>
-        )}
+        <div style={{ display: 'flex', fontSize: 26, color: 'rgba(255,255,255,0.4)', marginTop: 26 }}>
+          {p ? `${p.followers} follower${p.followers === 1 ? '' : 's'} · ` : ''}connection.tecosystem.app
+        </div>
       </div>
     ),
     size,

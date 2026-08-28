@@ -2,11 +2,14 @@
 // fetch — so it renders in a server component (the public pages) and inside a
 // client tree (the landing) without duplicating the markup.
 //
-// Ranking rule made visible: ✅ Verified is PRESENTED from Zone/KYC and is never
-// minted here; ⭐ Featured is Connection Pro and is REACH ONLY. Featured must never
-// look like verification — trust is earned, never bought (C-107).
+// The badge treatment is a constitutional requirement, not a style choice:
+// ✅ Verified is evidence PRESENTED from Zone / KYC and is never minted here,
+// while Featured is a Connection Pro placement worth REACH and nothing else. So
+// they are given different shapes and different colour families — green evidence
+// vs a neutral grey label — because two weights of the same gold would let a paid
+// placement read as verification. Trust is earned, never bought.
 import Link from 'next/link';
-import { TEC_COLORS } from '@yasser172/tec-ui';
+import { Avatar } from './Avatar';
 
 export interface DirectoryCardProfile {
   username:  string;
@@ -17,42 +20,56 @@ export interface DirectoryCardProfile {
   followers: number;
 }
 
-export function DirectoryCard({ profile }: { profile: DirectoryCardProfile }) {
+export function DirectoryCard({ profile, delay = 0 }: { profile: DirectoryCardProfile; delay?: number }) {
   return (
     <Link
       href={`/u/${encodeURIComponent(profile.username)}`}
-      style={{
-        display: 'flex', gap: 14, alignItems: 'center', textDecoration: 'none',
-        background: TEC_COLORS.surface, border: `1px solid ${TEC_COLORS.gold}22`,
-        borderRadius: 16, padding: '16px 18px',
-      }}>
-      <div style={{
-        width: 44, height: 44, borderRadius: 999, flexShrink: 0, display: 'grid', placeItems: 'center',
-        background: TEC_COLORS.bg, border: `1px solid ${TEC_COLORS.gold}55`,
-        color: TEC_COLORS.gold, fontSize: 18, fontWeight: 900,
-      }}>{profile.username.charAt(0).toUpperCase()}</div>
+      className="pub-card pub-in"
+      style={{ animationDelay: `${delay}ms` }}>
+
+      <Avatar username={profile.username} />
 
       <div style={{ minWidth: 0, flex: 1 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-          <span style={{ fontSize: 15, fontWeight: 800, color: TEC_COLORS.text }}>@{profile.username}</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 7, flexWrap: 'wrap' }}>
+          <span style={{ fontSize: 15.5, fontWeight: 800, color: '#fff', letterSpacing: '-0.01em' }}>
+            @{profile.username}
+          </span>
           {profile.verified && (
-            <span title="Verified — presented from Zone / KYC"
-              style={{ fontSize: 10, fontWeight: 800, color: TEC_COLORS.gold, border: `1px solid ${TEC_COLORS.gold}55`, borderRadius: 999, padding: '1px 7px' }}>
-              ✅ Verified
+            <span className="pub-badge-verified" title="Verified — presented from Zone / KYC, never minted by Connection">
+              ✓ Verified
             </span>
           )}
-          {profile.featured && <span title="Featured — Connection Pro placement (reach only)" style={{ fontSize: 12, color: TEC_COLORS.gold }}>⭐</span>}
         </div>
+
         {profile.headline && (
           <div style={{
-            fontSize: 13, color: TEC_COLORS.subtext, marginTop: 3, lineHeight: 1.4,
+            fontSize: 13.5, color: 'rgba(255,255,255,0.60)', marginTop: 3, lineHeight: 1.45,
             overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
           }}>{profile.headline}</div>
         )}
-        <div style={{ fontSize: 11, color: TEC_COLORS.gold, marginTop: 4, textTransform: 'capitalize' }}>
-          {profile.category} · {profile.followers} follower{profile.followers === 1 ? '' : 's'}
+
+        {/* Featured sits on the META line, not beside the handle. Two reasons, and
+            the second is the one that matters: on a 390px screen a second badge
+            next to the name wrapped and made that one card taller than the rest —
+            and Featured is a paid PLACEMENT, not something the person is, so it
+            does not belong in the same row as their identity and their evidence.
+            `capitalize` is scoped to the category alone; on the whole line it also
+            title-cased the count — "Builder · 184 Followers". */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 11.5, color: 'rgba(255,255,255,0.38)', marginTop: 5 }}>
+          <span>
+            <span style={{ textTransform: 'capitalize' }}>{profile.category}</span>
+            {' · '}{profile.followers} follower{profile.followers === 1 ? '' : 's'}
+          </span>
+          {profile.featured && (
+            <span className="pub-badge-featured" style={{ fontSize: 9.5, padding: '1px 6px' }}
+              title="Featured — a Connection Pro placement. Reach only; not verification.">
+              Featured
+            </span>
+          )}
         </div>
       </div>
+
+      <span aria-hidden="true" style={{ color: 'rgba(255,255,255,0.28)', fontSize: 18, flexShrink: 0 }}>›</span>
     </Link>
   );
 }

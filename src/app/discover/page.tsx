@@ -7,16 +7,16 @@
 // button on an otherwise empty screen. An app that asks you to authenticate
 // before it shows you a single human is not a front door.
 //
-// This page is the front door: real people, searchable, with no session. Search
-// and category filtering run through a plain GET <form>, so the page works with
-// JavaScript disabled, inside an in-app browser, and — the point — for a crawler.
+// Search and category filtering run through a plain GET <form> and real links,
+// so the page works with JavaScript disabled, inside an in-app browser, and —
+// the point — for a crawler. Every result is a URL somebody can paste into a
+// group chat.
 //
 // Publishing is opt-in (sovereignty, C-107): only profiles the owner published
 // appear here. An unreachable backend renders an honest empty state; it never
 // fabricates a directory.
 import Link from 'next/link';
 import type { Metadata } from 'next';
-import { TEC_COLORS } from '@yasser172/tec-ui';
 import { CATEGORIES, resolveDirectory } from '@/lib/connection/discovery';
 import { DirectoryCard } from '@/components/public/DirectoryCard';
 
@@ -24,21 +24,13 @@ export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
   title:       'Discover people on Pi · TEC Connection',
-  description: 'Find builders, merchants, creators and investors in the Pi economy. Trust is earned from real activity — never bought.',
+  description: 'Find builders, merchants, creators and investors in the Pi economy. Trust is earned from real completed payments — never bought.',
   openGraph: {
     title:       'Discover people on Pi · TEC Connection',
     description: 'Find builders, merchants, creators and investors in the Pi economy.',
     type:        'website',
   },
 };
-
-const chip = (active: boolean): React.CSSProperties => ({
-  fontSize: 12, fontWeight: 700, whiteSpace: 'nowrap', textDecoration: 'none',
-  color: active ? '#0a0800' : TEC_COLORS.text,
-  background: active ? `linear-gradient(135deg, ${TEC_COLORS.gold}, ${TEC_COLORS.goldDark})` : 'transparent',
-  border: `1px solid ${TEC_COLORS.gold}${active ? '' : '33'}`,
-  borderRadius: 999, padding: '6px 12px', textTransform: 'capitalize',
-});
 
 export default async function DiscoverPage(
   { searchParams }: { searchParams: Promise<{ q?: string; category?: string }> },
@@ -56,73 +48,78 @@ export default async function DiscoverPage(
   };
 
   return (
-    <main style={{ minHeight: '100vh', background: TEC_COLORS.bg, color: TEC_COLORS.text, fontFamily: 'system-ui, -apple-system, sans-serif' }}>
-      <div style={{ maxWidth: 760, margin: '0 auto', padding: '40px 22px 64px' }}>
+    <main className="pub-glow" style={{
+      minHeight: '100vh', color: '#fff',
+      fontFamily: 'var(--font-sans, system-ui, -apple-system, sans-serif)', overflowX: 'hidden',
+    }}>
+      <div style={{
+        maxWidth: 600, margin: '0 auto',
+        padding: 'calc(34px + env(safe-area-inset-top)) 22px calc(56px + env(safe-area-inset-bottom))',
+      }}>
 
-        <Link href="/" style={{ fontSize: 12, letterSpacing: 1, color: TEC_COLORS.subtext, textTransform: 'uppercase', textDecoration: 'none' }}>
-          ← TEC Connection
+        <Link href="/" className="pub-eyebrow" style={{ textDecoration: 'none', display: 'inline-block' }}>
+          ← TEC · Connection
         </Link>
-        <h1 style={{ fontSize: 28, fontWeight: 900, color: TEC_COLORS.gold, margin: '10px 0 6px' }}>
+
+        <h1 className="pub-h1 pub-in" style={{ marginTop: 16, fontSize: 'clamp(28px, 7.5vw, 38px)' }}>
           Discover people on Pi
         </h1>
-        <p style={{ fontSize: 14, color: TEC_COLORS.subtext, lineHeight: 1.6, margin: 0 }}>
-          Builders, merchants, creators and investors in the Pi economy. Verification comes
-          from Zone / KYC — Connection presents it, never mints it.
+        <p className="pub-lede pub-in" style={{ animationDelay: '60ms' }}>
+          Builders, merchants, creators and investors. Verification comes from
+          Zone / KYC — Connection presents it, never mints it.
         </p>
 
         {/* Plain GET form: no JavaScript required, and the result is a real URL
             you can share or a crawler can follow. */}
-        <form action="/discover" method="GET" style={{ display: 'flex', gap: 8, marginTop: 22 }}>
+        <form action="/discover" method="GET" className="pub-in"
+          style={{ display: 'flex', gap: 9, marginTop: 24, animationDelay: '110ms' }}>
           {active && <input type="hidden" name="category" value={active} />}
           <input
-            name="q" defaultValue={q ?? ''} placeholder="Search by name or headline…"
-            aria-label="Search people"
-            style={{
-              flex: 1, background: TEC_COLORS.surface, color: TEC_COLORS.text,
-              border: `1px solid ${TEC_COLORS.gold}33`, borderRadius: 12, padding: '11px 14px', fontSize: 14,
-            }} />
-          <button type="submit" style={{
-            background: `linear-gradient(135deg, ${TEC_COLORS.gold}, ${TEC_COLORS.goldDark})`,
-            color: '#0a0800', border: 'none', borderRadius: 12, padding: '11px 20px',
-            fontSize: 14, fontWeight: 800, cursor: 'pointer',
-          }}>Search</button>
+            className="pub-input" name="q" defaultValue={q ?? ''}
+            placeholder="Search people…" aria-label="Search by handle or headline" />
+          <button type="submit" className="pub-cta" style={{ width: 'auto', padding: '13px 22px', fontSize: 15 }}>
+            Search
+          </button>
         </form>
 
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 14 }}>
-          <Link href={href()} style={chip(!active)}>all</Link>
-          {CATEGORIES.map(c => <Link key={c} href={href(c)} style={chip(active === c)}>{c}</Link>)}
+        <div className="pub-in" style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 14, animationDelay: '150ms' }}>
+          <Link href={href()} className="pub-chip" data-active={String(!active)}>all</Link>
+          {CATEGORIES.map(c => (
+            <Link key={c} href={href(c)} className="pub-chip" data-active={String(active === c)}>{c}</Link>
+          ))}
         </div>
 
-        <div style={{ display: 'grid', gap: 10, marginTop: 24 }}>
+        <div style={{ display: 'grid', gap: 10, marginTop: 26 }}>
           {profiles.length === 0 ? (
-            <div style={{
-              background: TEC_COLORS.surface, border: `1px solid ${TEC_COLORS.gold}22`,
-              borderRadius: 16, padding: '28px 22px', textAlign: 'center',
-            }}>
-              <div style={{ fontSize: 15, fontWeight: 800, color: TEC_COLORS.text }}>
+            <div className="pub-panel pub-in" style={{ padding: '34px 24px', textAlign: 'center' }}>
+              <div style={{ fontSize: 30, marginBottom: 10 }} aria-hidden="true">🔍</div>
+              <div style={{ fontSize: 16, fontWeight: 800, color: '#fff' }}>
                 {q || active ? 'Nobody matches that yet' : 'The directory is still filling up'}
               </div>
-              <p style={{ fontSize: 13, color: TEC_COLORS.subtext, marginTop: 8, lineHeight: 1.6 }}>
-                Listing is opt-in — people appear here only after publishing their profile.
-                Sign in and publish yours to be found.
+              <p style={{ fontSize: 13.5, color: 'rgba(255,255,255,0.55)', margin: '10px auto 0', maxWidth: 380, lineHeight: 1.6 }}>
+                Listing is opt-in — people appear here only after publishing their
+                profile. Sign in and publish yours to be found.
               </p>
+              {(q || active) && (
+                <Link href="/discover" className="pub-secondary" style={{ marginTop: 18 }}>
+                  Clear filters
+                </Link>
+              )}
             </div>
-          ) : profiles.map(p => <DirectoryCard key={p.username} profile={p} />)}
+          ) : profiles.map((p, i) => <DirectoryCard key={p.username} profile={p} delay={180 + i * 45} />)}
         </div>
 
-        <div style={{
-          marginTop: 30, background: TEC_COLORS.surface, border: `1px solid ${TEC_COLORS.gold}33`,
-          borderRadius: 16, padding: '22px', textAlign: 'center',
-        }}>
-          <div style={{ fontSize: 15, fontWeight: 800, color: TEC_COLORS.text }}>Be findable in the Pi economy</div>
-          <p style={{ fontSize: 13, color: TEC_COLORS.subtext, margin: '8px 0 16px', lineHeight: 1.6 }}>
-            Publish your profile, follow people, and build trust from real activity.
+        <div className="pub-panel" style={{ marginTop: 34, padding: '28px 24px', textAlign: 'center' }}>
+          <div style={{ fontSize: 17, fontWeight: 850, color: '#fff', letterSpacing: '-0.01em' }}>
+            Be findable in the Pi economy
+          </div>
+          <p style={{ fontSize: 13.5, color: 'rgba(255,255,255,0.58)', margin: '10px auto 20px', maxWidth: 380, lineHeight: 1.6 }}>
+            Publish your profile, follow the people you deal with, and let trust
+            build from real completed payments.
           </p>
-          <Link href="/app" style={{
-            display: 'inline-block', padding: '12px 26px', borderRadius: 12,
-            background: `linear-gradient(135deg, ${TEC_COLORS.gold}, ${TEC_COLORS.goldDark})`,
-            color: '#0a0800', fontWeight: 800, fontSize: 14, textDecoration: 'none',
-          }}>Continue with Pi</Link>
+          <Link href="/app" className="pub-cta" style={{ textDecoration: 'none', maxWidth: 300 }}>
+            Continue with Pi
+          </Link>
         </div>
       </div>
     </main>

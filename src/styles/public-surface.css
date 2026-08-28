@@ -1,0 +1,257 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   Public surfaces — landing · /discover · /u/<handle>
+   ───────────────────────────────────────────────────────────────────────────
+   These three pages are the first thing a Pi user ever sees of TEC, and they
+   are the only ones a stranger reaches with no session. They need craft that
+   inline styles cannot express: hover and focus states, a gradient headline,
+   an ambient light source, staggered entrances.
+
+   Everything here is app-owned on purpose. `tec-design-tokens.css` is synced
+   with the tec-ui package across 23 repos — app-specific polish in that file
+   becomes fleet drift the moment the package moves. This file consumes those
+   tokens and never redefines one.
+
+   Pi Browser is the target: a phone WebView. No CSS framework, no custom
+   properties inside colour strings that get alpha appended, nothing exotic —
+   `backdrop-filter` appears only as an enhancement over a painted background,
+   never as the thing that makes text readable.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Box model ──────────────────────────────────────────────────────────────
+   tec-design-tokens.css resets tap-highlight and font-smoothing but NOT
+   box-sizing, so `width: 100%` plus padding overflows — the CTA ran past the
+   right edge of its own panel on both /discover and /u/<handle>, visible only
+   once the pages were rendered at 390px.
+
+   Scoped to the classes this file owns rather than declared globally: a
+   platform-wide `*{box-sizing:border-box}` here would silently re-lay-out every
+   authenticated screen in /app, which no part of this change has looked at. */
+.pub-cta, .pub-input, .pub-card, .pub-panel, .pub-chip { box-sizing: border-box; }
+
+/* ── The light source ───────────────────────────────────────────────────────
+   One warm glow behind the hero, so the page has a direction rather than
+   being flat black. Sits behind everything and never intercepts a tap. */
+.pub-glow {
+  position: relative;
+  isolation: isolate;
+}
+.pub-glow::before {
+  content: '';
+  position: absolute;
+  inset: -30% -40% auto -40%;
+  height: 620px;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(60% 55% at 50% 0%, rgba(251, 180, 74, 0.16), transparent 70%),
+    radial-gradient(40% 40% at 78% 12%, rgba(139, 92, 246, 0.10), transparent 70%);
+}
+
+/* ── Headline ───────────────────────────────────────────────────────────────
+   Fluid so one rule covers a 360px phone and a desktop share preview.
+   The gradient is painted on the text itself; the plain colour beneath is the
+   fallback for any engine that ignores background-clip, so the headline can
+   never render invisible. */
+.pub-h1 {
+  margin: 0;
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  line-height: 1.08;
+  font-size: clamp(32px, 9vw, 46px);
+  color: #ffffff;
+  background: linear-gradient(135deg, #ffffff 22%, #FDCF7A 62%, #FBB44A 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+@supports not ((-webkit-background-clip: text) or (background-clip: text)) {
+  .pub-h1 { -webkit-text-fill-color: #ffffff; background: none; }
+}
+
+.pub-eyebrow {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--tec-gold);
+}
+
+/* Body copy on the public pages uses a brighter secondary than the package's
+   `subtext` (#6b6b7a), which sits near the contrast floor on #050816. The
+   dimmest token stays for labels and captions, never for a sentence. */
+.pub-lede {
+  margin: 14px 0 0;
+  font-size: clamp(15px, 4vw, 17px);
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.66);
+}
+
+/* ── Primary action ─────────────────────────────────────────────────────── */
+.pub-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  max-width: 340px;
+  padding: 16px 30px;
+  border: none;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #FDCF7A, #FBB44A 45%, #E8962A);
+  color: #12080a;
+  font-size: 16px;
+  font-weight: 850;
+  font-family: inherit;
+  cursor: pointer;
+  box-shadow: 0 10px 30px rgba(251, 180, 74, 0.26), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  transition: transform var(--dur-fast) var(--ease-out), box-shadow var(--dur-base) var(--ease-out);
+}
+.pub-cta:hover  { box-shadow: 0 14px 38px rgba(251, 180, 74, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.45); }
+.pub-cta:active { transform: scale(0.975); }
+.pub-cta:disabled { opacity: 0.55; cursor: not-allowed; box-shadow: none; }
+
+.pub-secondary {
+  display: inline-block;
+  margin-top: 16px;
+  padding: 6px 2px;
+  font-size: 14px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.62);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.16);
+  transition: color var(--dur-base) var(--ease-out), border-color var(--dur-base) var(--ease-out);
+}
+.pub-secondary:hover { color: var(--tec-gold); border-color: var(--tec-border-gold); }
+
+/* ── Cards ──────────────────────────────────────────────────────────────── */
+.pub-card {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  /* A grid item defaults to `min-width: auto`, which is large enough to fit its
+     longest unbroken content — so the card grew past the column and the headline's
+     ellipsis never engaged. Caught on a 390px screenshot: three headlines ran off
+     the right edge and the chevron was pushed off-screen entirely. */
+  min-width: 0;
+  padding: 15px 17px;
+  border-radius: 18px;
+  text-decoration: none;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.015));
+  border: 1px solid var(--tec-border);
+  transition: transform var(--dur-base) var(--ease-out),
+              border-color var(--dur-base) var(--ease-out),
+              background var(--dur-base) var(--ease-out);
+}
+.pub-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--tec-border-gold);
+  background: linear-gradient(180deg, rgba(251, 180, 74, 0.07), rgba(255, 255, 255, 0.02));
+}
+.pub-card:active { transform: scale(0.985); }
+
+.pub-panel {
+  border-radius: 22px;
+  border: 1px solid var(--tec-border);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.012));
+}
+
+/* ── Avatar ─────────────────────────────────────────────────────────────────
+   The initial is deterministic per handle (see avatarTint) so a person keeps
+   the same colour on every surface — it reads as identity, not decoration. */
+.pub-avatar {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  border-radius: 999px;
+  font-weight: 900;
+  color: #0a0812;
+}
+
+/* Overlapping stack — social proof built from people who are actually there. */
+.pub-stack { display: flex; align-items: center; }
+.pub-stack > * { margin-left: -9px; box-shadow: 0 0 0 3px #050816; }
+.pub-stack > *:first-child { margin-left: 0; }
+
+/* ── Chips (category filter) ────────────────────────────────────────────── */
+.pub-chip {
+  display: inline-block;
+  padding: 7px 14px;
+  border-radius: 999px;
+  font-size: 12.5px;
+  font-weight: 750;
+  text-transform: capitalize;
+  text-decoration: none;
+  white-space: nowrap;
+  color: rgba(255, 255, 255, 0.72);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--tec-border);
+  transition: all var(--dur-base) var(--ease-out);
+}
+.pub-chip:hover { color: #fff; border-color: var(--tec-border-gold); }
+.pub-chip[data-active='true'] {
+  color: #12080a;
+  background: linear-gradient(135deg, #FDCF7A, #E8962A);
+  border-color: transparent;
+}
+
+/* ── Search field ───────────────────────────────────────────────────────── */
+.pub-input {
+  flex: 1;
+  min-width: 0;
+  padding: 13px 16px;
+  font-size: 15px;
+  font-family: inherit;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--tec-border);
+  border-radius: 14px;
+  outline: none;
+  transition: border-color var(--dur-base) var(--ease-out), box-shadow var(--dur-base) var(--ease-out);
+}
+.pub-input::placeholder { color: rgba(255, 255, 255, 0.34); }
+.pub-input:focus {
+  border-color: var(--tec-border-gold);
+  box-shadow: 0 0 0 3px rgba(251, 180, 74, 0.12);
+}
+
+/* ── Badges ─────────────────────────────────────────────────────────────────
+   ✅ Verified and ⭐ Featured must never read as the same thing: verification
+   is evidence presented from Zone/KYC, Featured is a paid placement worth
+   reach and nothing else (C-107). So they are given different shapes and
+   different colour families, not two weights of gold. */
+.pub-badge-verified {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  font-weight: 800;
+  color: #22C55E;
+  background: rgba(34, 197, 94, 0.12);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+}
+.pub-badge-featured {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 7px;
+  border-radius: 6px;
+  font-size: 10.5px;
+  font-weight: 750;
+  color: rgba(255, 255, 255, 0.55);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--tec-border);
+}
+
+/* ── Entrance ───────────────────────────────────────────────────────────────
+   Staggered via an inline `animation-delay`, so order lives with the markup. */
+.pub-in { animation: tec-slide-up 520ms var(--ease-out) both; }
+
+/* Motion is decoration here; every one of these elements is fully legible
+   without it. Anyone who has asked their device to stop moving gets the page
+   in its final state immediately. */
+@media (prefers-reduced-motion: reduce) {
+  .pub-in { animation: none !important; }
+  .pub-card, .pub-cta, .pub-chip, .pub-secondary { transition: none !important; }
+  .pub-card:hover, .pub-cta:active, .pub-card:active { transform: none !important; }
+}

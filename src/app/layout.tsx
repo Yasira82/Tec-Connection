@@ -3,6 +3,10 @@ import { RefApply } from '@/components/referral/RefApply';
 import { LocaleProvider } from '@/lib/i18n';
 import type { Metadata } from 'next';
 import '@/styles/tec-design-tokens.css';
+// App-owned polish for the three public surfaces (landing · /discover · /u/<handle>).
+// Kept out of tec-design-tokens.css on purpose: that file is synced with the tec-ui
+// package across the fleet, so app-specific rules there become drift.
+import '@/styles/public-surface.css';
 
 export const metadata: Metadata = {
   title:       'TEC Connection',
