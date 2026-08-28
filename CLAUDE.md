@@ -132,7 +132,7 @@ Phase 0 — customized from template:
   ✅ landing + /app themed as the Connection home shell (Connections · Trust · Collaboration)
   ✅ full-bleed dark shell (no white frame): color-scheme dark + theme-color + html/body reset
 
-Next (before live):
+Live on Mainnet — all complete (SSoT: architecture/app-fleet.yaml):
   ✅ Pi App ID registered: connection-aa9fba4f11664096 · Vercel vars set
     (API_GATEWAY_URL · INTERNAL_SECRET · SSO_SECRET · NEXT_PUBLIC_PI_APP_ID · PI_SANDBOX=false).
   ✅ Hub SSO: connection.tecosystem.app + tec-connection.vercel.app added to the Hub
@@ -143,11 +143,11 @@ Next (before live):
     Interactive follow/unfollow + following/followers counts in /app. Follower =
     session identity (never a param); followee by Pi username. Needs: identity-service
     deployed (connection_follows via db push).
-  □ Deploy to Vercel + runtime-verify login + a follow/unfollow round-trip in Pi Browser.
-  □ FEATURE slice 2 — Trust signals (eventual): consume payment.completed.v1 /
+  ✅ Deploy to Vercel + runtime-verify login + a follow/unfollow round-trip in Pi Browser.
+  ✅ FEATURE slice 2 — Trust signals (eventual): consume payment.completed.v1 /
     order.created.v1 into relationship trust signals; PRESENT them (never re-derive
     transaction truth — C-107 boundary).
-  □ FEATURE slice 3+ — reputation projection + collaboration context.
+  ✅ FEATURE slice 3+ — reputation projection + collaboration context.
 ```
 
 > Payment scaffold (`src/lib/pi-payment.ts`, ADR-007 guard) is kept for compliance +
