@@ -6,9 +6,11 @@
 import { useEffect, useState } from 'react';
 import { usePiAuth } from '@yasser172/tec-auth';
 import { TEC_COLORS } from '@yasser172/tec-ui';
-import { useTranslation } from '@/lib/i18n';
+import { useTranslation, LOCALES } from '@/lib/i18n';
 import { useMe } from '@/lib-client/hooks/useMe';
 import { InviteCard } from '@/components/referral/InviteCard';
+import { ProfileEditor } from './ProfileEditor';
+import { ConnectionPro } from './ConnectionPro';
 
 const cardStyle = {
   background: TEC_COLORS.surface, border: `1px solid ${TEC_COLORS.border}`, borderRadius: 16,
@@ -119,21 +121,53 @@ export function SettingsView() {
         </div>
       </Section>
 
-      {/* Appearance — language toggle drives the whole app (i18n + RTL) */}
+      {/* Your public card — moved here from the Discover TAB, where a form was
+          filling the first screen of the surface meant for finding people. */}
+      <ProfileEditor />
+
+      {/* Pro sits WITH the card it upgrades. Rendered after <SettingsView/> by
+          the page, it landed below the Logout button — the destructive action
+          should be the last thing on a settings screen, not the middle of it. */}
+      <div style={{ marginTop: 18 }}><ConnectionPro /></div>
+
+      {/* Appearance — language choice drives the whole app (i18n + RTL) */}
       <Section title={s.appearance} icon="🎨">
+        {/* All twelve, in their own scripts. The public pages have spoken these
+            languages since the front-door work; a settings panel still offering
+            EN/AR was the app disagreeing with itself, and the two lists are now
+            the same list — LOCALES — so they cannot drift apart again.
+            A wrapping row rather than Pills: twelve options do not fit one line
+            on a phone, and a horizontal scroller hides most of them. */}
         <Row label={s.language} desc={s.languageDesc} first>
-          <Pills
-            value={locale}
-            options={[{ value: 'en', label: '🇺🇸 EN' }, { value: 'ar', label: '🇸🇦 AR' }]}
-            onChange={(v) => setLocale(v)}
-          />
+          <div />
         </Row>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7, padding: '2px 0 14px' }}>
+          {LOCALES.map((l) => {
+            const active = l.code === locale;
+            return (
+              <button
+                key={l.code}
+                onClick={() => setLocale(l.code)}
+                lang={l.code}
+                aria-pressed={active}
+                style={{
+                  fontSize: 12.5, fontWeight: 700, lineHeight: 1.5, whiteSpace: 'nowrap',
+                  padding: '6px 12px', borderRadius: 999, cursor: 'pointer',
+                  color: active ? '#0a0800' : TEC_COLORS.text,
+                  background: active ? `linear-gradient(135deg, ${TEC_COLORS.gold}, ${TEC_COLORS.goldDark})` : 'transparent',
+                  border: `1px solid ${active ? 'transparent' : TEC_COLORS.border}`,
+                }}>
+                {l.native}
+              </button>
+            );
+          })}
+        </div>
       </Section>
 
       {/* About */}
       <Section title={s.about} icon="ℹ️">
         <Row label={s.version} first><span style={{ color: TEC_COLORS.subtext, fontSize: 14 }}>1.0.0</span></Row>
-        <Row label={s.domain}><span style={{ color: TEC_COLORS.subtext, fontSize: 14 }}>connection.pi</span></Row>
+        <Row label={s.domain}><span style={{ color: TEC_COLORS.subtext, fontSize: 14 }}>connection.tecosystem.app</span></Row>
         <Row label={s.ecosystem}><span style={{ color: TEC_COLORS.gold, fontSize: 14, fontWeight: 700 }}>TEC · 24</span></Row>
         <Row label={s.builtOn}><span style={{ color: TEC_COLORS.subtext, fontSize: 14 }}>{s.builtOnPi}</span></Row>
       </Section>

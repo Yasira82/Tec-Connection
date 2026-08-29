@@ -17,7 +17,8 @@ export const pt: Dictionary = {
     brand: 'TEC Connection · Sua rede',
     welcome: 'Bem-vindo', welcomeName: 'Bem-vindo, {name}',
     subtitle: 'Seu grafo de relações no ecossistema TEC. Suas conexões são suas — você decide em quem confia e quem pode ver.',
-    nav: { home: 'Início', discover: 'Descobrir', trust: 'Confiança', settings: 'Ajustes' },
+    nav: { home: 'Início', discover: 'Descobrir', trust: 'Confiança', settings: 'Ajustes',
+      homeSub: 'Novidades e quem você segue.', discoverSub: 'Encontre pessoas na economia Pi.', trustSub: 'Construída a partir de pagamentos em Pi concluídos.' },
     footer: 'O Connection é onde ficam suas relações de confiança — quem você segue, com quem se conecta e com quem constrói confiança na TEC. Você sempre controla sua própria rede.',
     settings: {
       profile: 'Perfil', planFree: 'Grátis', planPro: 'Pro',

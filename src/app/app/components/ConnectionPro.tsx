@@ -162,12 +162,22 @@ export function ConnectionPro() {
           {PRICE}π<span style={{ fontSize: 12, color: TEC_COLORS.subtext, fontWeight: 600 }}> / month</span>
         </div>
       </div>
-      <div style={{ fontSize: 12, color: TEC_COLORS.subtext, marginTop: 8, lineHeight: 1.5 }}>
-        Two real benefits: <strong style={{ color: TEC_COLORS.text }}>Network Insights</strong> —
-        see who follows you, who you don’t follow back, and follow back in a tap — plus a
-        ⭐ <strong style={{ color: TEC_COLORS.text }}>Featured</strong> card in Discover so more
-        of the Pi community finds you. Reach + insight only: never buys verification or trust
-        (those are earned, C-107). Your graph stays yours.
+      {/* Two lines, not a paragraph. The previous copy ran seven lines and ended
+          with "(those are earned, C-107)" — an internal constitutional reference
+          on a payment card. The rule it protects still holds and is still stated,
+          in four words, at the bottom. */}
+      <ul style={{ margin: '10px 0 0', padding: 0, listStyle: 'none', display: 'grid', gap: 7 }}>
+        <li style={{ fontSize: 13, color: TEC_COLORS.text, display: 'flex', gap: 8 }}>
+          <span aria-hidden="true">👥</span>
+          <span>See who follows you — and follow back in one tap.</span>
+        </li>
+        <li style={{ fontSize: 13, color: TEC_COLORS.text, display: 'flex', gap: 8 }}>
+          <span aria-hidden="true">⭐</span>
+          <span>A Featured card in Discover, so more people find you.</span>
+        </li>
+      </ul>
+      <div style={{ fontSize: 11.5, color: TEC_COLORS.subtext, marginTop: 10 }}>
+        Reach only — never verification or trust.
       </div>
 
       <button

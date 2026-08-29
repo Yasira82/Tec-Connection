@@ -36,7 +36,8 @@ export const en = {
     welcome:     'Welcome',
     welcomeName: 'Welcome, {name}',
     subtitle:    'Your relationship graph in the TEC ecosystem. Your connections are yours — you control who you trust and who can see it.',
-    nav: { home: 'Home', discover: 'Discover', trust: 'Trust', settings: 'Settings' },
+    nav: { home: 'Home', discover: 'Discover', trust: 'Trust', settings: 'Settings',
+      homeSub: 'What’s new, and who you follow.', discoverSub: 'Find people in the Pi economy.', trustSub: 'Built from completed Pi payments.' },
     footer:      'Connection is where your trusted relationships live — who you follow, connect with, and build trust with across TEC. You are always in control of your own network.',
     settings: {
       profile: 'Profile', planFree: 'Free', planPro: 'Pro',

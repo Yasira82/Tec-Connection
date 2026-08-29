@@ -17,7 +17,8 @@ export const id: Dictionary = {
     brand: 'TEC Connection · Jaringan Anda',
     welcome: 'Selamat datang', welcomeName: 'Selamat datang, {name}',
     subtitle: 'Grafik hubungan Anda di ekosistem TEC. Koneksi Anda adalah milik Anda — Anda yang menentukan siapa yang dipercaya dan siapa yang boleh melihatnya.',
-    nav: { home: 'Beranda', discover: 'Jelajahi', trust: 'Kepercayaan', settings: 'Pengaturan' },
+    nav: { home: 'Beranda', discover: 'Jelajahi', trust: 'Kepercayaan', settings: 'Pengaturan',
+      homeSub: 'Yang baru, dan siapa yang Anda ikuti.', discoverSub: 'Temukan orang di ekonomi Pi.', trustSub: 'Dibangun dari pembayaran Pi yang selesai.' },
     footer: 'Connection adalah tempat hubungan tepercaya Anda berada — siapa yang Anda ikuti, hubungi, dan bangun kepercayaan bersama di TEC. Anda selalu memegang kendali atas jaringan Anda.',
     settings: {
       profile: 'Profil', planFree: 'Gratis', planPro: 'Pro',
