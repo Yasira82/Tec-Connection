@@ -82,7 +82,7 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
 
         <section className="pub-panel pub-in" style={{ marginTop: 18, padding: '34px 26px', textAlign: 'center' }}>
           <div style={{ display: 'flex', justifyContent: 'center' }}>
-            <Avatar username={p.username} size={84} />
+            <Avatar username={p.username} size={84} hasPhoto={p.hasAvatar} />
           </div>
 
           {/* <bdi>: a Latin handle inside an RTL page would otherwise render as

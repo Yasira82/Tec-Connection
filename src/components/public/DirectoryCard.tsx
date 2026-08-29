@@ -24,6 +24,7 @@ export interface DirectoryCardProfile {
   verified:  boolean;
   featured:  boolean;
   followers: number;
+  hasAvatar?: boolean;
 }
 
 export interface DirectoryCardLabels {
@@ -51,7 +52,7 @@ export function DirectoryCard({
       className="pub-card pub-in"
       style={{ animationDelay: `${delay}ms` }}>
 
-      <Avatar username={profile.username} />
+      <Avatar username={profile.username} hasPhoto={profile.hasAvatar} />
 
       <div style={{ minWidth: 0, flex: 1 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 7, flexWrap: 'wrap' }}>

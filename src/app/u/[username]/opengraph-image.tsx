@@ -21,6 +21,7 @@
 import { ImageResponse } from 'next/og';
 import { avatarGradient } from '@/components/public/Avatar';
 import { resolvePublicProfile } from '@/lib/connection/discovery';
+import { resolveAvatarBytes } from '@/lib/connection/avatar';
 import { getI18n } from '@/lib/i18n/server';
 
 export const alt         = 'TEC Connection profile';
@@ -40,6 +41,16 @@ export default async function Image({ params }: { params: Promise<{ username: st
   const handle   = p ? `@${p.username}` : 'TEC Connection';
   const headline = p?.headline || (p ? cat : t.headline);
 
+  // Satori cannot fetch a relative URL, and a remote fetch that fails inside
+  // ImageResponse throws — which would turn a missing photo into a 500 on the
+  // one surface a stranger sees first. So the bytes are resolved here, where a
+  // failure is just `null`, and inlined as a data URI.
+  let photo: string | null = null;
+  if (p?.hasAvatar) {
+    const img = await resolveAvatarBytes(p.username).catch(() => null);
+    if (img) photo = `data:${img.contentType};base64,${Buffer.from(img.body).toString('base64')}`;
+  }
+
   return new ImageResponse(
     (
       <div style={{
@@ -58,9 +69,12 @@ export default async function Image({ params }: { params: Promise<{ username: st
             width: 156, height: 156, borderRadius: 999, display: 'flex',
             alignItems: 'center', justifyContent: 'center',
             background: p ? avatarGradient(p.username) : 'linear-gradient(140deg, #FDCF7A, #E8962A)',
-            color: '#0a0812', fontSize: 76, fontWeight: 900,
+            color: '#0a0812', fontSize: 76, fontWeight: 900, overflow: 'hidden',
           }}>
-            {(p?.username ?? 'T').charAt(0).toUpperCase()}
+            {/* Satori renders raw elements; next/image does not exist here. */}
+            {photo
+              ? <img src={photo} width={156} height={156} alt="" style={{ objectFit: 'cover' }} />
+              : (p?.username ?? 'T').charAt(0).toUpperCase()}
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column' }}>

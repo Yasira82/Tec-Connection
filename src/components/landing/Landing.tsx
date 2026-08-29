@@ -79,7 +79,7 @@ export function Landing({
               gap: 12, marginTop: 26, animationDelay: '170ms',
             }}>
               <div className="pub-stack">
-                {profiles.slice(0, 5).map(p => <Avatar key={p.username} username={p.username} size={34} />)}
+                {profiles.slice(0, 5).map(p => <Avatar key={p.username} username={p.username} size={34} hasPhoto={p.hasAvatar} />)}
               </div>
               <span style={{ fontSize: 13, fontWeight: 650, color: 'rgba(255,255,255,0.55)' }}>
                 {t.alreadyOn}

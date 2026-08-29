@@ -8,6 +8,7 @@
 // is your session — the app never sends it.
 import { useEffect, useMemo, useState } from 'react';
 import { TEC_COLORS } from '@yasser172/tec-ui';
+import { AvatarUpload } from './AvatarUpload';
 
 const CATEGORIES = ['builder', 'merchant', 'creator', 'investor', 'mentor', 'other'] as const;
 type Category = (typeof CATEGORIES)[number];
@@ -15,10 +16,12 @@ type Category = (typeof CATEGORIES)[number];
 interface Card {
   username: string; headline: string; category: string;
   verified: boolean; featured: boolean; followers: number;
+  hasAvatar?: boolean;
 }
 interface MyProfile {
   username: string; headline: string; category: string;
   published: boolean; verified: boolean; featured: boolean;
+  hasAvatar?: boolean;
 }
 
 const card = {
@@ -143,6 +146,13 @@ export function Discover() {
             <> Public link: <a href={`/u/${encodeURIComponent(me.username)}`} style={{ color: TEC_COLORS.gold }}>/u/{me.username}</a></>
           )}
         </p>
+        {me?.username && (
+          <AvatarUpload
+            username={me.username}
+            hasPhoto={Boolean(me.hasAvatar)}
+            onChange={(has) => setMe((cur) => (cur ? { ...cur, hasAvatar: has } : cur))}
+          />
+        )}
         <input style={field} value={editHeadline} onChange={(e) => setEditHeadline(e.target.value)}
           placeholder="One line about what you do (e.g. Pi app developer)" maxLength={160} />
         <div style={{ display: 'flex', gap: 8, marginTop: 10, overflowX: 'auto', paddingBottom: 4 }}>

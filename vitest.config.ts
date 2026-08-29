@@ -17,6 +17,11 @@ export default defineConfig({
     },
   },
   resolve: {
-    alias: { '@': path.resolve(__dirname, 'src') },
+    alias: {
+      '@': path.resolve(__dirname, 'src'),
+      // See test/server-only-stub.ts — the guard stays in the source; only the
+      // resolution is stubbed, because Vitest has no bundler to enforce it.
+      'server-only': path.resolve(__dirname, 'test/server-only-stub.ts'),
+    },
   },
 });
