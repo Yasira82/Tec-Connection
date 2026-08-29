@@ -35,7 +35,7 @@ export function Notifications() {
     }}>
       <button onClick={toggle} style={{
         width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '12px 16px',
-        background: 'none', border: 'none', cursor: 'pointer', color: TEC_COLORS.text, textAlign: 'left',
+        background: 'none', border: 'none', cursor: 'pointer', color: TEC_COLORS.text, textAlign: 'start',
       }}>
         <span style={{ fontSize: 18 }}>🔔</span>
         <span style={{ fontSize: 14, fontWeight: 700, flex: 1 }}>{a.notifications}</span>

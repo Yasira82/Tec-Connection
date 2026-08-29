@@ -60,7 +60,7 @@ export function Connections() {
         {onlineCount > 0 ? (
           <span style={{ fontSize: 12, color: TEC_COLORS.success, display: 'inline-flex', alignItems: 'center', gap: 5 }}>
             <span style={{ width: 8, height: 8, borderRadius: 999, background: TEC_COLORS.success }} />
-            {onlineCount} online
+            {onlineCount} {a.onlineCount}
           </span>
         ) : (
           <span style={{ fontSize: 12, color: TEC_COLORS.subtext }}>{a.yourGraph}</span>
@@ -95,7 +95,7 @@ export function Connections() {
         {/* Following list */}
         <div style={{ marginTop: 14 }}>
           {loading ? (
-            <p style={{ color: TEC_COLORS.subtext, fontSize: 13 }}>Loading…</p>
+            <p style={{ color: TEC_COLORS.subtext, fontSize: 13 }}>{a.loading}</p>
           ) : following.length === 0 ? (
             <p style={{ color: TEC_COLORS.subtext, fontSize: 13 }}>
               {a.noConnections}
@@ -110,8 +110,8 @@ export function Connections() {
                     background: TEC_COLORS.bg, border: `1px solid ${TEC_COLORS.border}`, color: TEC_COLORS.gold, fontSize: 13, fontWeight: 800,
                   }}>{f.username.charAt(0).toUpperCase()}</span>
                   {isOnline(f.username) && (
-                    <span title="Online now" style={{
-                      position: 'absolute', right: -1, bottom: -1, width: 10, height: 10, borderRadius: 999,
+                    <span title={a.onlineNow} style={{
+                      position: 'absolute', insetInlineEnd: -1, bottom: -1, width: 10, height: 10, borderRadius: 999,
                       background: TEC_COLORS.success, border: `2px solid ${TEC_COLORS.surface}`,
                     }} />
                   )}
@@ -119,7 +119,7 @@ export function Connections() {
                 <span style={{ flex: 1, minWidth: 0, fontSize: 14, color: TEC_COLORS.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   <bdi>@{f.username}</bdi>
                 </span>
-                <button onClick={() => unfollow(f.username)} disabled={busy} title="Unfollow"
+                <button onClick={() => unfollow(f.username)} disabled={busy} title={a.unfollow}
                   style={{ background: 'none', border: `1px solid ${TEC_COLORS.border}`, color: TEC_COLORS.subtext,
                            borderRadius: 8, padding: '5px 12px', fontSize: 12, cursor: 'pointer', flexShrink: 0 }}>
                   {a.unfollow}

@@ -7,6 +7,7 @@
 // the follower count is shown to everyone as an honest teaser. Own-scope (P6).
 import { useEffect, useState } from 'react';
 import { TEC_COLORS } from '@yasser172/tec-ui';
+import { useTranslation } from '@/lib/i18n';
 
 interface Follower { username: string; mutual: boolean; }
 
@@ -16,6 +17,8 @@ const card = {
 } as const;
 
 export function NetworkInsights() {
+  const { t } = useTranslation();
+  const a = t.app;
   const [pro, setPro] = useState<boolean | null>(null);
   const [count, setCount] = useState(0);
   const [followers, setFollowers] = useState<Follower[]>([]);
@@ -55,8 +58,8 @@ export function NetworkInsights() {
     <section style={{ marginTop: 24 }}>
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 12 }}>
         <span style={{ fontSize: 22 }}>📈</span>
-        <h2 style={{ fontSize: 18, fontWeight: 800, color: TEC_COLORS.text, margin: 0 }}>Network insights</h2>
-        <span style={{ fontSize: 11, color: TEC_COLORS.gold, border: `1px solid ${TEC_COLORS.gold}55`, borderRadius: 999, padding: '1px 8px' }}>PRO</span>
+        <h2 style={{ fontSize: 18, fontWeight: 800, color: TEC_COLORS.text, margin: 0 }}>{a.networkInsights}</h2>
+        <span style={{ fontSize: 11, color: TEC_COLORS.gold, border: `1px solid ${TEC_COLORS.gold}55`, borderRadius: 999, padding: '1px 8px' }}>{a.proTag}</span>
       </div>
 
       {!pro ? (
@@ -67,13 +70,13 @@ export function NetworkInsights() {
               "upgrade above" was wrong the moment Pro stopped sitting on this
               screen, and a dead instruction is worse than none. */}
           <div style={{ fontSize: 15, fontWeight: 800, color: TEC_COLORS.text }}>
-            🔒 {count} follower{count === 1 ? '' : 's'}
+            🔒 {count} {count === 1 ? t.public.follower : t.public.followers}
           </div>
           <p style={{ fontSize: 13, color: TEC_COLORS.subtext, margin: '6px 0 0', lineHeight: 1.55 }}>
-            Pro shows you who they are, and lets you follow back in one tap.
+            {a.proReveals}
           </p>
           <p style={{ fontSize: 12, color: TEC_COLORS.gold, margin: '10px 0 0', fontWeight: 700 }}>
-            Settings → Connection Pro
+            {a.proWhere}
           </p>
         </div>
       ) : (
@@ -81,17 +84,17 @@ export function NetworkInsights() {
           <div style={{ display: 'flex', gap: 16, marginBottom: 14 }}>
             <div style={{ textAlign: 'center' }}>
               <div style={{ fontSize: 22, fontWeight: 900, color: TEC_COLORS.gold }}>{count}</div>
-              <div style={{ fontSize: 11, color: TEC_COLORS.subtext, textTransform: 'uppercase', letterSpacing: 0.5 }}>Followers</div>
+              <div style={{ fontSize: 11, color: TEC_COLORS.subtext, textTransform: 'uppercase', letterSpacing: 0.5 }}>{a.followers}</div>
             </div>
             <div style={{ width: 1, background: TEC_COLORS.border }} />
             <div style={{ textAlign: 'center' }}>
               <div style={{ fontSize: 22, fontWeight: 900, color: TEC_COLORS.gold }}>{nonMutual}</div>
-              <div style={{ fontSize: 11, color: TEC_COLORS.subtext, textTransform: 'uppercase', letterSpacing: 0.5 }}>Not followed back</div>
+              <div style={{ fontSize: 11, color: TEC_COLORS.subtext, textTransform: 'uppercase', letterSpacing: 0.5 }}>{a.notFollowedBack}</div>
             </div>
           </div>
 
           {followers.length === 0 ? (
-            <p style={{ fontSize: 13, color: TEC_COLORS.subtext }}>No followers yet. Publish your profile in Settings so others can find you.</p>
+            <p style={{ fontSize: 13, color: TEC_COLORS.subtext }}>{a.publishPrompt}</p>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column' }}>
               {followers.map((f, i) => (
@@ -105,10 +108,10 @@ export function NetworkInsights() {
                     <bdi>@{f.username}</bdi>
                   </a>
                   {f.mutual || followedBack.has(f.username)
-                    ? <span style={{ fontSize: 12, color: TEC_COLORS.success, whiteSpace: 'nowrap' }}>Mutual ✓</span>
+                    ? <span style={{ fontSize: 12, color: TEC_COLORS.success, whiteSpace: 'nowrap' }}>{a.mutual}</span>
                     : <button onClick={() => followBack(f.username)}
                         style={{ background: `linear-gradient(135deg, ${TEC_COLORS.gold}, ${TEC_COLORS.goldDark})`, color: '#0a0800', border: 'none', borderRadius: 8, padding: '6px 14px', fontSize: 12, fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap' }}>
-                        Follow back
+                        {a.followBack}
                       </button>}
                 </div>
               ))}

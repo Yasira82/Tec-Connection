@@ -25,25 +25,28 @@ function Detail({ id, onBack }: { id: string; onBack: () => void }) {
 
   return (
     <div style={{ ...card }}>
-      <button onClick={onBack} style={{ background: 'none', border: 'none', color: TEC_COLORS.subtext, cursor: 'pointer', fontSize: 13, padding: 0, marginBottom: 10 }}>← Collections</button>
+      <button onClick={onBack} style={{ background: 'none', border: 'none', color: TEC_COLORS.subtext, cursor: 'pointer', fontSize: 13, padding: 0, marginBottom: 10 }}>{a.backCollections}</button>
       {!detail ? (
-        <p style={{ color: TEC_COLORS.subtext, fontSize: 13, margin: 0 }}>{error ?? 'Loading…'}</p>
+        <p style={{ color: TEC_COLORS.subtext, fontSize: 13, margin: 0 }}>{error ?? a.loading}</p>
       ) : (
         <>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
             <h3 style={{ fontSize: 17, fontWeight: 800, color: TEC_COLORS.text, margin: 0 }}>{detail.title}</h3>
-            <span style={{ fontSize: 11, color: TEC_COLORS.subtext }}>{detail.role} · {detail.members.length} {a.members}</span>
+            <span style={{ fontSize: 11, color: TEC_COLORS.subtext }}>
+              <bdi>{detail.role === 'owner' ? a.owner : a.member}</bdi>
+              {' · '}<bdi>{detail.members.length} {a.members}</bdi>
+            </span>
           </div>
 
           <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
             <input style={input} value={text} onChange={(e) => setText(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter') submitItem(); }} placeholder="Add an item…" maxLength={500} />
-            <button style={{ ...goldBtn, opacity: busy ? 0.6 : 1 }} onClick={submitItem} disabled={busy}>Add</button>
+              onKeyDown={(e) => { if (e.key === 'Enter') submitItem(); }} placeholder={a.addItemPlaceholder} maxLength={500} />
+            <button style={{ ...goldBtn, opacity: busy ? 0.6 : 1 }} onClick={submitItem} disabled={busy}>{a.add}</button>
           </div>
 
           <div style={{ marginTop: 12 }}>
             {detail.items.length === 0 ? (
-              <p style={{ color: TEC_COLORS.subtext, fontSize: 13 }}>No items yet.</p>
+              <p style={{ color: TEC_COLORS.subtext, fontSize: 13 }}>{a.noItems}</p>
             ) : detail.items.map((it, i) => (
               <div key={it.id} style={{ padding: '9px 0', borderTop: i === 0 ? 'none' : `1px solid ${TEC_COLORS.border}` }}>
                 <div style={{ fontSize: 14, color: TEC_COLORS.text }}>{it.text}</div>
@@ -55,8 +58,8 @@ function Detail({ id, onBack }: { id: string; onBack: () => void }) {
           {detail.role === 'owner' && (
             <div style={{ display: 'flex', gap: 8, marginTop: 14, paddingTop: 14, borderTop: `1px solid ${TEC_COLORS.border}` }}>
               <input style={input} value={invitee} onChange={(e) => setInvitee(e.target.value)}
-                onKeyDown={(e) => { if (e.key === 'Enter') submitInvite(); }} placeholder="Invite a @username" maxLength={100} autoCapitalize="none" />
-              <button style={{ ...goldBtn, opacity: busy ? 0.6 : 1 }} onClick={submitInvite} disabled={busy}>Invite</button>
+                onKeyDown={(e) => { if (e.key === 'Enter') submitInvite(); }} placeholder={a.invitePlaceholder} maxLength={100} autoCapitalize="none" />
+              <button style={{ ...goldBtn, opacity: busy ? 0.6 : 1 }} onClick={submitInvite} disabled={busy}>{a.invite}</button>
             </div>
           )}
           {error && <p style={{ color: TEC_COLORS.error, fontSize: 13, marginTop: 10 }}>{error}</p>}
@@ -95,16 +98,20 @@ export function Collaboration() {
           {error && <p style={{ color: TEC_COLORS.error, fontSize: 13, marginTop: 10 }}>{error}</p>}
           <div style={{ marginTop: 14 }}>
             {loading ? (
-              <p style={{ color: TEC_COLORS.subtext, fontSize: 13 }}>Loading…</p>
+              <p style={{ color: TEC_COLORS.subtext, fontSize: 13 }}>{a.loading}</p>
             ) : collections.length === 0 ? (
-              <p style={{ color: TEC_COLORS.subtext, fontSize: 13 }}>No collections yet. Create one to plan or build together with your connections.</p>
+              <p style={{ color: TEC_COLORS.subtext, fontSize: 13 }}>{a.noCollections}</p>
             ) : collections.map((c, i) => (
               <button key={c.id} onClick={() => setOpenId(c.id)}
-                style={{ width: '100%', textAlign: 'left', display: 'flex', alignItems: 'center', gap: 10, padding: '11px 0',
+                style={{ width: '100%', textAlign: 'start', display: 'flex', alignItems: 'center', gap: 10, padding: '11px 0',
                          background: 'none', border: 'none', cursor: 'pointer', borderTop: i === 0 ? 'none' : `1px solid ${TEC_COLORS.border}` }}>
                 <span style={{ flex: 1, minWidth: 0 }}>
                   <span style={{ display: 'block', fontSize: 14, fontWeight: 600, color: TEC_COLORS.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.title}</span>
-                  <span style={{ fontSize: 11, color: TEC_COLORS.subtext }}>{c.role} · {c.items} {a.items} · {c.members} {a.members}</span>
+                  <span style={{ fontSize: 11, color: TEC_COLORS.subtext }}>
+                    <bdi>{c.role === 'owner' ? a.owner : a.member}</bdi>
+                    {' · '}<bdi>{c.items} {a.items}</bdi>
+                    {' · '}<bdi>{c.members} {a.members}</bdi>
+                  </span>
                 </span>
                 <span style={{ color: TEC_COLORS.subtext, fontSize: 16 }}>›</span>
               </button>
