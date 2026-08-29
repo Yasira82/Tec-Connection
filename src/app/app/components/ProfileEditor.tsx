@@ -12,6 +12,7 @@
 // (Public / Hidden) rather than explained in a paragraph.
 import { useEffect, useState } from 'react';
 import { TEC_COLORS } from '@yasser172/tec-ui';
+import { useTranslation } from '@/lib/i18n';
 import { AvatarUpload } from './AvatarUpload';
 
 const CATEGORIES = ['builder', 'merchant', 'creator', 'investor', 'mentor', 'other'] as const;
@@ -45,6 +46,8 @@ const chip = (active: boolean): React.CSSProperties => ({
 });
 
 export function ProfileEditor() {
+  const { t } = useTranslation();
+  const a = t.app;
   const [me, setMe] = useState<MyProfile | null>(null);
   const [headline, setHeadline] = useState('');
   const [cat, setCat] = useState<Category>('builder');
@@ -73,29 +76,29 @@ export function ProfileEditor() {
         body: JSON.stringify({ headline: headline.trim(), category: cat, published: publish }),
       });
       const j = (await res.json().catch(() => ({}))) as { profile?: MyProfile; ok?: boolean };
-      if (!res.ok || !j.ok || !j.profile) { setMsg('Could not save. Please retry.'); return; }
+      if (!res.ok || !j.ok || !j.profile) { setMsg(a.saveFailed); return; }
       setMe(j.profile);
-      setMsg(j.profile.published ? '✅ Saved — you are in Discover.' : '✅ Saved — you are hidden.');
-    } catch { setMsg('Network error. Please retry.'); }
+      setMsg(j.profile.published ? a.savedPublic : a.savedHidden);
+    } catch { setMsg(a.networkError); }
     finally { setSaving(false); }
   };
 
   return (
     <section style={{ marginTop: 22 }}>
       <div style={{ fontSize: 11, letterSpacing: 1, color: TEC_COLORS.subtext, textTransform: 'uppercase', fontWeight: 700, marginBottom: 8 }}>
-        🪪 Your card
+        🪪 {a.yourCard}
       </div>
 
       <div style={card}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 14 }}>
           <span style={{ fontSize: 13, color: TEC_COLORS.subtext }}>
-            {me?.published ? 'Visible in Discover' : 'Not listed'}
+            {me?.published ? a.visibleInDiscover : a.notListed}
           </span>
           {me?.published
             ? <span style={{ fontSize: 11, fontWeight: 800, color: TEC_COLORS.success, border: `1px solid ${TEC_COLORS.success}55`, borderRadius: 999, padding: '2px 10px' }}>
-                {me.featured ? '⭐ Featured' : 'Public'}
+                {me.featured ? `⭐ ${a.publicBadge}` : a.publicBadge}
               </span>
-            : <span style={{ fontSize: 11, fontWeight: 700, color: TEC_COLORS.subtext, border: `1px solid ${TEC_COLORS.border}`, borderRadius: 999, padding: '2px 10px' }}>Hidden</span>}
+            : <span style={{ fontSize: 11, fontWeight: 700, color: TEC_COLORS.subtext, border: `1px solid ${TEC_COLORS.border}`, borderRadius: 999, padding: '2px 10px' }}>{a.hiddenBadge}</span>}
         </div>
 
         {me?.username && (
@@ -107,7 +110,7 @@ export function ProfileEditor() {
         )}
 
         <input style={field} value={headline} onChange={(e) => setHeadline(e.target.value)}
-          placeholder="What do you do? (e.g. Pi app developer)" maxLength={160} />
+          placeholder={a.headlinePlaceholder} maxLength={160} />
 
         <div style={{ display: 'flex', gap: 8, marginTop: 12, overflowX: 'auto', paddingBottom: 4 }}>
           {CATEGORIES.map((c) => (
@@ -117,12 +120,12 @@ export function ProfileEditor() {
 
         <div style={{ display: 'flex', gap: 8, marginTop: 14, flexWrap: 'wrap' }}>
           <button style={{ ...goldBtn, opacity: saving ? 0.6 : 1 }} disabled={saving} onClick={() => save(true)}>
-            {me?.published ? 'Save' : 'Publish'}
+            {me?.published ? a.save : a.publish}
           </button>
           {me?.published && (
             <button disabled={saving} onClick={() => save(false)}
               style={{ background: 'none', border: `1px solid ${TEC_COLORS.border}`, color: TEC_COLORS.subtext, borderRadius: 10, padding: '10px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
-              Hide
+              {a.hide}
             </button>
           )}
         </div>
@@ -134,7 +137,7 @@ export function ProfileEditor() {
         {me?.published && me.username && (
           <a href={`/u/${encodeURIComponent(me.username)}`}
             style={{ display: 'inline-block', marginTop: 12, fontSize: 12.5, color: TEC_COLORS.gold, textDecoration: 'none' }}>
-            View your public page →
+            {a.viewPublic}
           </a>
         )}
       </div>

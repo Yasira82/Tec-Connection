@@ -15,6 +15,7 @@
 // clears it and says so.
 import { useRef, useState, useEffect } from 'react';
 import { TEC_COLORS } from '@yasser172/tec-ui';
+import { useTranslation } from '@/lib/i18n';
 
 const MAX_BYTES = 2 * 1024 * 1024;
 const ACCEPT    = 'image/jpeg,image/png,image/webp';
@@ -27,6 +28,8 @@ export function AvatarUpload({
   /** Called after the server has confirmed, so the parent can refresh its copy. */
   onChange: (hasPhoto: boolean) => void;
 }) {
+  const { t } = useTranslation();
+  const a = t.app;
   const fileRef = useRef<HTMLInputElement>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [busy, setBusy]       = useState(false);
@@ -48,10 +51,10 @@ export function AvatarUpload({
     // own sake: catching it in the browser means the user gets a sentence
     // instead of a failed round-trip, and a 5MB photo is never uploaded at all.
     if (!ACCEPT.split(',').includes(file.type)) {
-      setMsg('Use a JPEG, PNG or WebP image.'); return;
+      setMsg(a.photoWrongType); return;
     }
     if (file.size > MAX_BYTES) {
-      setMsg('That image is over 2MB. Try a smaller one.'); return;
+      setMsg(a.photoTooBig); return;
     }
 
     setBusy(true); setMsg('');
@@ -59,36 +62,27 @@ export function AvatarUpload({
     setPreview(localUrl);
 
     try {
-      const signRes = await fetch('/api/bff/connection/avatar/upload-url', {
+      // ONE request, to our own origin. The previous version asked for a
+      // presigned URL and PUT the file straight to R2 from the browser — which
+      // needs a CORS policy on the bucket that does not exist, so every upload
+      // died as an opaque "Network error" before a byte left the phone. The
+      // server does the presign and the PUT now; see the route for the full note.
+      const res = await fetch('/api/bff/connection/avatar/upload', {
         method: 'POST', credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ mimeType: file.type, size: file.size }),
+        headers: { 'Content-Type': file.type },
+        body: file,
       });
-      const sign = await signRes.json().catch(() => ({}));
-      if (!signRes.ok || !sign?.uploadUrl || !sign?.key) {
-        setMsg(sign?.message ?? 'Could not start the upload. Please retry.');
+      const out = await res.json().catch(() => ({}));
+      if (!res.ok || !out?.ok) {
+        setMsg(out?.message ?? a.uploadFailed);
         setPreview(null); return;
       }
 
-      // Straight to R2. `Content-Type` must match what the URL was signed for or
-      // the signature is rejected.
-      const put = await fetch(sign.uploadUrl, {
-        method: 'PUT', body: file, headers: { 'Content-Type': file.type },
-      });
-      if (!put.ok) { setMsg('The upload did not complete. Please retry.'); setPreview(null); return; }
-
-      const saveRes = await fetch('/api/bff/connection/avatar', {
-        method: 'PUT', credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ key: sign.key }),
-      });
-      if (!saveRes.ok) { setMsg('Uploaded, but could not attach it. Please retry.'); setPreview(null); return; }
-
       setVersion(v => v + 1);
       onChange(true);
-      setMsg('✅ Photo updated.');
+      setMsg(a.photoUpdated);
     } catch {
-      setMsg('Network error. Please retry.');
+      setMsg(a.networkError);
       setPreview(null);
     } finally {
       setBusy(false);
@@ -102,12 +96,12 @@ export function AvatarUpload({
     setBusy(true); setMsg('');
     try {
       const res = await fetch('/api/bff/connection/avatar', { method: 'DELETE', credentials: 'include' });
-      if (!res.ok) { setMsg('Could not remove the photo. Please retry.'); return; }
+      if (!res.ok) { setMsg(a.uploadFailed); return; }
       setPreview(null);
       setVersion(v => v + 1);
       onChange(false);
-      setMsg('Photo removed.');
-    } catch { setMsg('Network error. Please retry.'); }
+      setMsg(a.photoRemoved);
+    } catch { setMsg(a.networkError); }
     finally { setBusy(false); }
   };
 
@@ -117,7 +111,7 @@ export function AvatarUpload({
     <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 14 }}>
       <button
         type="button" onClick={pick} disabled={busy}
-        aria-label={hasPhoto ? 'Change your profile photo' : 'Add a profile photo'}
+        aria-label={hasPhoto ? a.change : a.addPhoto}
         style={{
           width: 62, height: 62, borderRadius: 999, flexShrink: 0, padding: 0,
           overflow: 'hidden', position: 'relative', cursor: busy ? 'wait' : 'pointer',
@@ -135,20 +129,20 @@ export function AvatarUpload({
 
       <div style={{ minWidth: 0 }}>
         <div style={{ fontSize: 13, fontWeight: 750, color: TEC_COLORS.text }}>
-          {hasPhoto ? 'Profile photo' : 'Add a profile photo'}
+          {hasPhoto ? a.photoTitle : a.addPhoto}
         </div>
         <div style={{ fontSize: 11.5, color: TEC_COLORS.subtext, marginTop: 2, lineHeight: 1.45 }}>
-          JPEG, PNG or WebP · up to 2MB. Shown publicly on your profile.
+          {a.photoHint}
         </div>
         <div style={{ display: 'flex', gap: 12, marginTop: 6 }}>
           <button type="button" onClick={pick} disabled={busy}
             style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: 12, fontWeight: 700, color: TEC_COLORS.gold }}>
-            {busy ? 'Working…' : hasPhoto ? 'Change' : 'Choose a photo'}
+            {busy ? a.working : hasPhoto ? a.change : a.choosePhoto}
           </button>
           {hasPhoto && !busy && (
             <button type="button" onClick={remove}
               style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: 12, fontWeight: 700, color: TEC_COLORS.subtext }}>
-              Remove
+              {a.remove}
             </button>
           )}
         </div>

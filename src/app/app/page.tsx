@@ -56,8 +56,11 @@ export default function ConnectionHome() {
           <div style={{ fontSize: 11, letterSpacing: 1.4, color: TEC_COLORS.subtext, textTransform: 'uppercase', fontWeight: 700 }}>
             {t.connection.brand}
           </div>
+          {/* <bdi>: on the Home tab the title is a Latin @handle. Inside an
+              Arabic (RTL) document the '@' is bidi-neutral and resolves against
+              the paragraph — it rendered as "yas55eR82@". */}
           <h1 style={{ fontSize: 26, fontWeight: 900, color: TEC_COLORS.gold, margin: '4px 0 0', letterSpacing: '-0.02em' }}>
-            {title}
+            <bdi>{title}</bdi>
           </h1>
           {sub && (
             <p style={{ fontSize: 13.5, color: TEC_COLORS.subtext, margin: '5px 0 0', lineHeight: 1.5 }}>{sub}</p>

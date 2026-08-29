@@ -8,6 +8,7 @@
 // is your session — the app never sends it.
 import { useEffect, useMemo, useState } from 'react';
 import { TEC_COLORS } from '@yasser172/tec-ui';
+import { useTranslation } from '@/lib/i18n';
 import { Avatar } from '@/components/public/Avatar';
 
 const CATEGORIES = ['builder', 'merchant', 'creator', 'investor', 'mentor', 'other'] as const;
@@ -46,6 +47,8 @@ const chip = (active: boolean): React.CSSProperties => ({
 });
 
 export function Discover() {
+  const { t } = useTranslation();
+  const a = t.app;
   const [query, setQuery] = useState('');
   const [cat,   setCat]   = useState<Category | 'all'>('all');
   const [list,  setList]  = useState<Card[]>([]);
@@ -100,18 +103,18 @@ export function Discover() {
 
       {/* Directory */}
       <div style={card}>
-        <input style={field} value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search people…" maxLength={80} />
+        <input style={field} value={query} onChange={(e) => setQuery(e.target.value)} placeholder={a.searchPeople} maxLength={80} />
         <div style={{ display: 'flex', gap: 8, marginTop: 10, overflowX: 'auto', paddingBottom: 4 }}>
-          <button style={chip(cat === 'all')} onClick={() => setCat('all')}>all</button>
-          {catList.map((c) => <button key={c} style={chip(cat === c)} onClick={() => setCat(c)}>{c}</button>)}
+          <button style={chip(cat === 'all')} onClick={() => setCat('all')}>{a.all}</button>
+          {catList.map((c) => <button key={c} style={chip(cat === c)} onClick={() => setCat(c)}>{t.public.cat[c] ?? c}</button>)}
         </div>
 
         <div style={{ marginTop: 14, display: 'grid', gap: 10 }}>
-          {status === 'loading' && <p style={{ color: TEC_COLORS.subtext, fontSize: 13, textAlign: 'center' }}>Loading…</p>}
-          {status === 'unavailable' && <p style={{ color: TEC_COLORS.subtext, fontSize: 13, textAlign: 'center' }}>Discover is unavailable right now. Please try again shortly.</p>}
+          {status === 'loading' && <p style={{ color: TEC_COLORS.subtext, fontSize: 13, textAlign: 'center' }}>{a.loading}</p>}
+          {status === 'unavailable' && <p style={{ color: TEC_COLORS.subtext, fontSize: 13, textAlign: 'center' }}>{a.discoverUnavailable}</p>}
           {status === 'ready' && count === 0 && (
             <p style={{ color: TEC_COLORS.subtext, fontSize: 13, textAlign: 'center' }}>
-              Nobody here yet. Publish your card in Settings to be the first.
+              {a.discoverEmpty}
             </p>
           )}
           {status === 'ready' && list.map((p) => (
@@ -121,13 +124,13 @@ export function Discover() {
               <Avatar username={p.username} size={38} hasPhoto={p.hasAvatar} />
               <a href={`/u/${encodeURIComponent(p.username)}`} style={{ flex: 1, minWidth: 0, textDecoration: 'none' }}>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-                  <span style={{ fontSize: 14, fontWeight: 800, color: TEC_COLORS.text }}>@{p.username}</span>
-                  {p.verified && <span style={{ fontSize: 10, fontWeight: 800, color: TEC_COLORS.success, background: 'rgba(34,197,94,0.12)', border: `1px solid ${TEC_COLORS.success}4d`, borderRadius: 999, padding: '1px 7px', whiteSpace: 'nowrap' }}>✓ Verified</span>}
+                  <bdi style={{ fontSize: 14, fontWeight: 800, color: TEC_COLORS.text }}>@{p.username}</bdi>
+                  {p.verified && <span style={{ fontSize: 10, fontWeight: 800, color: TEC_COLORS.success, background: 'rgba(34,197,94,0.12)', border: `1px solid ${TEC_COLORS.success}4d`, borderRadius: 999, padding: '1px 7px', whiteSpace: 'nowrap' }}>✓ {t.public.verified}</span>}
                 </div>
                 {/* `capitalize` scoped to the category alone — on the whole
                     line it also title-cased the count: "184 Followers". */}
                 <div style={{ fontSize: 11, color: TEC_COLORS.gold, marginTop: 2 }}>
-                  <span style={{ textTransform: 'capitalize' }}>{p.category}</span>
+                  <span style={{ textTransform: 'capitalize' }}>{t.public.cat[p.category as keyof typeof t.public.cat] ?? p.category}</span>
                   {' · '}{p.followers} follower{p.followers === 1 ? '' : 's'}
                   {/* ⭐ on the META line, not beside the name: a second badge
                       next to a long handle wraps and makes that one row taller.
@@ -138,8 +141,8 @@ export function Discover() {
               </a>
               {!isSelf(p.username) && (
                 followed.has(p.username)
-                  ? <span style={{ fontSize: 12, color: TEC_COLORS.success, whiteSpace: 'nowrap' }}>Following ✓</span>
-                  : <button style={goldBtn} onClick={() => follow(p.username)}>Follow</button>
+                  ? <span style={{ fontSize: 12, color: TEC_COLORS.success, whiteSpace: 'nowrap' }}>{a.followingNow}</span>
+                  : <button style={goldBtn} onClick={() => follow(p.username)}>{a.follow}</button>
               )}
             </div>
           ))}
@@ -148,7 +151,7 @@ export function Discover() {
         {/* One line, once. The same three principles were previously restated
             at the bottom of every card on every tab. */}
         <p style={{ fontSize: 11, color: TEC_COLORS.subtext, margin: '14px 0 0', lineHeight: 1.5 }}>
-          ✅ Verified comes from Zone / KYC. ⭐ Featured is paid reach — never trust.
+          {a.verifiedNote}
         </p>
       </div>
     </section>

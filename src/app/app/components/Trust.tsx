@@ -4,6 +4,7 @@
 // activity (paid orders), not vanity metrics — and it is EVENTUAL, never
 // presented as financial truth (the owning services are the source).
 import { TEC_COLORS } from '@yasser172/tec-ui';
+import { useTranslation } from '@/lib/i18n';
 import { useTrust, type TrustSide } from '@/lib-client/connection/useTrust';
 
 const card = {
@@ -13,7 +14,7 @@ const card = {
   padding:      '20px 22px',
 } as const;
 
-function Side({ title, hint, label, side }: { title: string; hint: string; label: string; side: TrustSide }) {
+function Side({ title, hint, label, partnersLbl, ordersLbl, side }: { title: string; hint: string; label: string; partnersLbl: string; ordersLbl: string; side: TrustSide }) {
   return (
     <div>
       <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 8 }}>
@@ -22,9 +23,9 @@ function Side({ title, hint, label, side }: { title: string; hint: string; label
       </div>
       <div style={{ display: 'flex', gap: 16, marginTop: 8 }}>
         <span style={{ fontSize: 20, fontWeight: 900, color: TEC_COLORS.gold }}>{side.partners}
-          <span style={{ fontSize: 11, fontWeight: 600, color: TEC_COLORS.subtext }}> partners</span></span>
+          <span style={{ fontSize: 11, fontWeight: 600, color: TEC_COLORS.subtext }}> {partnersLbl}</span></span>
         <span style={{ fontSize: 20, fontWeight: 900, color: TEC_COLORS.text }}>{side.orders}
-          <span style={{ fontSize: 11, fontWeight: 600, color: TEC_COLORS.subtext }}> orders</span></span>
+          <span style={{ fontSize: 11, fontWeight: 600, color: TEC_COLORS.subtext }}> {ordersLbl}</span></span>
         <span style={{ fontSize: 20, fontWeight: 900, color: TEC_COLORS.text }}>π {side.volume}</span>
       </div>
       {/* The per-partner rows used to be labelled with the raw counterparty id —
@@ -55,22 +56,24 @@ function Side({ title, hint, label, side }: { title: string; hint: string; label
 
 export function Trust() {
   const { trust, loading, error } = useTrust();
+  const { t } = useTranslation();
+  const a = t.app;
   const empty = trust.given.partners === 0 && trust.received.partners === 0;
 
   return (
     <section>
       <div style={{ ...card, display: 'grid', gap: 16 }}>
         {loading ? (
-          <p style={{ fontSize: 13, color: TEC_COLORS.subtext, margin: 0 }}>Loading…</p>
+          <p style={{ fontSize: 13, color: TEC_COLORS.subtext, margin: 0 }}>{a.loading}</p>
         ) : error || empty ? (
           <p style={{ fontSize: 13, color: TEC_COLORS.subtext, margin: 0, lineHeight: 1.6 }}>
-            Nothing yet. This fills in from completed Pi payments across TEC.
+            {a.trustEmpty}
           </p>
         ) : (
           <>
-            <Side title="You paid" hint="sellers" label="Seller" side={trust.given} />
+            <Side title={a.youPaid} hint={a.sellers} label={a.seller} partnersLbl={a.partners} ordersLbl={a.orders} side={trust.given} />
             <div style={{ height: 1, background: TEC_COLORS.border }} />
-            <Side title="Paid you" hint="buyers" label="Buyer" side={trust.received} />
+            <Side title={a.paidYou} hint={a.buyers} label={a.buyer} partnersLbl={a.partners} ordersLbl={a.orders} side={trust.received} />
           </>
         )}
       </div>
