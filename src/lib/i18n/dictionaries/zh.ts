@@ -17,7 +17,8 @@ export const zh: Dictionary = {
     brand: 'TEC Connection · 您的人脉',
     welcome: '欢迎', welcomeName: '欢迎，{name}',
     subtitle: '您在 TEC 生态中的关系图谱。您的人脉属于您自己 — 由您决定信任谁、谁可以看到。',
-    nav: { home: '首页', discover: '发现', trust: '信任', settings: '设置' },
+    nav: { home: '首页', discover: '发现', trust: '信任', settings: '设置',
+      homeSub: '最新动态，以及你关注的人。', discoverSub: '在 Pi 经济中寻找他人。', trustSub: '由已完成的 Pi 付款生成。' },
     footer: 'Connection 是您可信关系的所在 — 您关注的人、连接的人、以及在 TEC 中共同建立信任的人。您始终掌控自己的人脉网络。',
     settings: {
       profile: '个人资料', planFree: '免费', planPro: 'Pro',

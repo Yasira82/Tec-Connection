@@ -13,9 +13,7 @@ const card = {
   padding:      '20px 22px',
 } as const;
 
-const shortId = (id: string) => (id.length > 12 ? `${id.slice(0, 6)}…${id.slice(-4)}` : id);
-
-function Side({ title, hint, side }: { title: string; hint: string; side: TrustSide }) {
+function Side({ title, hint, label, side }: { title: string; hint: string; label: string; side: TrustSide }) {
   return (
     <div>
       <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 8 }}>
@@ -29,15 +27,24 @@ function Side({ title, hint, side }: { title: string; hint: string; side: TrustS
           <span style={{ fontSize: 11, fontWeight: 600, color: TEC_COLORS.subtext }}> orders</span></span>
         <span style={{ fontSize: 20, fontWeight: 900, color: TEC_COLORS.text }}>π {side.volume}</span>
       </div>
+      {/* The per-partner rows used to be labelled with the raw counterparty id —
+          `afa10f…c983`. That is a commerce user id: it identifies nobody to the
+          person reading it, and a screen full of hashes is why this tab looked
+          like a debug view. The rows stay (each is a real relationship) but are
+          labelled by position until the id can be resolved to a Pi username,
+          which needs a lookup Connection does not have today. A meaningless
+          label is worse than an honest ordinal. */}
       {side.edges.length > 0 && (
         <div style={{ marginTop: 10 }}>
           {side.edges.slice(0, 5).map((e, i) => (
             <div key={e.user_id}
               style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderTop: i === 0 ? 'none' : `1px solid ${TEC_COLORS.border}` }}>
-              <span style={{ flex: 1, minWidth: 0, fontSize: 13, color: TEC_COLORS.text, fontFamily: 'monospace', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {shortId(e.user_id)}
+              <span style={{ flex: 1, minWidth: 0, fontSize: 13.5, color: TEC_COLORS.text }}>
+                {label} {i + 1}
               </span>
-              <span style={{ fontSize: 12, color: TEC_COLORS.subtext, whiteSpace: 'nowrap' }}>{e.orders}× · π {e.volume}</span>
+              <span style={{ fontSize: 12.5, color: TEC_COLORS.subtext, whiteSpace: 'nowrap' }}>
+                {e.orders}× · π {e.volume}
+              </span>
             </div>
           ))}
         </div>
@@ -51,32 +58,21 @@ export function Trust() {
   const empty = trust.given.partners === 0 && trust.received.partners === 0;
 
   return (
-    <section style={{ marginTop: 24 }}>
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 12 }}>
-        <span style={{ fontSize: 22 }}>🛡️</span>
-        <h2 style={{ fontSize: 18, fontWeight: 800, color: TEC_COLORS.text, margin: 0 }}>Trust</h2>
-        <span style={{ fontSize: 12, color: TEC_COLORS.subtext }}>earned from real activity</span>
-      </div>
-
+    <section>
       <div style={{ ...card, display: 'grid', gap: 16 }}>
         {loading ? (
           <p style={{ fontSize: 13, color: TEC_COLORS.subtext, margin: 0 }}>Loading…</p>
         ) : error || empty ? (
           <p style={{ fontSize: 13, color: TEC_COLORS.subtext, margin: 0, lineHeight: 1.6 }}>
-            No trust signals yet. Trust builds from real economic activity — as you
-            complete purchases and sales across TEC, verified trust edges appear here.
+            Nothing yet. This fills in from completed Pi payments across TEC.
           </p>
         ) : (
           <>
-            <Side title="Trust you've extended" hint="sellers you've paid" side={trust.given} />
+            <Side title="You paid" hint="sellers" label="Seller" side={trust.given} />
             <div style={{ height: 1, background: TEC_COLORS.border }} />
-            <Side title="Trust you've earned" hint="buyers who paid you" side={trust.received} />
+            <Side title="Paid you" hint="buyers" label="Buyer" side={trust.received} />
           </>
         )}
-        <p style={{ fontSize: 11, color: TEC_COLORS.subtext, margin: 0, lineHeight: 1.5 }}>
-          Trust is built from real, completed activity across TEC — never from
-          self-promotion.
-        </p>
       </div>
     </section>
   );

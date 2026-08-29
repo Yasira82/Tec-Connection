@@ -17,7 +17,8 @@ export const hi: Dictionary = {
     brand: 'TEC Connection · आपका नेटवर्क',
     welcome: 'स्वागत है', welcomeName: 'स्वागत है, {name}',
     subtitle: 'TEC इकोसिस्टम में आपका संबंध-ग्राफ़। आपके कनेक्शन आपके हैं — आप तय करते हैं कि किस पर भरोसा करना है और कौन इसे देख सकता है।',
-    nav: { home: 'होम', discover: 'खोजें', trust: 'भरोसा', settings: 'सेटिंग्स' },
+    nav: { home: 'होम', discover: 'खोजें', trust: 'भरोसा', settings: 'सेटिंग्स',
+      homeSub: 'नया क्या है, और आप किसे फ़ॉलो करते हैं।', discoverSub: 'Pi अर्थव्यवस्था में लोगों को खोजें।', trustSub: 'पूरे हुए Pi भुगतानों से बना।' },
     footer: 'Connection वह जगह है जहाँ आपके भरोसेमंद रिश्ते रहते हैं — जिन्हें आप फ़ॉलो करते हैं, जुड़ते हैं, और TEC पर भरोसा बनाते हैं। आपका नेटवर्क हमेशा आपके नियंत्रण में रहता है।',
     settings: {
       profile: 'प्रोफ़ाइल', planFree: 'मुफ़्त', planPro: 'Pro',

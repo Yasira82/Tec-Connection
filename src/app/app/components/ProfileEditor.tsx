@@ -1,0 +1,143 @@
+'use client';
+
+// "Your card" — the user's own public profile (C-107).
+//
+// This used to sit at the top of the Discover TAB, where it filled the first
+// screen with a form on the one surface whose job is finding other people. It is
+// a settings task — you edit it once and then forget it — so it lives in
+// Settings, and Discover starts with people.
+//
+// Publishing is opt-in and stays that way: the toggle is the only thing that
+// puts a person in the directory, and the state is shown as a plain word
+// (Public / Hidden) rather than explained in a paragraph.
+import { useEffect, useState } from 'react';
+import { TEC_COLORS } from '@yasser172/tec-ui';
+import { AvatarUpload } from './AvatarUpload';
+
+const CATEGORIES = ['builder', 'merchant', 'creator', 'investor', 'mentor', 'other'] as const;
+type Category = (typeof CATEGORIES)[number];
+
+interface MyProfile {
+  username: string; headline: string; category: string;
+  published: boolean; verified: boolean; featured: boolean;
+  hasAvatar?: boolean;
+}
+
+const card = {
+  background: TEC_COLORS.surface, border: `1px solid ${TEC_COLORS.border}`,
+  borderRadius: 16, padding: '18px 20px',
+} as const;
+const field = {
+  width: '100%', boxSizing: 'border-box' as const, background: TEC_COLORS.bg, color: TEC_COLORS.text,
+  border: `1px solid ${TEC_COLORS.border}`, borderRadius: 10, padding: '11px 13px', fontSize: 14,
+} as const;
+const goldBtn = {
+  background: `linear-gradient(135deg, ${TEC_COLORS.gold}, ${TEC_COLORS.goldDark})`,
+  color: '#0a0800', border: 'none', borderRadius: 10, padding: '10px 18px',
+  fontSize: 13.5, fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap' as const,
+};
+const chip = (active: boolean): React.CSSProperties => ({
+  fontSize: 12.5, fontWeight: 700, whiteSpace: 'nowrap',
+  color: active ? '#0a0800' : TEC_COLORS.text,
+  background: active ? `linear-gradient(135deg, ${TEC_COLORS.gold}, ${TEC_COLORS.goldDark})` : 'transparent',
+  border: `1px solid ${TEC_COLORS.gold}${active ? '' : '33'}`,
+  borderRadius: 999, padding: '7px 13px', cursor: 'pointer', textTransform: 'capitalize',
+});
+
+export function ProfileEditor() {
+  const [me, setMe] = useState<MyProfile | null>(null);
+  const [headline, setHeadline] = useState('');
+  const [cat, setCat] = useState<Category>('builder');
+  const [msg, setMsg] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    fetch('/api/bff/connection/profile/me', { credentials: 'include', cache: 'no-store' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j: { profile?: MyProfile } | null) => {
+        if (!j?.profile) return;
+        setMe(j.profile);
+        setHeadline(j.profile.headline ?? '');
+        setCat((CATEGORIES as readonly string[]).includes(j.profile.category) ? (j.profile.category as Category) : 'builder');
+      })
+      .catch(() => {});
+  }, []);
+
+  const save = async (publish: boolean) => {
+    if (saving) return;
+    setSaving(true); setMsg('');
+    try {
+      const res = await fetch('/api/bff/connection/profile/me', {
+        method: 'PUT', credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ headline: headline.trim(), category: cat, published: publish }),
+      });
+      const j = (await res.json().catch(() => ({}))) as { profile?: MyProfile; ok?: boolean };
+      if (!res.ok || !j.ok || !j.profile) { setMsg('Could not save. Please retry.'); return; }
+      setMe(j.profile);
+      setMsg(j.profile.published ? '✅ Saved — you are in Discover.' : '✅ Saved — you are hidden.');
+    } catch { setMsg('Network error. Please retry.'); }
+    finally { setSaving(false); }
+  };
+
+  return (
+    <section style={{ marginTop: 22 }}>
+      <div style={{ fontSize: 11, letterSpacing: 1, color: TEC_COLORS.subtext, textTransform: 'uppercase', fontWeight: 700, marginBottom: 8 }}>
+        🪪 Your card
+      </div>
+
+      <div style={card}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 14 }}>
+          <span style={{ fontSize: 13, color: TEC_COLORS.subtext }}>
+            {me?.published ? 'Visible in Discover' : 'Not listed'}
+          </span>
+          {me?.published
+            ? <span style={{ fontSize: 11, fontWeight: 800, color: TEC_COLORS.success, border: `1px solid ${TEC_COLORS.success}55`, borderRadius: 999, padding: '2px 10px' }}>
+                {me.featured ? '⭐ Featured' : 'Public'}
+              </span>
+            : <span style={{ fontSize: 11, fontWeight: 700, color: TEC_COLORS.subtext, border: `1px solid ${TEC_COLORS.border}`, borderRadius: 999, padding: '2px 10px' }}>Hidden</span>}
+        </div>
+
+        {me?.username && (
+          <AvatarUpload
+            username={me.username}
+            hasPhoto={Boolean(me.hasAvatar)}
+            onChange={(has) => setMe((cur) => (cur ? { ...cur, hasAvatar: has } : cur))}
+          />
+        )}
+
+        <input style={field} value={headline} onChange={(e) => setHeadline(e.target.value)}
+          placeholder="What do you do? (e.g. Pi app developer)" maxLength={160} />
+
+        <div style={{ display: 'flex', gap: 8, marginTop: 12, overflowX: 'auto', paddingBottom: 4 }}>
+          {CATEGORIES.map((c) => (
+            <button key={c} style={chip(cat === c)} onClick={() => setCat(c)}>{c}</button>
+          ))}
+        </div>
+
+        <div style={{ display: 'flex', gap: 8, marginTop: 14, flexWrap: 'wrap' }}>
+          <button style={{ ...goldBtn, opacity: saving ? 0.6 : 1 }} disabled={saving} onClick={() => save(true)}>
+            {me?.published ? 'Save' : 'Publish'}
+          </button>
+          {me?.published && (
+            <button disabled={saving} onClick={() => save(false)}
+              style={{ background: 'none', border: `1px solid ${TEC_COLORS.border}`, color: TEC_COLORS.subtext, borderRadius: 10, padding: '10px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
+              Hide
+            </button>
+          )}
+        </div>
+
+        {msg && (
+          <div style={{ marginTop: 10, fontSize: 12.5, color: msg.startsWith('✅') ? TEC_COLORS.gold : TEC_COLORS.error }}>{msg}</div>
+        )}
+
+        {me?.published && me.username && (
+          <a href={`/u/${encodeURIComponent(me.username)}`}
+            style={{ display: 'inline-block', marginTop: 12, fontSize: 12.5, color: TEC_COLORS.gold, textDecoration: 'none' }}>
+            View your public page →
+          </a>
+        )}
+      </div>
+    </section>
+  );
+}

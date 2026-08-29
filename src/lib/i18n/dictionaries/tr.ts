@@ -17,7 +17,8 @@ export const tr: Dictionary = {
     brand: 'TEC Connection · Ağınız',
     welcome: 'Hoş geldiniz', welcomeName: 'Hoş geldiniz, {name}',
     subtitle: 'TEC ekosistemindeki ilişki grafiğiniz. Bağlantılarınız size aittir — kime güveneceğinize ve kimin göreceğine siz karar verirsiniz.',
-    nav: { home: 'Ana sayfa', discover: 'Keşfet', trust: 'Güven', settings: 'Ayarlar' },
+    nav: { home: 'Ana sayfa', discover: 'Keşfet', trust: 'Güven', settings: 'Ayarlar',
+      homeSub: 'Yenilikler ve takip ettikleriniz.', discoverSub: 'Pi ekonomisinde insanları bulun.', trustSub: 'Tamamlanmış Pi ödemelerinden oluşur.' },
     footer: 'Connection, güvendiğiniz ilişkilerin yaşadığı yerdir — TEC genelinde takip ettiğiniz, bağlandığınız ve birlikte güven inşa ettiğiniz kişiler. Ağınızın kontrolü her zaman sizde.',
     settings: {
       profile: 'Profil', planFree: 'Ücretsiz', planPro: 'Pro',

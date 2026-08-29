@@ -17,7 +17,8 @@ export const vi: Dictionary = {
     brand: 'TEC Connection · Mạng lưới của bạn',
     welcome: 'Chào mừng', welcomeName: 'Chào mừng, {name}',
     subtitle: 'Đồ thị quan hệ của bạn trong hệ sinh thái TEC. Các kết nối là của bạn — bạn quyết định tin ai và ai được nhìn thấy.',
-    nav: { home: 'Trang chủ', discover: 'Khám phá', trust: 'Uy tín', settings: 'Cài đặt' },
+    nav: { home: 'Trang chủ', discover: 'Khám phá', trust: 'Uy tín', settings: 'Cài đặt',
+      homeSub: 'Điều mới, và những người bạn theo dõi.', discoverSub: 'Tìm mọi người trong nền kinh tế Pi.', trustSub: 'Dựng từ các khoản thanh toán Pi đã hoàn tất.' },
     footer: 'Connection là nơi lưu giữ các mối quan hệ đáng tin cậy của bạn — những người bạn theo dõi, kết nối và xây dựng uy tín cùng trên TEC. Bạn luôn kiểm soát mạng lưới của mình.',
     settings: {
       profile: 'Hồ sơ', planFree: 'Miễn phí', planPro: 'Pro',
