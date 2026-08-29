@@ -6,6 +6,7 @@
 // Browser → Mode 2 (direct createU2APayment). Approves under PI_API_KEY_CONNECTION.
 import { useEffect, useState } from 'react';
 import { TEC_COLORS } from '@yasser172/tec-ui';
+import { useTranslation } from '@/lib/i18n';
 import {
   isHubNavigation,
   redirectToHubPayment,
@@ -33,6 +34,8 @@ const asText = (v: unknown): string => {
 type Status = 'idle' | 'creating' | 'paying' | 'success' | 'error';
 
 export function ConnectionPro() {
+  const { t } = useTranslation();
+  const a = t.app;
   const [piReady, setPiReady] = useState(false);
   const [status,  setStatus]  = useState<Status>('idle');
   const [message, setMessage] = useState('');
@@ -76,8 +79,11 @@ export function ConnectionPro() {
     const p  = new URLSearchParams(window.location.search);
     const st = p.get('payment_status');
     if (!st) return;
+    // Leave `message` empty and let the render fall back to the translated
+    // default — reading `a` inside a mount-only effect would capture the locale
+    // that happened to be active on the first render.
     if (st === 'success') setStatus('success');
-    else if (st === 'error') { setStatus('error'); setMessage('Payment did not complete. Please try again.'); }
+    else if (st === 'error') { setStatus('error'); setMessage(''); }
     window.history.replaceState({}, '', '/app');
   }, []);
 
@@ -98,7 +104,7 @@ export function ConnectionPro() {
       const internalId = await createPaymentRecord(PRICE, ITEM_ID, MEMO);
       if (!internalId) {
         setStatus('error');
-        setMessage('Could not start the payment. Please sign in again and retry.');
+        setMessage(a.proCouldNotStart);
         return;
       }
       setStatus('paying');
@@ -109,11 +115,11 @@ export function ConnectionPro() {
         setStatus('idle');
       } else {
         setStatus('error');
-        setMessage(asText(result.message) || 'Payment failed. Please try again.');
+        setMessage(asText(result.message) || a.proFailed);
       }
     } catch (err) {
       setStatus('error');
-      setMessage(asText(err) || 'Payment failed. Please try again.');
+      setMessage(asText(err) || a.proFailed);
     }
   };
 
@@ -128,13 +134,15 @@ export function ConnectionPro() {
   if (isSubscribed) {
     return (
       <div style={{ background: TEC_COLORS.surface, border: `1px solid ${TEC_COLORS.gold}55`, borderRadius: 16, padding: 20, marginTop: 24 }}>
-        <div style={{ fontSize: 15, fontWeight: 800, color: TEC_COLORS.gold }}>★ You’re on Pro</div>
+        <div style={{ fontSize: 15, fontWeight: 800, color: TEC_COLORS.gold }}>{a.proActive}</div>
         <div style={{ fontSize: 12, color: TEC_COLORS.subtext, marginTop: 6 }}>
-          Your subscription is active. Thanks for supporting TEC.
+          {a.proSubActive}
         </div>
         {typeof daysRemaining === 'number' && (
           <div style={{ fontSize: 12, fontWeight: daysRemaining <= 7 ? 700 : 600, color: daysRemaining <= 7 ? TEC_COLORS.gold : TEC_COLORS.subtext, marginTop: 8 }}>
-            {daysRemaining <= 7 ? '⏳ ' : ''}Expires in {daysRemaining} day{daysRemaining === 1 ? '' : 's'}{daysRemaining <= 7 ? ' — re-subscribe to keep Pro (one-time monthly, no auto-renewal).' : '.'}
+            {daysRemaining <= 7 ? '⏳ ' : ''}
+            {a.proExpires.replace('{days}', String(daysRemaining))}
+            {daysRemaining <= 7 ? ` — ${a.proRenewNote}` : '.'}
           </div>
         )}
       </div>
@@ -144,9 +152,9 @@ export function ConnectionPro() {
   if (status === 'success') {
     return (
       <div style={{ ...card, borderColor: `${TEC_COLORS.success}66` }}>
-        <div style={{ fontSize: 15, fontWeight: 800, color: TEC_COLORS.success }}>✅ Connection Pro active</div>
+        <div style={{ fontSize: 15, fontWeight: 800, color: TEC_COLORS.success }}>{a.proPaid}</div>
         <div style={{ fontSize: 12, color: TEC_COLORS.subtext, marginTop: 6 }}>
-          Payment received. Thanks for supporting TEC Connection 🔗.
+          {a.proPaidBody}
         </div>
       </div>
     );
@@ -157,9 +165,9 @@ export function ConnectionPro() {
   return (
     <div style={card}>
       <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 12 }}>
-        <div style={{ fontSize: 15, fontWeight: 800, color: TEC_COLORS.gold }}>🔗 Connection Pro</div>
+        <div style={{ fontSize: 15, fontWeight: 800, color: TEC_COLORS.gold }}>🔗 {a.proTitle}</div>
         <div style={{ fontSize: 20, fontWeight: 900, color: TEC_COLORS.text }}>
-          {PRICE}π<span style={{ fontSize: 12, color: TEC_COLORS.subtext, fontWeight: 600 }}> / month</span>
+          {PRICE}π<span style={{ fontSize: 12, color: TEC_COLORS.subtext, fontWeight: 600 }}> {a.perMonth}</span>
         </div>
       </div>
       {/* Two lines, not a paragraph. The previous copy ran seven lines and ended
@@ -169,15 +177,15 @@ export function ConnectionPro() {
       <ul style={{ margin: '10px 0 0', padding: 0, listStyle: 'none', display: 'grid', gap: 7 }}>
         <li style={{ fontSize: 13, color: TEC_COLORS.text, display: 'flex', gap: 8 }}>
           <span aria-hidden="true">👥</span>
-          <span>See who follows you — and follow back in one tap.</span>
+          <span>{a.proBenefit1}</span>
         </li>
         <li style={{ fontSize: 13, color: TEC_COLORS.text, display: 'flex', gap: 8 }}>
           <span aria-hidden="true">⭐</span>
-          <span>A Featured card in Discover, so more people find you.</span>
+          <span>{a.proBenefit2}</span>
         </li>
       </ul>
       <div style={{ fontSize: 11.5, color: TEC_COLORS.subtext, marginTop: 10 }}>
-        Reach only — never verification or trust.
+        {a.proReachOnly}
       </div>
 
       <button
@@ -191,13 +199,13 @@ export function ConnectionPro() {
           cursor: busy ? 'not-allowed' : 'pointer',
         }}
       >
-        {status === 'creating' ? 'Preparing…'
-          : status === 'paying' ? 'Confirm in Pi…'
-          : `Upgrade — ${PRICE}π / month`}
+        {status === 'creating' ? a.proPreparing
+          : status === 'paying' ? a.proConfirm
+          : `${a.proUpgrade} — ${PRICE}π ${a.perMonth}`}
       </button>
 
       {status === 'error' && (
-        <div style={{ fontSize: 12, color: TEC_COLORS.error, marginTop: 10 }}>{message}</div>
+        <div style={{ fontSize: 12, color: TEC_COLORS.error, marginTop: 10 }}>{message || a.proNotCompleted}</div>
       )}
     </div>
   );

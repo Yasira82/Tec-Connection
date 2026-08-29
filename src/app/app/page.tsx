@@ -29,6 +29,7 @@ import { NetworkInsights } from './components/NetworkInsights';
 import { Trust } from './components/Trust';
 import { Notifications } from './components/Notifications';
 import { Collaboration } from './components/Collaboration';
+import { Messages } from './components/Messages';
 
 export default function ConnectionHome() {
   const { user, isLoading } = usePiAuth();
@@ -43,6 +44,7 @@ export default function ConnectionHome() {
   // in a few words — it is not a place to explain the platform.
   const heading: Record<ConnTab, { title: string; sub: string }> = {
     home:     { title: isLoading || !name ? t.connection.welcome : name, sub: t.connection.nav.homeSub },
+    messages: { title: t.app.messages,            sub: t.app.messagesSub },
     discover: { title: t.connection.nav.discover, sub: t.connection.nav.discoverSub },
     trust:    { title: t.connection.nav.trust,    sub: t.connection.nav.trustSub },
     settings: { title: t.connection.nav.settings, sub: '' },
@@ -75,6 +77,11 @@ export default function ConnectionHome() {
             <InviteCard />
           </>
         )}
+
+        {/* MESSAGES — direct threads and groups. `me` comes from the server-
+            resolved session username, so "is this mine?" is decided by the same
+            identity the backend scoped the thread to. */}
+        {tab === 'messages' && <Messages me={piName ?? ''} />}
 
         {/* DISCOVER — people. The profile editor lives in Settings. */}
         {tab === 'discover' && (

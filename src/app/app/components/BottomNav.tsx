@@ -5,12 +5,13 @@
 import { Icon, type ConnIconName } from './Icon';
 import { useTranslation } from '@/lib/i18n';
 
-export type ConnTab = 'home' | 'discover' | 'trust' | 'settings';
+export type ConnTab = 'home' | 'messages' | 'discover' | 'trust' | 'settings';
 
 export function BottomNav({ active, onSelect }: { active: ConnTab; onSelect: (t: ConnTab) => void }) {
   const { t } = useTranslation();
   const ITEMS: { key: ConnTab; icon: ConnIconName; label: string }[] = [
     { key: 'home',     icon: 'home',     label: t.connection.nav.home     },
+    { key: 'messages', icon: 'message',  label: t.app.messages           },
     { key: 'discover', icon: 'users',    label: t.connection.nav.discover },
     { key: 'trust',    icon: 'shield',   label: t.connection.nav.trust    },
     { key: 'settings', icon: 'settings', label: t.connection.nav.settings },

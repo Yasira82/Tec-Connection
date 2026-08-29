@@ -107,7 +107,7 @@ export function SettingsView() {
           }}>{(username ?? 'Y').charAt(0).toUpperCase()}</div>
           <div style={{ minWidth: 0 }}>
             <div style={{ fontSize: 18, fontWeight: 800, color: TEC_COLORS.text }}>
-              {username ? `@${username}` : signedIn ? s.member : s.notSignedIn}
+              {username ? <bdi>@{username}</bdi> : signedIn ? s.member : s.notSignedIn}
             </div>
             <div style={{ fontSize: 13, color: TEC_COLORS.subtext, marginTop: 2 }}>{isPro ? s.planPro : s.planFree}</div>
             {signedIn && (

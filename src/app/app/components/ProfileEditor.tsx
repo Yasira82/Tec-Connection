@@ -114,7 +114,7 @@ export function ProfileEditor() {
 
         <div style={{ display: 'flex', gap: 8, marginTop: 12, overflowX: 'auto', paddingBottom: 4 }}>
           {CATEGORIES.map((c) => (
-            <button key={c} style={chip(cat === c)} onClick={() => setCat(c)}>{c}</button>
+            <button key={c} style={chip(cat === c)} onClick={() => setCat(c)}>{t.public.cat[c]}</button>
           ))}
         </div>
 

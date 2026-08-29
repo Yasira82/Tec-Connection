@@ -131,7 +131,7 @@ export function Discover() {
                     line it also title-cased the count: "184 Followers". */}
                 <div style={{ fontSize: 11, color: TEC_COLORS.gold, marginTop: 2 }}>
                   <span style={{ textTransform: 'capitalize' }}>{t.public.cat[p.category as keyof typeof t.public.cat] ?? p.category}</span>
-                  {' · '}{p.followers} follower{p.followers === 1 ? '' : 's'}
+                  {' · '}<bdi>{p.followers} {p.followers === 1 ? t.public.follower : t.public.followers}</bdi>
                   {/* ⭐ on the META line, not beside the name: a second badge
                       next to a long handle wraps and makes that one row taller.
                       It is also a paid placement, not part of who they are. */}
