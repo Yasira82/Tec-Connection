@@ -1,0 +1,78 @@
+import type { Dictionary } from './en';
+
+export const pt: Dictionary = {
+  common: {
+    appName: 'TEC', tagline: 'O Consórcio de Elite', login: 'Entrar com Pi', logout: 'Sair',
+    loading: 'Carregando…', comingSoon: 'Em breve', live: 'Ativo', language: 'Idioma',
+  },
+  dashboard: {
+    greeting: 'Bem-vindo,', welcomeNew: '🎉 Bem-vindo à TEC — Sua conta está pronta',
+    stats: {
+      piBalance: 'Saldo de Pi', tecWallet: 'Carteira TEC', availableApps: 'Apps disponíveis',
+      activeApp: 'Ativo', subscription: 'Assinatura', upgradePro: 'Atualizar para Pro',
+    },
+    appsTitle: 'Ecossistema TEC', appsCount: '24 apps',
+  },
+  connection: {
+    brand: 'TEC Connection · Sua rede',
+    welcome: 'Bem-vindo', welcomeName: 'Bem-vindo, {name}',
+    subtitle: 'Seu grafo de relações no ecossistema TEC. Suas conexões são suas — você decide em quem confia e quem pode ver.',
+    nav: { home: 'Início', discover: 'Descobrir', trust: 'Confiança', settings: 'Ajustes' },
+    footer: 'O Connection é onde ficam suas relações de confiança — quem você segue, com quem se conecta e com quem constrói confiança na TEC. Você sempre controla sua própria rede.',
+    settings: {
+      profile: 'Perfil', planFree: 'Grátis', planPro: 'Pro',
+      connectedPi: 'Conectado ao Pi', notSignedIn: 'Não conectado', member: 'Membro TEC',
+      appearance: 'Aparência', language: 'Idioma', languageDesc: 'Idioma de exibição',
+      about: 'Sobre', version: 'Versão', domain: 'Domínio', ecosystem: 'Ecossistema',
+      builtOn: 'Construído sobre', builtOnPi: 'Pi Network', logout: 'Sair',
+    },
+  },
+  public: {
+    brand:       'TEC · Connection',
+    headline:    'As pessoas da economia Pi.',
+    lede:        'Encontre construtores e comerciantes que realmente aceitam Pi — e veja em quem se pode confiar, com base em pagamentos reais concluídos, não em promessas.',
+    alreadyOn:   'já estão na TEC',
+    cta:         'Continuar com Pi',
+    browseFree:  'Ou explore sem entrar →',
+    peopleOnTec: 'Pessoas na TEC',
+    seeAll:      'Ver tudo →',
+    howTrust:    'Como a confiança é construída aqui',
+    step1Title:  'Publique',
+    step1Body:   'Coloque seu nome de usuário e uma linha sobre o que você faz. É opcional — você só aparece se escolher.',
+    step2Title:  'Conecte-se',
+    step2Body:   'Siga os construtores e comerciantes com quem você realmente negocia. Seu grafo pertence a você.',
+    step3Title:  'Seja confiável',
+    step3Body:   'Aqui a confiança é calculada a partir de pagamentos em Pi concluídos — não de seguidores, avaliações ou qualquer coisa que você escreva sobre si mesmo.',
+    disclaimer:  'A verificação vem do Zone / KYC — o Connection nunca a emite. "Destaque" é uma posição Pro: apenas alcance, não confiança.',
+
+    discoverTitle: 'Descubra pessoas no Pi',
+    discoverLede:  'Construtores, comerciantes, criadores e investidores. A verificação vem do Zone / KYC — o Connection apenas a exibe, nunca a emite.',
+    searchLabel:   'Buscar por nome de usuário ou descrição',
+    searchHint:    'Buscar pessoas…',
+    searchAction:  'Buscar',
+    all:           'todos',
+    emptyFiltered: 'Ainda não há resultados',
+    emptyAll:      'O diretório ainda está sendo preenchido',
+    emptyBody:     'Aparecer é opcional — as pessoas só surgem aqui depois de publicar o perfil. Entre e publique o seu para ser encontrado.',
+    clearFilters:  'Limpar filtros',
+    findableTitle: 'Seja encontrado na economia Pi',
+    findableBody:  'Publique seu perfil, siga as pessoas com quem você negocia e deixe a confiança crescer a partir de pagamentos reais concluídos.',
+
+    back:         'Descobrir',
+    verified:     'Verificado',
+    verifiedHint: 'Verificado — vem do Zone / KYC, nunca emitido pelo Connection',
+    featured:     'Destaque',
+    featuredHint: 'Destaque — posição do Connection Pro. Apenas alcance; não é verificação.',
+    follower:     'seguidor',
+    followers:    'seguidores',
+    since:        'Na TEC desde {date}',
+    follow:       'Seguir @{name}',
+    browseMore:   'Ver mais pessoas →',
+    profileNote:  'A verificação vem do Zone / KYC — o Connection nunca a emite. "Destaque" é uma posição do Connection Pro: apenas alcance, nunca confiança. Confiança se conquista, não se compra.',
+    notFound:     'Perfil não encontrado',
+
+    cat: { builder: 'construtor', merchant: 'comerciante', creator: 'criador', investor: 'investidor', mentor: 'mentor', other: 'outro' },
+
+    privacy: 'Privacidade', terms: 'Termos',
+  },
+};

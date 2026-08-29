@@ -1,0 +1,78 @@
+import type { Dictionary } from './en';
+
+export const fr: Dictionary = {
+  common: {
+    appName: 'TEC', tagline: 'Le Consortium d’Élite', login: 'Se connecter avec Pi', logout: 'Déconnexion',
+    loading: 'Chargement…', comingSoon: 'Bientôt disponible', live: 'Actif', language: 'Langue',
+  },
+  dashboard: {
+    greeting: 'Bienvenue,', welcomeNew: '🎉 Bienvenue sur TEC — Votre compte est prêt',
+    stats: {
+      piBalance: 'Solde Pi', tecWallet: 'Portefeuille TEC', availableApps: 'Applications disponibles',
+      activeApp: 'Actif', subscription: 'Abonnement', upgradePro: 'Passer à Pro',
+    },
+    appsTitle: 'Écosystème TEC', appsCount: '24 applications',
+  },
+  connection: {
+    brand: 'TEC Connection · Votre réseau',
+    welcome: 'Bienvenue', welcomeName: 'Bienvenue, {name}',
+    subtitle: 'Votre graphe de relations dans l’écosystème TEC. Vos connexions vous appartiennent — vous décidez à qui vous faites confiance et qui peut le voir.',
+    nav: { home: 'Accueil', discover: 'Découvrir', trust: 'Confiance', settings: 'Réglages' },
+    footer: 'Connection est l’endroit où vivent vos relations de confiance — ceux que vous suivez, avec qui vous vous connectez et bâtissez la confiance sur TEC. Vous gardez toujours le contrôle de votre réseau.',
+    settings: {
+      profile: 'Profil', planFree: 'Gratuit', planPro: 'Pro',
+      connectedPi: 'Connecté à Pi', notSignedIn: 'Non connecté', member: 'Membre TEC',
+      appearance: 'Apparence', language: 'Langue', languageDesc: 'Langue d’affichage',
+      about: 'À propos', version: 'Version', domain: 'Domaine', ecosystem: 'Écosystème',
+      builtOn: 'Construit sur', builtOnPi: 'Pi Network', logout: 'Déconnexion',
+    },
+  },
+  public: {
+    brand:       'TEC · Connection',
+    headline:    'Les gens de l’économie Pi.',
+    lede:        'Trouvez des bâtisseurs et des commerçants qui acceptent réellement Pi — et voyez à qui faire confiance, d’après des paiements réellement finalisés plutôt que des promesses.',
+    alreadyOn:   'déjà sur TEC',
+    cta:         'Continuer avec Pi',
+    browseFree:  'Ou parcourir sans se connecter →',
+    peopleOnTec: 'Les gens sur TEC',
+    seeAll:      'Tout voir →',
+    howTrust:    'Comment la confiance se construit ici',
+    step1Title:  'Publiez',
+    step1Body:   'Indiquez votre identifiant et une ligne sur ce que vous faites. C’est facultatif — vous n’êtes listé que si vous le choisissez.',
+    step2Title:  'Connectez-vous',
+    step2Body:   'Suivez les bâtisseurs et commerçants avec qui vous traitez réellement. Votre graphe vous appartient.',
+    step3Title:  'Gagnez la confiance',
+    step3Body:   'Ici la confiance est calculée à partir de paiements Pi finalisés — pas à partir d’abonnés, d’avis, ni de quoi que ce soit que vous puissiez écrire sur vous-même.',
+    disclaimer:  'La vérification provient de Zone / KYC — Connection ne l’émet jamais. « À la une » est un emplacement Pro : de la visibilité seulement, pas de la confiance.',
+
+    discoverTitle: 'Découvrir des gens sur Pi',
+    discoverLede:  'Bâtisseurs, commerçants, créateurs et investisseurs. La vérification vient de Zone / KYC — Connection l’affiche, ne l’émet jamais.',
+    searchLabel:   'Rechercher par identifiant ou description',
+    searchHint:    'Rechercher des personnes…',
+    searchAction:  'Rechercher',
+    all:           'tous',
+    emptyFiltered: 'Aucun résultat pour l’instant',
+    emptyAll:      'L’annuaire se remplit encore',
+    emptyBody:     'L’inscription est facultative — les gens n’apparaissent ici qu’après avoir publié leur profil. Connectez-vous et publiez le vôtre pour être trouvé.',
+    clearFilters:  'Effacer les filtres',
+    findableTitle: 'Soyez trouvable dans l’économie Pi',
+    findableBody:  'Publiez votre profil, suivez les personnes avec qui vous traitez, et laissez la confiance se construire à partir de paiements réellement finalisés.',
+
+    back:         'Découvrir',
+    verified:     'Vérifié',
+    verifiedHint: 'Vérifié — provient de Zone / KYC, jamais émis par Connection',
+    featured:     'À la une',
+    featuredHint: 'À la une — emplacement Connection Pro. Visibilité seulement ; ce n’est pas une vérification.',
+    follower:     'abonné',
+    followers:    'abonnés',
+    since:        'Sur TEC depuis {date}',
+    follow:       'Suivre @{name}',
+    browseMore:   'Voir plus de personnes →',
+    profileNote:  'La vérification provient de Zone / KYC — Connection ne l’émet jamais. « À la une » est un emplacement Connection Pro : de la visibilité seulement, jamais de la confiance. La confiance se gagne, elle ne s’achète pas.',
+    notFound:     'Profil introuvable',
+
+    cat: { builder: 'bâtisseur', merchant: 'commerçant', creator: 'créateur', investor: 'investisseur', mentor: 'mentor', other: 'autre' },
+
+    privacy: 'Confidentialité', terms: 'Conditions',
+  },
+};

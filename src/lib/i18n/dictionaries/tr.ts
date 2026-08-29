@@ -1,0 +1,78 @@
+import type { Dictionary } from './en';
+
+export const tr: Dictionary = {
+  common: {
+    appName: 'TEC', tagline: 'Elit Konsorsiyum', login: 'Pi ile giriş yap', logout: 'Çıkış',
+    loading: 'Yükleniyor…', comingSoon: 'Yakında', live: 'Aktif', language: 'Dil',
+  },
+  dashboard: {
+    greeting: 'Hoş geldiniz,', welcomeNew: '🎉 TEC’e hoş geldiniz — Hesabınız hazır',
+    stats: {
+      piBalance: 'Pi Bakiyesi', tecWallet: 'TEC Cüzdanı', availableApps: 'Kullanılabilir uygulamalar',
+      activeApp: 'Aktif', subscription: 'Abonelik', upgradePro: 'Pro’ya yükselt',
+    },
+    appsTitle: 'TEC Ekosistemi', appsCount: '24 uygulama',
+  },
+  connection: {
+    brand: 'TEC Connection · Ağınız',
+    welcome: 'Hoş geldiniz', welcomeName: 'Hoş geldiniz, {name}',
+    subtitle: 'TEC ekosistemindeki ilişki grafiğiniz. Bağlantılarınız size aittir — kime güveneceğinize ve kimin göreceğine siz karar verirsiniz.',
+    nav: { home: 'Ana sayfa', discover: 'Keşfet', trust: 'Güven', settings: 'Ayarlar' },
+    footer: 'Connection, güvendiğiniz ilişkilerin yaşadığı yerdir — TEC genelinde takip ettiğiniz, bağlandığınız ve birlikte güven inşa ettiğiniz kişiler. Ağınızın kontrolü her zaman sizde.',
+    settings: {
+      profile: 'Profil', planFree: 'Ücretsiz', planPro: 'Pro',
+      connectedPi: 'Pi’ye bağlı', notSignedIn: 'Giriş yapılmadı', member: 'TEC Üyesi',
+      appearance: 'Görünüm', language: 'Dil', languageDesc: 'Görüntüleme dili',
+      about: 'Hakkında', version: 'Sürüm', domain: 'Alan adı', ecosystem: 'Ekosistem',
+      builtOn: 'Şunun üzerine kurulu', builtOnPi: 'Pi Network', logout: 'Çıkış yap',
+    },
+  },
+  public: {
+    brand:       'TEC · Connection',
+    headline:    'Pi ekonomisinin insanları.',
+    lede:        'Pi’yi gerçekten kabul eden üreticileri ve satıcıları bulun — ve kime güvenilebileceğini görün: iddialara göre değil, tamamlanmış gerçek ödemelere göre.',
+    alreadyOn:   'şimdiden TEC’te',
+    cta:         'Pi ile devam et',
+    browseFree:  'Ya da giriş yapmadan göz atın →',
+    peopleOnTec: 'TEC’teki insanlar',
+    seeAll:      'Tümünü gör →',
+    howTrust:    'Burada güven nasıl oluşur',
+    step1Title:  'Yayınlayın',
+    step1Body:   'Kullanıcı adınızı ve ne yaptığınıza dair bir satır yazın. İsteğe bağlıdır — yalnızca siz seçerseniz listelenirsiniz.',
+    step2Title:  'Bağlanın',
+    step2Body:   'Gerçekten iş yaptığınız üretici ve satıcıları takip edin. Grafiğiniz size aittir.',
+    step3Title:  'Güven kazanın',
+    step3Body:   'Buradaki güven tamamlanmış Pi ödemelerinden hesaplanır — takipçilerden, yorumlardan veya kendiniz hakkında yazabileceğiniz hiçbir şeyden değil.',
+    disclaimer:  'Doğrulama Zone / KYC’den gelir — Connection asla kendisi vermez. "Öne çıkan" bir Pro yerleşimidir: yalnızca erişim, güven değil.',
+
+    discoverTitle: 'Pi’de insanları keşfedin',
+    discoverLede:  'Üreticiler, satıcılar, içerik üreticileri ve yatırımcılar. Doğrulama Zone / KYC’den gelir — Connection yalnızca gösterir, asla vermez.',
+    searchLabel:   'Kullanıcı adı veya açıklamaya göre ara',
+    searchHint:    'Kişi ara…',
+    searchAction:  'Ara',
+    all:           'tümü',
+    emptyFiltered: 'Henüz eşleşen kimse yok',
+    emptyAll:      'Dizin hâlâ dolmakta',
+    emptyBody:     'Listelenmek isteğe bağlıdır — kişiler burada yalnızca profillerini yayınladıktan sonra görünür. Giriş yapın ve bulunabilmek için profilinizi yayınlayın.',
+    clearFilters:  'Filtreleri temizle',
+    findableTitle: 'Pi ekonomisinde bulunabilir olun',
+    findableBody:  'Profilinizi yayınlayın, iş yaptığınız kişileri takip edin ve güvenin tamamlanmış gerçek ödemelerden oluşmasına izin verin.',
+
+    back:         'Keşfet',
+    verified:     'Doğrulanmış',
+    verifiedHint: 'Doğrulanmış — Zone / KYC’den gelir, Connection tarafından verilmez',
+    featured:     'Öne çıkan',
+    featuredHint: 'Öne çıkan — Connection Pro yerleşimi. Yalnızca erişim; doğrulama değil.',
+    follower:     'takipçi',
+    followers:    'takipçi',
+    since:        '{date} tarihinden beri TEC’te',
+    follow:       '@{name} kullanıcısını takip et',
+    browseMore:   'Daha fazla kişiye göz at →',
+    profileNote:  'Doğrulama Zone / KYC’den gelir — Connection asla kendisi vermez. "Öne çıkan" bir Connection Pro yerleşimidir: yalnızca erişim, asla güven. Güven kazanılır, satın alınmaz.',
+    notFound:     'Profil bulunamadı',
+
+    cat: { builder: 'üretici', merchant: 'satıcı', creator: 'içerik üreticisi', investor: 'yatırımcı', mentor: 'mentor', other: 'diğer' },
+
+    privacy: 'Gizlilik', terms: 'Koşullar',
+  },
+};

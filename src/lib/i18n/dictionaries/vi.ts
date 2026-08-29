@@ -1,0 +1,78 @@
+import type { Dictionary } from './en';
+
+export const vi: Dictionary = {
+  common: {
+    appName: 'TEC', tagline: 'Liên minh Tinh hoa', login: 'Đăng nhập bằng Pi', logout: 'Đăng xuất',
+    loading: 'Đang tải…', comingSoon: 'Sắp ra mắt', live: 'Đang hoạt động', language: 'Ngôn ngữ',
+  },
+  dashboard: {
+    greeting: 'Chào mừng,', welcomeNew: '🎉 Chào mừng đến với TEC — Tài khoản của bạn đã sẵn sàng',
+    stats: {
+      piBalance: 'Số dư Pi', tecWallet: 'Ví TEC', availableApps: 'Ứng dụng khả dụng',
+      activeApp: 'Đang dùng', subscription: 'Gói đăng ký', upgradePro: 'Nâng cấp lên Pro',
+    },
+    appsTitle: 'Hệ sinh thái TEC', appsCount: '24 ứng dụng',
+  },
+  connection: {
+    brand: 'TEC Connection · Mạng lưới của bạn',
+    welcome: 'Chào mừng', welcomeName: 'Chào mừng, {name}',
+    subtitle: 'Đồ thị quan hệ của bạn trong hệ sinh thái TEC. Các kết nối là của bạn — bạn quyết định tin ai và ai được nhìn thấy.',
+    nav: { home: 'Trang chủ', discover: 'Khám phá', trust: 'Uy tín', settings: 'Cài đặt' },
+    footer: 'Connection là nơi lưu giữ các mối quan hệ đáng tin cậy của bạn — những người bạn theo dõi, kết nối và xây dựng uy tín cùng trên TEC. Bạn luôn kiểm soát mạng lưới của mình.',
+    settings: {
+      profile: 'Hồ sơ', planFree: 'Miễn phí', planPro: 'Pro',
+      connectedPi: 'Đã kết nối Pi', notSignedIn: 'Chưa đăng nhập', member: 'Thành viên TEC',
+      appearance: 'Giao diện', language: 'Ngôn ngữ', languageDesc: 'Ngôn ngữ hiển thị',
+      about: 'Giới thiệu', version: 'Phiên bản', domain: 'Tên miền', ecosystem: 'Hệ sinh thái',
+      builtOn: 'Xây dựng trên', builtOnPi: 'Pi Network', logout: 'Đăng xuất',
+    },
+  },
+  public: {
+    brand:       'TEC · Connection',
+    headline:    'Những con người của nền kinh tế Pi.',
+    lede:        'Tìm những nhà xây dựng và thương nhân thực sự chấp nhận Pi — và xem ai đáng tin, dựa trên các khoản thanh toán đã hoàn tất chứ không phải lời tự nhận.',
+    alreadyOn:   'đã có mặt trên TEC',
+    cta:         'Tiếp tục với Pi',
+    browseFree:  'Hoặc xem trước mà không cần đăng nhập →',
+    peopleOnTec: 'Mọi người trên TEC',
+    seeAll:      'Xem tất cả →',
+    howTrust:    'Uy tín được tạo ra như thế nào',
+    step1Title:  'Công khai hồ sơ',
+    step1Body:   'Đặt tên người dùng và một dòng mô tả công việc của bạn. Tự nguyện — bạn chỉ xuất hiện nếu bạn chọn.',
+    step2Title:  'Kết nối',
+    step2Body:   'Theo dõi những nhà xây dựng và thương nhân bạn thực sự giao dịch. Mạng lưới thuộc về bạn.',
+    step3Title:  'Được tin tưởng',
+    step3Body:   'Uy tín ở đây được tính từ các khoản thanh toán Pi đã hoàn tất — không phải từ lượt theo dõi, đánh giá, hay bất cứ điều gì bạn tự viết về mình.',
+    disclaimer:  'Xác minh được cung cấp từ Zone / KYC — Connection không bao giờ tự cấp. "Nổi bật" là vị trí Pro: chỉ tăng hiển thị, không phải uy tín.',
+
+    discoverTitle: 'Khám phá mọi người trên Pi',
+    discoverLede:  'Nhà xây dựng, thương nhân, nhà sáng tạo và nhà đầu tư. Xác minh đến từ Zone / KYC — Connection chỉ hiển thị, không bao giờ tự cấp.',
+    searchLabel:   'Tìm theo tên hoặc mô tả',
+    searchHint:    'Tìm người…',
+    searchAction:  'Tìm',
+    all:           'tất cả',
+    emptyFiltered: 'Chưa có ai phù hợp',
+    emptyAll:      'Danh bạ vẫn đang được bổ sung',
+    emptyBody:     'Việc xuất hiện là tự nguyện — mọi người chỉ hiện ở đây sau khi công khai hồ sơ. Đăng nhập và công khai hồ sơ để được tìm thấy.',
+    clearFilters:  'Xoá bộ lọc',
+    findableTitle: 'Để được tìm thấy trong nền kinh tế Pi',
+    findableBody:  'Công khai hồ sơ, theo dõi những người bạn giao dịch, và để uy tín được xây dựng từ các khoản thanh toán thực đã hoàn tất.',
+
+    back:         'Khám phá',
+    verified:     'Đã xác minh',
+    verifiedHint: 'Đã xác minh — từ Zone / KYC, Connection không bao giờ tự cấp',
+    featured:     'Nổi bật',
+    featuredHint: 'Nổi bật — vị trí Connection Pro. Chỉ tăng hiển thị; không phải xác minh.',
+    follower:     'người theo dõi',
+    followers:    'người theo dõi',
+    since:        'Trên TEC từ {date}',
+    follow:       'Theo dõi @{name}',
+    browseMore:   'Xem thêm người khác →',
+    profileNote:  'Xác minh được cung cấp từ Zone / KYC — Connection không bao giờ tự cấp. "Nổi bật" là vị trí Connection Pro: chỉ tăng hiển thị, không phải uy tín. Uy tín được tạo ra, không thể mua.',
+    notFound:     'Không tìm thấy hồ sơ',
+
+    cat: { builder: 'nhà xây dựng', merchant: 'thương nhân', creator: 'nhà sáng tạo', investor: 'nhà đầu tư', mentor: 'người hướng dẫn', other: 'khác' },
+
+    privacy: 'Quyền riêng tư', terms: 'Điều khoản',
+  },
+};

@@ -2,6 +2,12 @@
 // fetch — so it renders in a server component (the public pages) and inside a
 // client tree (the landing) without duplicating the markup.
 //
+// All copy arrives as props rather than being read from a context: these cards
+// appear on server-rendered pages where a client locale context does not exist,
+// and the category slug (`builder`, `merchant`, …) comes from the backend and has
+// to be looked up in the caller's dictionary. `labels` is required, so adding a
+// language can never leave a card half-translated.
+//
 // The badge treatment is a constitutional requirement, not a style choice:
 // ✅ Verified is evidence PRESENTED from Zone / KYC and is never minted here,
 // while Featured is a Connection Pro placement worth REACH and nothing else. So
@@ -20,7 +26,25 @@ export interface DirectoryCardProfile {
   followers: number;
 }
 
-export function DirectoryCard({ profile, delay = 0 }: { profile: DirectoryCardProfile; delay?: number }) {
+export interface DirectoryCardLabels {
+  verified:     string;
+  verifiedHint: string;
+  featured:     string;
+  featuredHint: string;
+  follower:     string;
+  followers:    string;
+}
+
+export function DirectoryCard({
+  profile, labels, categoryLabel, delay = 0,
+}: {
+  profile: DirectoryCardProfile;
+  labels: DirectoryCardLabels;
+  categoryLabel?: string;
+  delay?: number;
+}) {
+  const followerWord = profile.followers === 1 ? labels.follower : labels.followers;
+
   return (
     <Link
       href={`/u/${encodeURIComponent(profile.username)}`}
@@ -31,18 +55,25 @@ export function DirectoryCard({ profile, delay = 0 }: { profile: DirectoryCardPr
 
       <div style={{ minWidth: 0, flex: 1 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 7, flexWrap: 'wrap' }}>
-          <span style={{ fontSize: 15.5, fontWeight: 800, color: '#fff', letterSpacing: '-0.01em' }}>
+          {/* <bdi>, not <span>. A Latin handle inside an Arabic paragraph is a
+              bidi island: the '@' is a NEUTRAL character, so the bidi algorithm
+              resolves it against the surrounding RTL run and renders
+              "sara_builds@". Seen in an RTL screenshot, not in review. <bdi>
+              isolates the handle so it always reads "@sara_builds", in any
+              language the page is displayed in. */}
+          <bdi style={{ fontSize: 15.5, fontWeight: 800, color: '#fff', letterSpacing: '-0.01em' }}>
             @{profile.username}
-          </span>
+          </bdi>
           {profile.verified && (
-            <span className="pub-badge-verified" title="Verified — presented from Zone / KYC, never minted by Connection">
-              ✓ Verified
-            </span>
+            <span className="pub-badge-verified" title={labels.verifiedHint}>✓ {labels.verified}</span>
           )}
         </div>
 
+        {/* `dir="auto"` because the headline is USER content: a person writes it
+            in their own language, which need not match the page's. Without it an
+            English headline on an Arabic page truncates from the wrong end. */}
         {profile.headline && (
-          <div style={{
+          <div dir="auto" style={{
             fontSize: 13.5, color: 'rgba(255,255,255,0.60)', marginTop: 3, lineHeight: 1.45,
             overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
           }}>{profile.headline}</div>
@@ -57,13 +88,13 @@ export function DirectoryCard({ profile, delay = 0 }: { profile: DirectoryCardPr
             title-cased the count — "Builder · 184 Followers". */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 11.5, color: 'rgba(255,255,255,0.38)', marginTop: 5 }}>
           <span>
-            <span style={{ textTransform: 'capitalize' }}>{profile.category}</span>
-            {' · '}{profile.followers} follower{profile.followers === 1 ? '' : 's'}
+            <span style={{ textTransform: 'capitalize' }}>{categoryLabel ?? profile.category}</span>
+            {' · '}{profile.followers} {followerWord}
           </span>
           {profile.featured && (
             <span className="pub-badge-featured" style={{ fontSize: 9.5, padding: '1px 6px' }}
-              title="Featured — a Connection Pro placement. Reach only; not verification.">
-              Featured
+              title={labels.featuredHint}>
+              {labels.featured}
             </span>
           )}
         </div>

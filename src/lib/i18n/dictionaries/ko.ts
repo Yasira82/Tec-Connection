@@ -1,0 +1,78 @@
+import type { Dictionary } from './en';
+
+export const ko: Dictionary = {
+  common: {
+    appName: 'TEC', tagline: '엘리트 컨소시엄', login: 'Pi로 로그인', logout: '로그아웃',
+    loading: '불러오는 중…', comingSoon: '곧 출시', live: '운영 중', language: '언어',
+  },
+  dashboard: {
+    greeting: '환영합니다,', welcomeNew: '🎉 TEC에 오신 것을 환영합니다 — 계정이 준비되었습니다',
+    stats: {
+      piBalance: 'Pi 잔액', tecWallet: 'TEC 지갑', availableApps: '사용 가능한 앱',
+      activeApp: '사용 중', subscription: '구독', upgradePro: 'Pro로 업그레이드',
+    },
+    appsTitle: 'TEC 생태계', appsCount: '앱 24개',
+  },
+  connection: {
+    brand: 'TEC Connection · 나의 네트워크',
+    welcome: '환영합니다', welcomeName: '환영합니다, {name}',
+    subtitle: 'TEC 생태계 안의 나의 관계 그래프. 연결은 온전히 당신의 것입니다 — 누구를 신뢰하고 누구에게 보일지 당신이 정합니다.',
+    nav: { home: '홈', discover: '탐색', trust: '신뢰', settings: '설정' },
+    footer: 'Connection은 신뢰하는 관계가 머무는 곳입니다 — TEC 전반에서 팔로우하고, 연결하고, 신뢰를 쌓아가는 사람들. 네트워크의 주도권은 언제나 당신에게 있습니다.',
+    settings: {
+      profile: '프로필', planFree: '무료', planPro: 'Pro',
+      connectedPi: 'Pi에 연결됨', notSignedIn: '로그인하지 않음', member: 'TEC 회원',
+      appearance: '화면', language: '언어', languageDesc: '표시 언어',
+      about: '정보', version: '버전', domain: '도메인', ecosystem: '생태계',
+      builtOn: '기반', builtOnPi: 'Pi Network', logout: '로그아웃',
+    },
+  },
+  public: {
+    brand:       'TEC · Connection',
+    headline:    'Pi 경제를 만드는 사람들.',
+    lede:        'Pi를 실제로 받는 빌더와 상점을 찾아보세요 — 그리고 누가 신뢰받는지 확인하세요. 자기 주장이 아니라 실제로 완료된 결제를 기준으로 합니다.',
+    alreadyOn:   '이미 TEC에 있습니다',
+    cta:         'Pi로 계속하기',
+    browseFree:  '로그인 없이 둘러보기 →',
+    peopleOnTec: 'TEC의 사람들',
+    seeAll:      '전체 보기 →',
+    howTrust:    '이곳의 신뢰가 쌓이는 방식',
+    step1Title:  '프로필 공개',
+    step1Body:   '핸들과 무엇을 하는지 한 줄을 적으세요. 선택 사항입니다 — 원할 때만 목록에 표시됩니다.',
+    step2Title:  '연결',
+    step2Body:   '실제로 거래하는 빌더와 상점을 팔로우하세요. 그래프는 당신의 것입니다.',
+    step3Title:  '신뢰 얻기',
+    step3Body:   '이곳의 신뢰는 완료된 Pi 결제로 계산됩니다 — 팔로워 수나 후기, 스스로 쓴 어떤 말도 아닙니다.',
+    disclaimer:  '인증은 Zone / KYC에서 제공되며 Connection이 발급하지 않습니다. "추천"은 Pro 노출 자리입니다: 도달 범위일 뿐 신뢰가 아닙니다.',
+
+    discoverTitle: 'Pi에서 사람 찾기',
+    discoverLede:  '빌더, 상점, 창작자, 투자자. 인증은 Zone / KYC에서 오며 Connection은 보여줄 뿐 발급하지 않습니다.',
+    searchLabel:   '핸들 또는 소개로 검색',
+    searchHint:    '사람 검색…',
+    searchAction:  '검색',
+    all:           '전체',
+    emptyFiltered: '아직 일치하는 사람이 없습니다',
+    emptyAll:      '디렉터리가 채워지는 중입니다',
+    emptyBody:     '등록은 선택 사항입니다 — 프로필을 공개한 사람만 여기에 나타납니다. 로그인하고 프로필을 공개해 발견되도록 하세요.',
+    clearFilters:  '필터 지우기',
+    findableTitle: 'Pi 경제에서 발견되기',
+    findableBody:  '프로필을 공개하고, 거래하는 사람들을 팔로우하고, 실제 완료된 결제로 신뢰를 쌓으세요.',
+
+    back:         '탐색',
+    verified:     '인증됨',
+    verifiedHint: '인증됨 — Zone / KYC에서 제공, Connection이 발급하지 않음',
+    featured:     '추천',
+    featuredHint: '추천 — Connection Pro 노출 자리. 도달 범위일 뿐 인증이 아닙니다.',
+    follower:     '팔로워',
+    followers:    '팔로워',
+    since:        '{date}부터 TEC 이용',
+    follow:       '@{name} 팔로우',
+    browseMore:   '다른 사람 더 보기 →',
+    profileNote:  '인증은 Zone / KYC에서 제공되며 Connection이 발급하지 않습니다. "추천"은 Connection Pro 노출 자리입니다: 도달 범위일 뿐 신뢰가 아닙니다. 신뢰는 얻는 것이지 살 수 있는 것이 아닙니다.',
+    notFound:     '프로필을 찾을 수 없습니다',
+
+    cat: { builder: '빌더', merchant: '상점', creator: '창작자', investor: '투자자', mentor: '멘토', other: '기타' },
+
+    privacy: '개인정보', terms: '약관',
+  },
+};

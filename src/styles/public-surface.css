@@ -243,6 +243,37 @@
   border: 1px solid var(--tec-border);
 }
 
+/* ── Language picker ────────────────────────────────────────────────────────
+   Every option in its own script, so the labels are visually uneven by nature.
+   A fixed line-height and consistent padding keep the row from bouncing between
+   Latin, CJK, Devanagari and Arabic glyphs. */
+.pub-lang {
+  padding: 5px 11px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 650;
+  line-height: 1.5;
+  text-decoration: none;
+  white-space: nowrap;
+  color: rgba(255, 255, 255, 0.5);
+  border: 1px solid transparent;
+  transition: color var(--dur-base) var(--ease-out), border-color var(--dur-base) var(--ease-out);
+}
+.pub-lang:hover { color: rgba(255, 255, 255, 0.9); border-color: var(--tec-border); }
+.pub-lang[data-active='true'] {
+  color: var(--tec-gold);
+  border-color: var(--tec-border-gold);
+  background: rgba(251, 180, 74, 0.07);
+}
+
+/* ── RTL ────────────────────────────────────────────────────────────────────
+   The layout is flex/grid throughout, which mirrors on its own. Only the two
+   places that hard-code a direction need help: the chevron at the end of a card,
+   and the overlap direction of the avatar stack. */
+[dir='rtl'] .pub-card > span[aria-hidden='true'] { transform: scaleX(-1); }
+[dir='rtl'] .pub-stack > * { margin-left: 0; margin-right: -9px; }
+[dir='rtl'] .pub-stack > *:first-child { margin-right: 0; }
+
 /* ── Entrance ───────────────────────────────────────────────────────────────
    Staggered via an inline `animation-delay`, so order lives with the markup. */
 .pub-in { animation: tec-slide-up 520ms var(--ease-out) both; }

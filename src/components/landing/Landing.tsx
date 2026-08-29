@@ -7,10 +7,10 @@
 // other human was here. That is the wrong order for the app that is meant to be
 // the ecosystem's front door: the reason to sign in has to be visible first.
 //
-// The people below are server-rendered by the parent from the public opt-in
-// directory (C-107), so they are in the delivered HTML — visible with no session,
-// to a crawler, and to a link preview. This component owns only the interactive
-// half: bounce an already-authenticated user into /app, and offer the Pi sign-in.
+// The people and the copy are both resolved by the SERVER parent — the directory
+// from the public opt-in listing (C-107), the strings from the visitor's locale —
+// so they are in the delivered HTML: visible with no session, to a crawler, and
+// to a link preview, in the visitor's own language.
 //
 // There is deliberately NO "N people" counter. The directory API is capped at
 // `take: 60`, so a count derived from the returned array would silently freeze at
@@ -22,23 +22,18 @@ import { useRouter } from 'next/navigation';
 import { usePiAuth, ssoRedirect } from '@yasser172/tec-auth';
 import { Avatar } from '@/components/public/Avatar';
 import { DirectoryCard, type DirectoryCardProfile } from '@/components/public/DirectoryCard';
+import { LanguagePicker } from '@/components/public/LanguagePicker';
+import type { Dictionary } from '@/lib/i18n/dictionaries';
+import type { Locale } from '@/lib/i18n/locales';
 
 const HUB_URL  = process.env.NEXT_PUBLIC_HUB_URL  ?? 'https://hub.tecosystem.app';
 const APP_URL  = process.env.NEXT_PUBLIC_APP_URL  ?? 'https://connection.tecosystem.app';
 
-const FOOTER_LINKS = [
-  { label: 'Discover', href: '/discover' },
-  { label: 'Privacy',  href: '/privacy'  },
-  { label: 'Terms',    href: '/terms'    },
-];
+type PublicStrings = Dictionary['public'];
 
-const STEPS = [
-  { n: '1', title: 'Publish',  body: 'Put up a handle and one line about what you do. Opt-in — you are listed only if you choose to be.' },
-  { n: '2', title: 'Connect',  body: 'Follow the builders and merchants you actually deal with. Your graph belongs to you.' },
-  { n: '3', title: 'Be trusted', body: 'Trust here is computed from completed Pi payments — not from followers, reviews, or anything you can write about yourself.' },
-];
-
-export function Landing({ profiles }: { profiles: DirectoryCardProfile[] }) {
+export function Landing({
+  profiles, t, locale,
+}: { profiles: DirectoryCardProfile[]; t: PublicStrings; locale: Locale }) {
   const { isAuthenticated, isLoading } = usePiAuth();
   const router = useRouter();
 
@@ -47,6 +42,12 @@ export function Landing({ profiles }: { profiles: DirectoryCardProfile[] }) {
   }, [isLoading, isAuthenticated, router]);
 
   const handleLogin = () => ssoRedirect(HUB_URL, `${APP_URL}/app`);
+
+  const steps = [
+    { n: '1', title: t.step1Title, body: t.step1Body },
+    { n: '2', title: t.step2Title, body: t.step2Body },
+    { n: '3', title: t.step3Title, body: t.step3Body },
+  ];
 
   return (
     <main className="pub-glow" style={{
@@ -62,16 +63,13 @@ export function Landing({ profiles }: { profiles: DirectoryCardProfile[] }) {
 
         {/* ── Hero ───────────────────────────────────────────────────── */}
         <header style={{ textAlign: 'center' }}>
-          <div className="pub-eyebrow pub-in">TEC · Connection</div>
+          <div className="pub-eyebrow pub-in">{t.brand}</div>
 
           <h1 className="pub-h1 pub-in" style={{ marginTop: 14, animationDelay: '60ms' }}>
-            The people of the<br />Pi economy.
+            {t.headline}
           </h1>
 
-          <p className="pub-lede pub-in" style={{ animationDelay: '120ms' }}>
-            Find builders and merchants who actually accept Pi — and see who is
-            trusted, from real completed payments rather than claims.
-          </p>
+          <p className="pub-lede pub-in" style={{ animationDelay: '120ms' }}>{t.lede}</p>
 
           {/* Social proof made of real, published people. Rendered only when the
               directory answered; an empty stack says nothing and is left out. */}
@@ -84,7 +82,7 @@ export function Landing({ profiles }: { profiles: DirectoryCardProfile[] }) {
                 {profiles.slice(0, 5).map(p => <Avatar key={p.username} username={p.username} size={34} />)}
               </div>
               <span style={{ fontSize: 13, fontWeight: 650, color: 'rgba(255,255,255,0.55)' }}>
-                already on TEC
+                {t.alreadyOn}
               </span>
             </div>
           )}
@@ -97,11 +95,9 @@ export function Landing({ profiles }: { profiles: DirectoryCardProfile[] }) {
                 until it resolved. The sign-in redirect does not depend on that
                 answer: an authenticated visitor is already being bounced to /app
                 by the effect above, so the button can always be pressed. */}
-            <button onClick={handleLogin} className="pub-cta">Continue with Pi</button>
+            <button onClick={handleLogin} className="pub-cta">{t.cta}</button>
             <div>
-              <Link href="/discover" className="pub-secondary">
-                Or browse without signing in →
-              </Link>
+              <Link href="/discover" className="pub-secondary">{t.browseFree}</Link>
             </div>
           </div>
         </header>
@@ -111,14 +107,22 @@ export function Landing({ profiles }: { profiles: DirectoryCardProfile[] }) {
           <section style={{ marginTop: 52 }}>
             <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 12, marginBottom: 14 }}>
               <h2 style={{ fontSize: 12, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.45)', margin: 0 }}>
-                People on TEC
+                {t.peopleOnTec}
               </h2>
               <Link href="/discover" style={{ fontSize: 13.5, fontWeight: 750, color: 'var(--tec-gold)', textDecoration: 'none' }}>
-                See all →
+                {t.seeAll}
               </Link>
             </div>
             <div style={{ display: 'grid', gap: 10 }}>
-              {profiles.map((p, i) => <DirectoryCard key={p.username} profile={p} delay={280 + i * 60} />)}
+              {profiles.map((p, i) => (
+                <DirectoryCard
+                  key={p.username}
+                  profile={p}
+                  delay={280 + i * 60}
+                  categoryLabel={t.cat[p.category as keyof PublicStrings['cat']] ?? p.category}
+                  labels={{ verified: t.verified, verifiedHint: t.verifiedHint, featured: t.featured, featuredHint: t.featuredHint, follower: t.follower, followers: t.followers }}
+                />
+              ))}
             </div>
           </section>
         )}
@@ -126,10 +130,10 @@ export function Landing({ profiles }: { profiles: DirectoryCardProfile[] }) {
         {/* ── The differentiator, stated plainly ─────────────────────── */}
         <section className="pub-panel" style={{ marginTop: 44, padding: '26px 22px' }}>
           <h2 style={{ fontSize: 12, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.45)', margin: '0 0 18px' }}>
-            How trust works here
+            {t.howTrust}
           </h2>
           <div style={{ display: 'grid', gap: 18 }}>
-            {STEPS.map(s => (
+            {steps.map(s => (
               <div key={s.n} style={{ display: 'flex', gap: 14, alignItems: 'flex-start' }}>
                 <div style={{
                   width: 26, height: 26, flexShrink: 0, borderRadius: 999, display: 'grid', placeItems: 'center',
@@ -147,15 +151,15 @@ export function Landing({ profiles }: { profiles: DirectoryCardProfile[] }) {
 
         <footer style={{ marginTop: 40, textAlign: 'center' }}>
           <p style={{ fontSize: 11.5, lineHeight: 1.65, color: 'rgba(255,255,255,0.34)', margin: 0 }}>
-            Verification is presented from Zone / KYC — never minted by Connection.
-            Featured is a Pro placement: reach only, not trust.
+            {t.disclaimer}
           </p>
           <div style={{ display: 'flex', gap: 18, justifyContent: 'center', marginTop: 14 }}>
-            {FOOTER_LINKS.map(l => (
-              <Link key={l.href} href={l.href} style={{ fontSize: 12.5, color: 'rgba(255,255,255,0.45)', textDecoration: 'none' }}>
-                {l.label}
-              </Link>
-            ))}
+            <Link href="/discover" style={{ fontSize: 12.5, color: 'rgba(255,255,255,0.45)', textDecoration: 'none' }}>{t.discoverTitle}</Link>
+            <Link href="/privacy"  style={{ fontSize: 12.5, color: 'rgba(255,255,255,0.45)', textDecoration: 'none' }}>{t.privacy}</Link>
+            <Link href="/terms"    style={{ fontSize: 12.5, color: 'rgba(255,255,255,0.45)', textDecoration: 'none' }}>{t.terms}</Link>
+          </div>
+          <div style={{ marginTop: 22 }}>
+            <LanguagePicker current={locale} next="/" />
           </div>
         </footer>
       </div>

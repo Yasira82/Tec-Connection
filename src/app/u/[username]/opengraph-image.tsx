@@ -21,6 +21,7 @@
 import { ImageResponse } from 'next/og';
 import { avatarGradient } from '@/components/public/Avatar';
 import { resolvePublicProfile } from '@/lib/connection/discovery';
+import { getI18n } from '@/lib/i18n/server';
 
 export const alt         = 'TEC Connection profile';
 export const size        = { width: 1200, height: 630 };
@@ -31,11 +32,13 @@ const GOLD  = '#FBB44A';
 const GREEN = '#22C55E';
 
 export default async function Image({ params }: { params: Promise<{ username: string }> }) {
-  const { username } = await params;
+  const [{ username }, { t: dict }] = await Promise.all([params, getI18n()]);
+  const t = dict.public;
   const p = await resolvePublicProfile(username).catch(() => null);
 
+  const cat      = p ? (t.cat[p.category as keyof typeof t.cat] ?? p.category) : '';
   const handle   = p ? `@${p.username}` : 'TEC Connection';
-  const headline = p?.headline || (p ? `${p.category} in the Pi economy` : 'The people of the Pi economy');
+  const headline = p?.headline || (p ? cat : t.headline);
 
   return new ImageResponse(
     (
@@ -68,7 +71,7 @@ export default async function Image({ params }: { params: Promise<{ username: st
                   display: 'flex', padding: '6px 18px', borderRadius: 999,
                   fontSize: 24, fontWeight: 800, color: GREEN,
                   background: 'rgba(34,197,94,0.12)', border: `2px solid rgba(34,197,94,0.35)`,
-                }}>✓ Verified</div>
+                }}>✓ {t.verified}</div>
               )}
               {p && (
                 <div style={{
@@ -76,7 +79,7 @@ export default async function Image({ params }: { params: Promise<{ username: st
                   fontSize: 24, fontWeight: 600, color: 'rgba(255,255,255,0.55)',
                   background: 'rgba(255,255,255,0.05)', border: '2px solid rgba(255,255,255,0.08)',
                   textTransform: 'capitalize',
-                }}>{p.category}</div>
+                }}>{cat}</div>
               )}
             </div>
           </div>
@@ -87,7 +90,7 @@ export default async function Image({ params }: { params: Promise<{ username: st
         </div>
 
         <div style={{ display: 'flex', fontSize: 26, color: 'rgba(255,255,255,0.4)', marginTop: 26 }}>
-          {p ? `${p.followers} follower${p.followers === 1 ? '' : 's'} · ` : ''}connection.tecosystem.app
+          {p ? `${p.followers} ${p.followers === 1 ? t.follower : t.followers} · ` : ''}connection.tecosystem.app
         </div>
       </div>
     ),
