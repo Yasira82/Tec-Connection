@@ -24,6 +24,8 @@ export interface DirectoryProfile {
   verified:  boolean;
   featured:  boolean;
   followers: number;
+  /** Whether a profile photo exists. The KEY is never exposed to a client. */
+  hasAvatar: boolean;
 }
 
 // The caller's OWN editable profile.
@@ -34,6 +36,7 @@ export interface MyProfile {
   published: boolean;
   verified:  boolean;
   featured:  boolean;
+  hasAvatar: boolean;
 }
 
 // A public shareable profile (published only).
@@ -48,6 +51,7 @@ const toCard = (o: Record<string, unknown>): DirectoryProfile => ({
   verified:  Boolean(o.verified ?? false),
   featured:  Boolean(o.featured ?? false),
   followers: Number(o.followers ?? 0),
+  hasAvatar: Boolean(o.has_avatar ?? false),
 });
 
 /** The public Discover directory. Unreachable backend → [] (honest, never fabricated). */
@@ -91,6 +95,7 @@ export async function resolveMyProfile(token: string | null): Promise<MyProfile 
       published: Boolean(p.published ?? false),
       verified:  Boolean(p.verified ?? false),
       featured:  Boolean(p.featured ?? false),
+      hasAvatar: Boolean(p.has_avatar ?? false),
     };
   } catch { return null; }
 }
@@ -98,7 +103,7 @@ export async function resolveMyProfile(token: string | null): Promise<MyProfile 
 /** Save the caller's OWN profile (authenticated). Returns the saved profile or null. */
 export async function saveMyProfile(
   token: string | null,
-  input: { headline?: string; category?: string; published?: boolean },
+  input: { headline?: string; category?: string; published?: boolean; avatar_key?: string | null },
 ): Promise<MyProfile | null> {
   if (!GW || !token) return null;
   try {
@@ -110,6 +115,7 @@ export async function saveMyProfile(
     return p ? {
       username: String(p.username ?? ''), headline: String(p.headline ?? ''), category: String(p.category ?? 'builder'),
       published: Boolean(p.published ?? false), verified: Boolean(p.verified ?? false), featured: Boolean(p.featured ?? false),
+      hasAvatar: Boolean(p.has_avatar ?? false),
     } : null;
   } catch { return null; }
 }

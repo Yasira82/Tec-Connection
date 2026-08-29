@@ -1,0 +1,78 @@
+import type { Dictionary } from './en';
+
+export const hi: Dictionary = {
+  common: {
+    appName: 'TEC', tagline: 'द एलीट कंसोर्टियम', login: 'Pi से साइन इन करें', logout: 'लॉग आउट',
+    loading: 'लोड हो रहा है…', comingSoon: 'जल्द आ रहा है', live: 'सक्रिय', language: 'भाषा',
+  },
+  dashboard: {
+    greeting: 'स्वागत है,', welcomeNew: '🎉 TEC में आपका स्वागत है — आपका खाता तैयार है',
+    stats: {
+      piBalance: 'Pi शेष', tecWallet: 'TEC वॉलेट', availableApps: 'उपलब्ध ऐप्स',
+      activeApp: 'सक्रिय', subscription: 'सदस्यता', upgradePro: 'Pro में अपग्रेड करें',
+    },
+    appsTitle: 'TEC इकोसिस्टम', appsCount: '24 ऐप्स',
+  },
+  connection: {
+    brand: 'TEC Connection · आपका नेटवर्क',
+    welcome: 'स्वागत है', welcomeName: 'स्वागत है, {name}',
+    subtitle: 'TEC इकोसिस्टम में आपका संबंध-ग्राफ़। आपके कनेक्शन आपके हैं — आप तय करते हैं कि किस पर भरोसा करना है और कौन इसे देख सकता है।',
+    nav: { home: 'होम', discover: 'खोजें', trust: 'भरोसा', settings: 'सेटिंग्स' },
+    footer: 'Connection वह जगह है जहाँ आपके भरोसेमंद रिश्ते रहते हैं — जिन्हें आप फ़ॉलो करते हैं, जुड़ते हैं, और TEC पर भरोसा बनाते हैं। आपका नेटवर्क हमेशा आपके नियंत्रण में रहता है।',
+    settings: {
+      profile: 'प्रोफ़ाइल', planFree: 'मुफ़्त', planPro: 'Pro',
+      connectedPi: 'Pi से जुड़ा', notSignedIn: 'साइन इन नहीं', member: 'TEC सदस्य',
+      appearance: 'दिखावट', language: 'भाषा', languageDesc: 'प्रदर्शन भाषा',
+      about: 'परिचय', version: 'संस्करण', domain: 'डोमेन', ecosystem: 'इकोसिस्टम',
+      builtOn: 'आधारित', builtOnPi: 'Pi Network', logout: 'लॉग आउट',
+    },
+  },
+  public: {
+    brand:       'TEC · Connection',
+    headline:    'Pi अर्थव्यवस्था के लोग।',
+    lede:        'ऐसे बिल्डर और व्यापारी खोजें जो वाकई Pi स्वीकार करते हैं — और देखें कि कौन भरोसेमंद है, दावों से नहीं बल्कि असली पूरे हुए भुगतानों से।',
+    alreadyOn:   'पहले से TEC पर',
+    cta:         'Pi के साथ जारी रखें',
+    browseFree:  'या बिना साइन इन किए देखें →',
+    peopleOnTec: 'TEC पर लोग',
+    seeAll:      'सभी देखें →',
+    howTrust:    'यहाँ भरोसा कैसे बनता है',
+    step1Title:  'प्रोफ़ाइल प्रकाशित करें',
+    step1Body:   'अपना हैंडल और एक पंक्ति लिखें कि आप क्या करते हैं। यह वैकल्पिक है — आप तभी सूचीबद्ध होते हैं जब आप चाहें।',
+    step2Title:  'जुड़ें',
+    step2Body:   'उन बिल्डरों और व्यापारियों को फ़ॉलो करें जिनसे आप वाकई लेन-देन करते हैं। आपका ग्राफ़ आपका है।',
+    step3Title:  'भरोसा कमाएँ',
+    step3Body:   'यहाँ भरोसा पूरे हुए Pi भुगतानों से गिना जाता है — फ़ॉलोअर्स, समीक्षाओं, या अपने बारे में लिखी किसी बात से नहीं।',
+    disclaimer:  'सत्यापन Zone / KYC से दिखाया जाता है — Connection इसे कभी जारी नहीं करता। "फ़ीचर्ड" एक Pro प्लेसमेंट है: केवल पहुँच, भरोसा नहीं।',
+
+    discoverTitle: 'Pi पर लोगों को खोजें',
+    discoverLede:  'बिल्डर, व्यापारी, क्रिएटर और निवेशक। सत्यापन Zone / KYC से आता है — Connection उसे दिखाता है, कभी जारी नहीं करता।',
+    searchLabel:   'हैंडल या विवरण से खोजें',
+    searchHint:    'लोगों को खोजें…',
+    searchAction:  'खोजें',
+    all:           'सभी',
+    emptyFiltered: 'अभी कोई मेल नहीं खाता',
+    emptyAll:      'डायरेक्टरी अभी भर रही है',
+    emptyBody:     'सूचीबद्ध होना वैकल्पिक है — लोग यहाँ तभी दिखते हैं जब वे अपनी प्रोफ़ाइल प्रकाशित करें। साइन इन करें और अपनी प्रोफ़ाइल प्रकाशित करें ताकि आप मिल सकें।',
+    clearFilters:  'फ़िल्टर हटाएँ',
+    findableTitle: 'Pi अर्थव्यवस्था में खोजे जाने लायक बनें',
+    findableBody:  'अपनी प्रोफ़ाइल प्रकाशित करें, जिनसे आप लेन-देन करते हैं उन्हें फ़ॉलो करें, और भरोसे को असली पूरे हुए भुगतानों से बनने दें।',
+
+    back:         'खोजें',
+    verified:     'सत्यापित',
+    verifiedHint: 'सत्यापित — Zone / KYC से दिखाया गया, Connection द्वारा जारी नहीं',
+    featured:     'फ़ीचर्ड',
+    featuredHint: 'फ़ीचर्ड — Connection Pro प्लेसमेंट। केवल पहुँच; सत्यापन नहीं।',
+    follower:     'फ़ॉलोअर',
+    followers:    'फ़ॉलोअर्स',
+    since:        '{date} से TEC पर',
+    follow:       '@{name} को फ़ॉलो करें',
+    browseMore:   'और लोगों को देखें →',
+    profileNote:  'सत्यापन Zone / KYC से दिखाया जाता है — Connection इसे कभी जारी नहीं करता। "फ़ीचर्ड" एक Connection Pro प्लेसमेंट है: केवल पहुँच, भरोसा नहीं। भरोसा कमाया जाता है, ख़रीदा नहीं जाता।',
+    notFound:     'प्रोफ़ाइल नहीं मिली',
+
+    cat: { builder: 'बिल्डर', merchant: 'व्यापारी', creator: 'क्रिएटर', investor: 'निवेशक', mentor: 'मेंटर', other: 'अन्य' },
+
+    privacy: 'गोपनीयता', terms: 'शर्तें',
+  },
+};

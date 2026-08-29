@@ -1,25 +1,36 @@
 import { RefCapture } from '@/components/referral/RefCapture';
 import { RefApply } from '@/components/referral/RefApply';
 import { LocaleProvider } from '@/lib/i18n';
+import { getI18n } from '@/lib/i18n/server';
 import type { Metadata } from 'next';
 import '@/styles/tec-design-tokens.css';
+// App-owned polish for the three public surfaces (landing · /discover · /u/<handle>).
+// Kept out of tec-design-tokens.css on purpose: that file is synced with the tec-ui
+// package across the fleet, so app-specific rules there become drift.
+import '@/styles/public-surface.css';
 
 export const metadata: Metadata = {
   title:       'TEC Connection',
   description: 'TEC Connection — your economic relationship graph on Pi Network',
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  // Resolved per request from the cookie, then Accept-Language. Setting `lang`
+  // and `dir` HERE — rather than from the client provider after hydration —
+  // means an Arabic visitor gets a right-to-left document in the first byte of
+  // HTML instead of a left-to-right flash, and a crawler sees the real language.
+  const { locale, dir } = await getI18n();
+
   return (
-    <html lang="en">
+    <html lang={locale} dir={dir}>
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
-        {/* Full-bleed dark shell — tint the browser UI + declare dark canvas so
-            no white frame shows around the app in Pi Browser. */}
+        {/* Full-bleed dark shell — kill every source of the "white frame" around the
+            dark app in Pi Browser. */}
         <meta name="theme-color" content="#050816" />
         <meta name="color-scheme" content="dark" />
         <script
@@ -62,7 +73,7 @@ export default function RootLayout({
         />
       </head>
       <body>
-        <LocaleProvider>
+        <LocaleProvider initialLocale={locale}>
           <RefCapture />
           <RefApply />
           {children}

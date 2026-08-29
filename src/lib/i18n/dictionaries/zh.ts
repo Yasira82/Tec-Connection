@@ -1,0 +1,78 @@
+import type { Dictionary } from './en';
+
+export const zh: Dictionary = {
+  common: {
+    appName: 'TEC', tagline: '精英联盟', login: '使用 Pi 登录', logout: '退出',
+    loading: '加载中…', comingSoon: '即将推出', live: '运行中', language: '语言',
+  },
+  dashboard: {
+    greeting: '欢迎，', welcomeNew: '🎉 欢迎来到 TEC — 您的账户已就绪',
+    stats: {
+      piBalance: 'Pi 余额', tecWallet: 'TEC 钱包', availableApps: '可用应用',
+      activeApp: '使用中', subscription: '订阅', upgradePro: '升级到 Pro',
+    },
+    appsTitle: 'TEC 生态', appsCount: '24 个应用',
+  },
+  connection: {
+    brand: 'TEC Connection · 您的人脉',
+    welcome: '欢迎', welcomeName: '欢迎，{name}',
+    subtitle: '您在 TEC 生态中的关系图谱。您的人脉属于您自己 — 由您决定信任谁、谁可以看到。',
+    nav: { home: '首页', discover: '发现', trust: '信任', settings: '设置' },
+    footer: 'Connection 是您可信关系的所在 — 您关注的人、连接的人、以及在 TEC 中共同建立信任的人。您始终掌控自己的人脉网络。',
+    settings: {
+      profile: '个人资料', planFree: '免费', planPro: 'Pro',
+      connectedPi: '已连接 Pi', notSignedIn: '未登录', member: 'TEC 会员',
+      appearance: '外观', language: '语言', languageDesc: '显示语言',
+      about: '关于', version: '版本', domain: '域名', ecosystem: '生态',
+      builtOn: '构建于', builtOnPi: 'Pi Network', logout: '退出登录',
+    },
+  },
+  public: {
+    brand:       'TEC · Connection',
+    headline:    'Pi 经济中的人。',
+    lede:        '找到真正接受 Pi 的建设者和商家 — 并了解谁值得信任：依据真实完成的付款，而非自我宣称。',
+    alreadyOn:   '已加入 TEC',
+    cta:         '使用 Pi 继续',
+    browseFree:  '或不登录先浏览 →',
+    peopleOnTec: 'TEC 上的人',
+    seeAll:      '查看全部 →',
+    howTrust:    '这里的信任如何建立',
+    step1Title:  '发布',
+    step1Body:   '填写您的用户名和一句话简介。自愿加入 — 只有您选择后才会被列出。',
+    step2Title:  '连接',
+    step2Body:   '关注您真正打交道的建设者和商家。您的关系图谱属于您。',
+    step3Title:  '获得信任',
+    step3Body:   '这里的信任由已完成的 Pi 付款计算得出 — 而不是粉丝数、评价，或任何您可以自己写下的内容。',
+    disclaimer:  '认证由 Zone / KYC 提供 — Connection 从不自行签发。「推荐」是 Pro 展示位：仅提升曝光，不代表信任。',
+
+    discoverTitle: '在 Pi 上发现人',
+    discoverLede:  '建设者、商家、创作者与投资人。认证来自 Zone / KYC — Connection 只做呈现，从不签发。',
+    searchLabel:   '按用户名或简介搜索',
+    searchHint:    '搜索用户…',
+    searchAction:  '搜索',
+    all:           '全部',
+    emptyFiltered: '暂无匹配结果',
+    emptyAll:      '目录仍在充实中',
+    emptyBody:     '列入是自愿的 — 只有发布个人资料后才会出现在这里。登录并发布您的资料，让别人找到您。',
+    clearFilters:  '清除筛选',
+    findableTitle: '让别人在 Pi 经济中找到您',
+    findableBody:  '发布您的资料，关注您打交道的人，让信任从真实完成的付款中积累。',
+
+    back:         '发现',
+    verified:     '已认证',
+    verifiedHint: '已认证 — 由 Zone / KYC 提供，Connection 从不自行签发',
+    featured:     '推荐',
+    featuredHint: '推荐 — Connection Pro 展示位。仅提升曝光，不是认证。',
+    follower:     '位关注者',
+    followers:    '位关注者',
+    since:        '{date} 加入 TEC',
+    follow:       '关注 @{name}',
+    browseMore:   '浏览更多用户 →',
+    profileNote:  '认证由 Zone / KYC 提供 — Connection 从不自行签发。「推荐」是 Connection Pro 展示位：仅提升曝光，不代表信任。信任只能赢得，无法购买。',
+    notFound:     '未找到该资料',
+
+    cat: { builder: '建设者', merchant: '商家', creator: '创作者', investor: '投资人', mentor: '导师', other: '其他' },
+
+    privacy: '隐私', terms: '条款',
+  },
+};

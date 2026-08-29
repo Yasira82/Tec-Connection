@@ -1,65 +1,152 @@
-// TEC Connection (C-107) — the PUBLIC shareable profile. Reachable outside a TEC
-// session (a Pi-community surface): a Pi user can share connection.tecosystem.app/u/<handle>
-// anywhere. Server component — reads the published profile directly via the server
-// helper (own-scope not needed; public + opt-in only). Verification is presented from
-// Zone/kyc; ⭐ Featured is Connection Pro (reach only). 404 when unknown/unpublished.
+// TEC Connection (C-107) — the PUBLIC shareable profile.
+//
+// This page is the app's cheapest acquisition surface: a Pi user pastes
+// connection.tecosystem.app/u/<handle> into a group chat and everyone who taps it
+// lands here with no session — often in a country whose language is not English.
+// So it has to stand on its own: say who this is, in the reader's language, say
+// why the badge means something, and give one obvious way in.
+//
+// Verification is PRESENTED from Zone / KYC and never minted here; Featured is a
+// Connection Pro placement worth reach only. 404 when the handle is unknown or
+// unpublished — a preview must never imply a profile exists.
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { TEC_COLORS } from '@yasser172/tec-ui';
+import type { Metadata } from 'next';
 import { resolvePublicProfile } from '@/lib/connection/discovery';
+import { Avatar } from '@/components/public/Avatar';
+import { LanguagePicker } from '@/components/public/LanguagePicker';
+import { getI18n } from '@/lib/i18n/server';
+import { fill } from '@/lib/i18n/dictionaries';
 
 export const dynamic = 'force-dynamic';
 
+// A shared profile link was previously blind: pasted into WhatsApp, Telegram or X
+// it previewed as the generic app title with no name, no headline and no image.
+// For the app that is meant to be the ecosystem's front door, the shared link IS
+// the acquisition surface — so it carries the person's own identity, described in
+// the reader's language. The matching card image is ./opengraph-image.tsx.
+export async function generateMetadata(
+  { params }: { params: Promise<{ username: string }> },
+): Promise<Metadata> {
+  const [{ username }, { t }] = await Promise.all([params, getI18n()]);
+  const p = await resolvePublicProfile(username);
+  if (!p) return { title: `${t.public.notFound} · TEC Connection` };
+
+  const cat = t.public.cat[p.category as keyof typeof t.public.cat] ?? p.category;
+  const title       = `@${p.username} · TEC Connection`;
+  const description = p.headline
+    ? p.headline
+    : `@${p.username} — ${cat}. ${p.followers} ${p.followers === 1 ? t.public.follower : t.public.followers}.`;
+
+  return {
+    title,
+    description,
+    openGraph: { title, description, type: 'profile' },
+    twitter:   { card: 'summary_large_image', title, description },
+  };
+}
+
+const fmtSince = (iso: string | undefined, locale: string): string | null => {
+  if (!iso) return null;
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return null;
+  // Formatted in the visitor's locale, with English as the fallback if the
+  // runtime has no data for it — never a raw ISO string on a public page.
+  try { return d.toLocaleDateString(locale, { month: 'long', year: 'numeric' }); }
+  catch { return d.toLocaleDateString('en', { month: 'long', year: 'numeric' }); }
+};
+
 export default async function PublicProfilePage({ params }: { params: Promise<{ username: string }> }) {
-  const { username } = await params;
+  const [{ username }, { locale, t: dict }] = await Promise.all([params, getI18n()]);
+  const t = dict.public;
+
   const p = await resolvePublicProfile(username);
   if (!p) notFound();
 
-  const card = {
-    background: TEC_COLORS.surface, border: `1px solid ${TEC_COLORS.gold}33`,
-    borderRadius: 18, padding: 26, textAlign: 'center' as const,
-  };
+  const since = fmtSince(p.since, locale);
+  const cat   = t.cat[p.category as keyof typeof t.cat] ?? p.category;
 
   return (
-    <main style={{ minHeight: '100vh', background: TEC_COLORS.bg, color: TEC_COLORS.text, padding: '48px 22px', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
-      <div style={{ maxWidth: 440, margin: '0 auto' }}>
-        <div style={{ fontSize: 12, letterSpacing: 1, color: TEC_COLORS.subtext, textTransform: 'uppercase', textAlign: 'center', marginBottom: 14 }}>
-          TEC Connection · Public profile
-        </div>
+    <main className="pub-glow" style={{
+      minHeight: '100vh', color: '#fff',
+      fontFamily: 'var(--font-sans, system-ui, -apple-system, sans-serif)', overflowX: 'hidden',
+    }}>
+      <div style={{
+        maxWidth: 480, margin: '0 auto',
+        padding: 'calc(34px + env(safe-area-inset-top)) 22px calc(56px + env(safe-area-inset-bottom))',
+      }}>
 
-        <div style={card}>
-          <div style={{
-            width: 64, height: 64, borderRadius: 999, margin: '0 auto 14px', display: 'grid', placeItems: 'center',
-            background: TEC_COLORS.bg, border: `1px solid ${TEC_COLORS.gold}55`, color: TEC_COLORS.gold, fontSize: 28, fontWeight: 900,
-          }}>{p.username.charAt(0).toUpperCase()}</div>
+        <Link href="/discover" className="pub-eyebrow" style={{ textDecoration: 'none', display: 'inline-block' }}>
+          ← {t.back}
+        </Link>
 
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, flexWrap: 'wrap' }}>
-            <span style={{ fontSize: 20, fontWeight: 900, color: TEC_COLORS.text }}>@{p.username}</span>
-            {p.verified && <span style={{ fontSize: 11, fontWeight: 800, color: TEC_COLORS.gold, border: `1px solid ${TEC_COLORS.gold}55`, borderRadius: 999, padding: '2px 9px' }}>✅ Verified</span>}
-            {p.featured && <span title="Featured (Connection Pro)" style={{ fontSize: 13, color: TEC_COLORS.gold }}>⭐</span>}
+        <section className="pub-panel pub-in" style={{ marginTop: 18, padding: '34px 26px', textAlign: 'center' }}>
+          <div style={{ display: 'flex', justifyContent: 'center' }}>
+            <Avatar username={p.username} size={84} hasPhoto={p.hasAvatar} />
           </div>
 
-          <div style={{ fontSize: 12, color: TEC_COLORS.gold, marginTop: 6, textTransform: 'capitalize' }}>{p.category}</div>
-          {p.headline && <p style={{ fontSize: 14, color: TEC_COLORS.subtext, marginTop: 12, lineHeight: 1.5 }}>{p.headline}</p>}
+          {/* <bdi>: a Latin handle inside an RTL page would otherwise render as
+              "nour_market@" — the '@' is a bidi-neutral character and resolves
+              against the surrounding direction. */}
+          <h1 style={{
+            fontSize: 'clamp(24px, 7vw, 30px)', fontWeight: 900, letterSpacing: '-0.02em',
+            color: '#fff', margin: '18px 0 0',
+          }}><bdi>@{p.username}</bdi></h1>
 
-          <div style={{ marginTop: 18, fontSize: 22, fontWeight: 900, color: TEC_COLORS.gold }}>
-            {p.followers}
-            <span style={{ display: 'block', fontSize: 11, fontWeight: 600, color: TEC_COLORS.subtext, textTransform: 'uppercase', letterSpacing: 0.5 }}>
-              follower{p.followers === 1 ? '' : 's'}
+          <div style={{ display: 'flex', gap: 7, justifyContent: 'center', flexWrap: 'wrap', marginTop: 10 }}>
+            {p.verified && (
+              <span className="pub-badge-verified" title={t.verifiedHint}>✓ {t.verified}</span>
+            )}
+            {p.featured && (
+              <span className="pub-badge-featured" title={t.featuredHint}>{t.featured}</span>
+            )}
+            <span className="pub-badge-featured" style={{ textTransform: 'capitalize' }}>{cat}</span>
+          </div>
+
+          {p.headline && (
+            <p dir="auto" style={{
+              fontSize: 15, lineHeight: 1.6, color: 'rgba(255,255,255,0.68)',
+              margin: '18px auto 0', maxWidth: 340,
+            }}>{p.headline}</p>
+          )}
+
+          {/* Followers is the only number this page can state, and it comes from a
+              real count of real edges — so it is stated, and nothing else is. */}
+          <div style={{
+            display: 'inline-flex', alignItems: 'baseline', gap: 8,
+            margin: '24px 0 0', padding: '12px 22px', borderRadius: 14,
+            background: 'rgba(255,255,255,0.04)', border: '1px solid var(--tec-border)',
+          }}>
+            <span style={{ fontSize: 24, fontWeight: 900, color: 'var(--tec-gold)' }}>{p.followers}</span>
+            <span style={{ fontSize: 12.5, fontWeight: 650, color: 'rgba(255,255,255,0.5)' }}>
+              {p.followers === 1 ? t.follower : t.followers}
             </span>
           </div>
 
-          <Link href="/app" style={{
-            display: 'inline-block', marginTop: 22, padding: '11px 22px', borderRadius: 12,
-            background: `linear-gradient(135deg, ${TEC_COLORS.gold}, ${TEC_COLORS.goldDark})`,
-            color: '#0a0800', fontWeight: 800, fontSize: 14, textDecoration: 'none',
-          }}>Connect on TEC</Link>
-        </div>
+          {since && (
+            <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.34)', marginTop: 12 }}>
+              {fill(t.since, { date: since })}
+            </div>
+          )}
 
-        <p style={{ fontSize: 11, color: TEC_COLORS.subtext, marginTop: 16, textAlign: 'center', lineHeight: 1.5 }}>
-          Verification is presented from Zone / KYC — never minted by Connection. ⭐ Featured is a
-          Connection Pro placement (reach only). Trust is earned, never bought.
+          <div style={{ marginTop: 26 }}>
+            <Link href="/app" className="pub-cta" style={{ textDecoration: 'none' }}>
+              <bdi>{fill(t.follow, { name: p.username })}</bdi>
+            </Link>
+          </div>
+          <Link href="/discover" className="pub-secondary">{t.browseMore}</Link>
+        </section>
+
+        <p style={{
+          fontSize: 11.5, color: 'rgba(255,255,255,0.34)', marginTop: 20,
+          textAlign: 'center', lineHeight: 1.65,
+        }}>
+          {t.profileNote}
         </p>
+
+        <div style={{ marginTop: 24 }}>
+          <LanguagePicker current={locale} next={`/u/${encodeURIComponent(p.username)}`} />
+        </div>
       </div>
     </main>
   );

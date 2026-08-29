@@ -1,0 +1,78 @@
+import type { Dictionary } from './en';
+
+export const id: Dictionary = {
+  common: {
+    appName: 'TEC', tagline: 'Konsorsium Elite', login: 'Masuk dengan Pi', logout: 'Keluar',
+    loading: 'Memuat…', comingSoon: 'Segera Hadir', live: 'Aktif', language: 'Bahasa',
+  },
+  dashboard: {
+    greeting: 'Selamat datang,', welcomeNew: '🎉 Selamat datang di TEC — Akun Anda sudah siap',
+    stats: {
+      piBalance: 'Saldo Pi', tecWallet: 'Dompet TEC', availableApps: 'Aplikasi Tersedia',
+      activeApp: 'Aktif', subscription: 'Langganan', upgradePro: 'Tingkatkan ke Pro',
+    },
+    appsTitle: 'Ekosistem TEC', appsCount: '24 Aplikasi',
+  },
+  connection: {
+    brand: 'TEC Connection · Jaringan Anda',
+    welcome: 'Selamat datang', welcomeName: 'Selamat datang, {name}',
+    subtitle: 'Grafik hubungan Anda di ekosistem TEC. Koneksi Anda adalah milik Anda — Anda yang menentukan siapa yang dipercaya dan siapa yang boleh melihatnya.',
+    nav: { home: 'Beranda', discover: 'Jelajahi', trust: 'Kepercayaan', settings: 'Pengaturan' },
+    footer: 'Connection adalah tempat hubungan tepercaya Anda berada — siapa yang Anda ikuti, hubungi, dan bangun kepercayaan bersama di TEC. Anda selalu memegang kendali atas jaringan Anda.',
+    settings: {
+      profile: 'Profil', planFree: 'Gratis', planPro: 'Pro',
+      connectedPi: 'Terhubung ke Pi', notSignedIn: 'Belum masuk', member: 'Anggota TEC',
+      appearance: 'Tampilan', language: 'Bahasa', languageDesc: 'Bahasa tampilan',
+      about: 'Tentang', version: 'Versi', domain: 'Domain', ecosystem: 'Ekosistem',
+      builtOn: 'Dibangun di atas', builtOnPi: 'Pi Network', logout: 'Keluar',
+    },
+  },
+  public: {
+    brand:       'TEC · Connection',
+    headline:    'Orang-orang di ekonomi Pi.',
+    lede:        'Temukan pembangun dan pedagang yang benar-benar menerima Pi — dan lihat siapa yang tepercaya, berdasarkan pembayaran nyata yang selesai, bukan klaim.',
+    alreadyOn:   'sudah ada di TEC',
+    cta:         'Lanjutkan dengan Pi',
+    browseFree:  'Atau jelajahi tanpa masuk →',
+    peopleOnTec: 'Orang di TEC',
+    seeAll:      'Lihat semua →',
+    howTrust:    'Bagaimana kepercayaan dibangun di sini',
+    step1Title:  'Terbitkan',
+    step1Body:   'Tulis nama pengguna dan satu baris tentang apa yang Anda lakukan. Bersifat pilihan — Anda hanya terdaftar jika Anda memilihnya.',
+    step2Title:  'Terhubung',
+    step2Body:   'Ikuti pembangun dan pedagang yang benar-benar Anda ajak bertransaksi. Jaringan itu milik Anda.',
+    step3Title:  'Jadi tepercaya',
+    step3Body:   'Kepercayaan di sini dihitung dari pembayaran Pi yang selesai — bukan dari pengikut, ulasan, atau apa pun yang bisa Anda tulis sendiri.',
+    disclaimer:  'Verifikasi disajikan dari Zone / KYC — tidak pernah diterbitkan oleh Connection. "Unggulan" adalah penempatan Pro: hanya jangkauan, bukan kepercayaan.',
+
+    discoverTitle: 'Temukan orang di Pi',
+    discoverLede:  'Pembangun, pedagang, kreator, dan investor. Verifikasi berasal dari Zone / KYC — Connection hanya menampilkannya, tidak pernah menerbitkannya.',
+    searchLabel:   'Cari berdasarkan nama pengguna atau deskripsi',
+    searchHint:    'Cari orang…',
+    searchAction:  'Cari',
+    all:           'semua',
+    emptyFiltered: 'Belum ada yang cocok',
+    emptyAll:      'Direktori masih terus terisi',
+    emptyBody:     'Pendaftaran bersifat pilihan — orang muncul di sini hanya setelah menerbitkan profil. Masuk dan terbitkan profil Anda agar ditemukan.',
+    clearFilters:  'Hapus filter',
+    findableTitle: 'Jadilah mudah ditemukan di ekonomi Pi',
+    findableBody:  'Terbitkan profil Anda, ikuti orang yang Anda ajak bertransaksi, dan biarkan kepercayaan tumbuh dari pembayaran nyata yang selesai.',
+
+    back:         'Jelajahi',
+    verified:     'Terverifikasi',
+    verifiedHint: 'Terverifikasi — disajikan dari Zone / KYC, tidak pernah diterbitkan Connection',
+    featured:     'Unggulan',
+    featuredHint: 'Unggulan — penempatan Connection Pro. Hanya jangkauan; bukan verifikasi.',
+    follower:     'pengikut',
+    followers:    'pengikut',
+    since:        'Di TEC sejak {date}',
+    follow:       'Ikuti @{name}',
+    browseMore:   'Jelajahi orang lain →',
+    profileNote:  'Verifikasi disajikan dari Zone / KYC — tidak pernah diterbitkan oleh Connection. "Unggulan" adalah penempatan Connection Pro: hanya jangkauan, bukan kepercayaan. Kepercayaan diperoleh, tidak pernah dibeli.',
+    notFound:     'Profil tidak ditemukan',
+
+    cat: { builder: 'pembangun', merchant: 'pedagang', creator: 'kreator', investor: 'investor', mentor: 'mentor', other: 'lainnya' },
+
+    privacy: 'Privasi', terms: 'Ketentuan',
+  },
+};
