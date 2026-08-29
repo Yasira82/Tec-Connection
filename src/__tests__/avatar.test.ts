@@ -126,11 +126,16 @@ describe('resolveAvatarBytes', () => {
       });
 
     const out = await resolveAvatarBytes('sara');
-    const [, keyInit]  = fetchMock.mock.calls[0];
-    const [, bytesInit] = fetchMock.mock.calls[1];
 
-    expect(keyInit.headers['x-internal-key']).toBe('secret');
-    expect(bytesInit.headers['x-internal-key']).toBe('secret');
+    // Asserted before indexing, not destructured blind: `mock.calls[n]` is
+    // `any[] | undefined` under noUncheckedIndexedAccess, and it also makes the
+    // failure legible — "expected 2 calls, got 1" beats a Symbol.iterator error.
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    const keyInit   = fetchMock.mock.calls[0]?.[1];
+    const bytesInit = fetchMock.mock.calls[1]?.[1];
+
+    expect(keyInit?.headers['x-internal-key']).toBe('secret');
+    expect(bytesInit?.headers['x-internal-key']).toBe('secret');
     // The returned shape carries bytes + type only — the key stays server-side.
     expect(Object.keys(out ?? {}).sort()).toEqual(['body', 'contentType']);
   });
