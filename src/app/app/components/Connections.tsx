@@ -5,6 +5,7 @@
 // the client only ever sends the followee username.
 import { useState, useMemo } from 'react';
 import { TEC_COLORS } from '@yasser172/tec-ui';
+import { useTranslation } from '@/lib/i18n';
 import { useConnection } from '@/lib-client/connection/useConnection';
 import { usePresence } from '@/lib-client/connection/usePresence';
 
@@ -36,6 +37,8 @@ function Stat({ label, value }: { label: string; value: number }) {
 }
 
 export function Connections() {
+  const { t } = useTranslation();
+  const a = t.app;
   const { following, stats, loading, busy, error, follow, unfollow } = useConnection();
   const [username, setUsername] = useState('');
   const followedNames = useMemo(() => following.map((f) => f.username), [following]);
@@ -53,23 +56,23 @@ export function Connections() {
     <section style={{ marginTop: 24 }}>
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 12 }}>
         <span style={{ fontSize: 22 }}>🤝</span>
-        <h2 style={{ fontSize: 18, fontWeight: 800, color: TEC_COLORS.text, margin: 0 }}>Connections</h2>
+        <h2 style={{ fontSize: 18, fontWeight: 800, color: TEC_COLORS.text, margin: 0 }}>{a.connections}</h2>
         {onlineCount > 0 ? (
           <span style={{ fontSize: 12, color: TEC_COLORS.success, display: 'inline-flex', alignItems: 'center', gap: 5 }}>
             <span style={{ width: 8, height: 8, borderRadius: 999, background: TEC_COLORS.success }} />
             {onlineCount} online
           </span>
         ) : (
-          <span style={{ fontSize: 12, color: TEC_COLORS.subtext }}>your social graph</span>
+          <span style={{ fontSize: 12, color: TEC_COLORS.subtext }}>{a.yourGraph}</span>
         )}
       </div>
 
       <div style={{ ...card }}>
         {/* Stats */}
         <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginBottom: 16 }}>
-          <Stat label="Following" value={stats.following} />
+          <Stat label={a.followingLbl} value={stats.following} />
           <div style={{ width: 1, background: TEC_COLORS.border }} />
-          <Stat label="Followers" value={stats.followers} />
+          <Stat label={a.followers} value={stats.followers} />
         </div>
 
         {/* Follow input */}
@@ -79,12 +82,12 @@ export function Connections() {
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') submit(); }}
-            placeholder="Follow a Pi username — e.g. @alice"
+            placeholder={a.followPlaceholder}
             maxLength={100}
             autoCapitalize="none"
             autoCorrect="off"
           />
-          <button style={{ ...goldBtn, opacity: busy ? 0.6 : 1 }} onClick={submit} disabled={busy}>Follow</button>
+          <button style={{ ...goldBtn, opacity: busy ? 0.6 : 1 }} onClick={submit} disabled={busy}>{a.follow}</button>
         </div>
 
         {error && <p style={{ color: TEC_COLORS.error, fontSize: 13, marginTop: 10 }}>{error}</p>}
@@ -95,7 +98,7 @@ export function Connections() {
             <p style={{ color: TEC_COLORS.subtext, fontSize: 13 }}>Loading…</p>
           ) : following.length === 0 ? (
             <p style={{ color: TEC_COLORS.subtext, fontSize: 13 }}>
-              You’re not following anyone yet. Follow a Pi username above to start your graph.
+              {a.noConnections}
             </p>
           ) : (
             following.map((f, i) => (
@@ -114,12 +117,12 @@ export function Connections() {
                   )}
                 </span>
                 <span style={{ flex: 1, minWidth: 0, fontSize: 14, color: TEC_COLORS.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  @{f.username}
+                  <bdi>@{f.username}</bdi>
                 </span>
                 <button onClick={() => unfollow(f.username)} disabled={busy} title="Unfollow"
                   style={{ background: 'none', border: `1px solid ${TEC_COLORS.border}`, color: TEC_COLORS.subtext,
                            borderRadius: 8, padding: '5px 12px', fontSize: 12, cursor: 'pointer', flexShrink: 0 }}>
-                  Unfollow
+                  {a.unfollow}
                 </button>
               </div>
             ))

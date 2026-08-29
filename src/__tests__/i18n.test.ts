@@ -87,6 +87,47 @@ describe('dictionaries', () => {
     }
   });
 
+  it('the IN-APP strings are translated too, not just the public pages', () => {
+    // The failure this exists for was visible on a phone: the public surfaces
+    // were translated while every card inside /app stayed English, so choosing
+    // Arabic produced a half-translated screen. A partly translated screen reads
+    // as broken; an untranslated one only reads as unsupported.
+    //
+    // Measured in AGGREGATE rather than per key. A per-key inequality rule looks
+    // stricter but is wrong: "Notifications" is genuinely the French word, and
+    // "Connection Pro" is a product name in every language. Demanding that each
+    // string differ would fail on correct translations and teach the next person
+    // to mangle a word to get green. A stubbed-out file, which is what this
+    // actually guards against, fails the ratio by a wide margin.
+    const keys = Object.keys(DICTIONARIES.en.app) as (keyof typeof DICTIONARIES.en.app)[];
+    for (const l of LOCALES) {
+      if (l.code === 'en') continue;
+      const differing = keys.filter(k => DICTIONARIES[l.code].app[k] !== DICTIONARIES.en.app[k]);
+      const ratio = differing.length / keys.length;
+      expect(
+        ratio,
+        `${l.code}.app looks untranslated — only ${differing.length}/${keys.length} strings differ from English`,
+      ).toBeGreaterThan(0.85);
+    }
+  });
+
+  it('keeps the {days} placeholder the Pro expiry line needs', () => {
+    for (const l of LOCALES) {
+      expect(DICTIONARIES[l.code].app.proExpires, `${l.code} proExpires`).toContain('{days}');
+    }
+  });
+
+  it('keeps the ✅ prefix the UI uses to colour a success message', () => {
+    // AvatarUpload and ProfileEditor decide green-vs-red with
+    // `msg.startsWith('✅')`. A translation that dropped the emoji would render
+    // a successful save in the error colour — no test, no error, just wrong.
+    for (const l of LOCALES) {
+      expect(DICTIONARIES[l.code].app.photoUpdated, `${l.code} photoUpdated`).toMatch(/^✅/);
+      expect(DICTIONARIES[l.code].app.savedPublic,  `${l.code} savedPublic`).toMatch(/^✅/);
+      expect(DICTIONARIES[l.code].app.savedHidden,  `${l.code} savedHidden`).toMatch(/^✅/);
+    }
+  });
+
   it('falls back to the default for an unknown code', () => {
     expect(dictionaryFor('sv' as never)).toBe(DICTIONARIES[DEFAULT_LOCALE]);
   });

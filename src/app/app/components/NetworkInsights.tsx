@@ -102,7 +102,7 @@ export function NetworkInsights() {
                     {f.username.charAt(0).toUpperCase()}
                   </span>
                   <a href={`/u/${encodeURIComponent(f.username)}`} style={{ flex: 1, minWidth: 0, fontSize: 14, color: TEC_COLORS.text, textDecoration: 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    @{f.username}
+                    <bdi>@{f.username}</bdi>
                   </a>
                   {f.mutual || followedBack.has(f.username)
                     ? <span style={{ fontSize: 12, color: TEC_COLORS.success, whiteSpace: 'nowrap' }}>Mutual ✓</span>
