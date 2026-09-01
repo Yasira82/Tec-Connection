@@ -24,6 +24,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { TEC_COLORS } from '@yasser172/tec-ui';
 import { useTranslation } from '@/lib/i18n';
 import { useThread, type Summary, type Msg } from '@/lib-client/connection/useMessages';
+import { NewChat } from './NewChat';
 
 /** The service normalizes every username; the session hook does not. */
 const norm = (u: string) => (u ?? '').trim().replace(/^@+/, '').toLowerCase();
@@ -304,7 +305,7 @@ interface Props {
   me: string;
   conversations: Summary[];
   loading: boolean;
-  openDirect: (username: string) => Promise<string | null>;
+  openDirect: (username: string) => Promise<{ id: string } | { code: number }>;
   createGroup: (title: string, members?: string[]) => Promise<string | null>;
   /** Lets the page hide its own header while a chat owns the screen. */
   onChatOpenChange?: (open: boolean) => void;
@@ -315,49 +316,61 @@ export function Messages({ me, conversations, loading, openDirect, createGroup, 
   const a = t.app;
   const [openId, setOpenId] = useState<string | null>(null);
   const [composing, setComposing] = useState<null | 'direct' | 'group'>(null);
-  const [value, setValue] = useState('');
+  const [groupTitle, setGroupTitle] = useState('');
+  const [pickError, setPickError] = useState<string | null>(null);
 
   useEffect(() => { onChatOpenChange?.(openId !== null); }, [openId, onChatOpenChange]);
 
-  const start = async () => {
-    const v = value.trim();
+  // Picking a person is the ONLY path that closes the picker. A failure keeps it
+  // open with the reason on screen — closing it on failure is what silently
+  // discarded the typed name.
+  const pick = async (username: string) => {
+    setPickError(null);
+    const res = await openDirect(username);
+    if ('id' in res) { setComposing(null); setOpenId(res.id); return; }
+    setPickError(a.openFailed.replace('{code}', String(res.code || '—')));
+  };
+
+  const startGroup = async () => {
+    const v = groupTitle.trim();
     if (!v) return;
-    setValue('');
-    const id = composing === 'group' ? await createGroup(v) : await openDirect(v);
-    setComposing(null);
-    if (id) setOpenId(id);
+    const id = await createGroup(v);
+    if (id) { setGroupTitle(''); setComposing(null); setOpenId(id); }
+    else setPickError(a.openFailed.replace('{code}', '—'));
   };
 
   if (openId) return <Chat id={openId} me={me} onBack={() => setOpenId(null)} />;
+
+  if (composing === 'direct') {
+    return <NewChat onPick={pick} onCancel={() => { setComposing(null); setPickError(null); }} error={pickError} />;
+  }
 
   return (
     <section>
       {/* No section heading. The page header above already reads
           "Messages · Your conversations"; repeating it was the exact defect the
           previous IA pass removed from every other tab. */}
-      {composing ? (
+      {composing === 'group' ? (
         <div style={{ display: 'flex', gap: 8, marginBottom: 6 }}>
           <input
-            autoFocus style={input} value={value} onChange={(e) => setValue(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter') start(); }}
-            placeholder={composing === 'group' ? a.groupTitlePlaceholder : a.newMessage}
-            maxLength={composing === 'group' ? 120 : 100}
-            autoCapitalize="none" autoCorrect="off" dir={composing === 'group' ? 'auto' : 'ltr'}
+            autoFocus style={input} value={groupTitle} onChange={(e) => setGroupTitle(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') startGroup(); }}
+            placeholder={a.groupTitlePlaceholder} maxLength={120} dir="auto"
           />
-          {/* "Start", not "Send" — this button opens a conversation, it does not
-              deliver anything, and labelling it Send was a promise it never kept. */}
-          <button style={goldBtn} onClick={start}>{composing === 'group' ? a.createGroup : a.startChat}</button>
+          <button style={goldBtn} onClick={startGroup}>{a.createGroup}</button>
         </div>
       ) : (
         <div style={{ display: 'flex', gap: 8, marginBottom: 6 }}>
-          <button style={{ ...goldBtn, flex: 1 }} onClick={() => { setValue(''); setComposing('direct'); }}>
+          <button style={{ ...goldBtn, flex: 1 }} onClick={() => { setPickError(null); setComposing('direct'); }}>
             ✉ {a.newChat}
           </button>
-          <button style={quietBtn} onClick={() => { setValue(''); setComposing('group'); }}>
+          <button style={quietBtn} onClick={() => { setGroupTitle(''); setComposing('group'); }}>
             + {a.newGroup}
           </button>
         </div>
       )}
+
+      {pickError && <p style={{ color: TEC_COLORS.error, fontSize: 12.5, margin: '0 0 6px' }}>{pickError}</p>}
 
       <div style={{ marginTop: 8 }}>
         {loading ? (

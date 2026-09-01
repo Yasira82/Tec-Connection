@@ -162,6 +162,13 @@ export const tr: Dictionary = {
     today: 'Bugün',
     yesterday: 'Dün',
     noMessagesYet: 'Henüz mesaj yok. Selam verin.',
+    searchOrType: 'Bir ad arayın veya Pi kullanıcı adı yazın',
+    noPeopleFound: 'Bu adla kimse bulunamadı',
+    messageExact: 'Yine de @{name} kullanıcısına yaz',
+    peopleYouFollow: 'Takip ettikleriniz',
+    fromDiscover: 'Keşfet’ten',
+    cancel: 'İptal',
+    openFailed: 'Sohbet açılamadı ({code}). Lütfen tekrar deneyin.',
   },
   public: {
     brand:       'TEC · Connection',

@@ -162,6 +162,13 @@ export const fr: Dictionary = {
     today: 'Aujourd’hui',
     yesterday: 'Hier',
     noMessagesYet: 'Aucun message. Dites bonjour.',
+    searchOrType: 'Cherchez un nom, ou saisissez un identifiant Pi',
+    noPeopleFound: 'Personne trouvé avec ce nom',
+    messageExact: 'Écrire à @{name} quand même',
+    peopleYouFollow: 'Les personnes que vous suivez',
+    fromDiscover: 'Depuis Découvrir',
+    cancel: 'Annuler',
+    openFailed: 'Impossible d’ouvrir la discussion ({code}). Veuillez réessayer.',
   },
   public: {
     brand:       'TEC · Connection',

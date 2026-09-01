@@ -162,6 +162,13 @@ export const es: Dictionary = {
     today: 'Hoy',
     yesterday: 'Ayer',
     noMessagesYet: 'Aún no hay mensajes. Saluda.',
+    searchOrType: 'Busca un nombre, o escribe un usuario de Pi',
+    noPeopleFound: 'No se encontró a nadie con ese nombre',
+    messageExact: 'Escribir a @{name} de todos modos',
+    peopleYouFollow: 'Personas que sigues',
+    fromDiscover: 'De Descubrir',
+    cancel: 'Cancelar',
+    openFailed: 'No se pudo abrir el chat ({code}). Inténtalo de nuevo.',
   },
   public: {
     brand:       'TEC · Connection',

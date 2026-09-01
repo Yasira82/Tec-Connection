@@ -162,6 +162,13 @@ export const ko: Dictionary = {
     today: '오늘',
     yesterday: '어제',
     noMessagesYet: '아직 메시지가 없습니다. 인사를 건네보세요.',
+    searchOrType: '이름을 검색하거나 Pi 사용자 이름을 입력하세요',
+    noPeopleFound: '그 이름을 가진 사람이 없습니다',
+    messageExact: '그래도 @{name}에게 메시지 보내기',
+    peopleYouFollow: '내가 팔로우하는 사람',
+    fromDiscover: '둘러보기에서',
+    cancel: '취소',
+    openFailed: '대화를 열 수 없습니다({code}). 다시 시도하세요.',
   },
   public: {
     brand:       'TEC · Connection',

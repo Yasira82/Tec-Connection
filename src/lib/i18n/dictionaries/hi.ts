@@ -162,6 +162,13 @@ export const hi: Dictionary = {
     today: 'आज',
     yesterday: 'कल',
     noMessagesYet: 'अभी कोई संदेश नहीं। नमस्ते कहें।',
+    searchOrType: 'नाम खोजें, या Pi उपयोगकर्ता नाम लिखें',
+    noPeopleFound: 'उस नाम से कोई नहीं मिला',
+    messageExact: 'फिर भी @{name} को संदेश भेजें',
+    peopleYouFollow: 'जिन्हें आप फ़ॉलो करते हैं',
+    fromDiscover: 'खोजें से',
+    cancel: 'रद्द करें',
+    openFailed: 'बातचीत नहीं खुल सकी ({code})। कृपया फिर से कोशिश करें।',
   },
   public: {
     brand:       'TEC · Connection',

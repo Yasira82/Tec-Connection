@@ -195,6 +195,13 @@ export const en = {
     today: 'Today',
     yesterday: 'Yesterday',
     noMessagesYet: 'No messages yet. Say hello.',
+    searchOrType: 'Search a name, or type a Pi username',
+    noPeopleFound: 'Nobody found with that name',
+    messageExact: 'Message @{name} anyway',
+    peopleYouFollow: 'People you follow',
+    fromDiscover: 'From Discover',
+    cancel: 'Cancel',
+    openFailed: 'Could not open the chat ({code}). Please try again.',
   },
   public: {
     brand:        'TEC · Connection',

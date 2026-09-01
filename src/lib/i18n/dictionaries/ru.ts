@@ -162,6 +162,13 @@ export const ru: Dictionary = {
     today: 'Сегодня',
     yesterday: 'Вчера',
     noMessagesYet: 'Сообщений пока нет. Поздоровайтесь.',
+    searchOrType: 'Найдите имя или введите имя пользователя Pi',
+    noPeopleFound: 'Никого с таким именем не найдено',
+    messageExact: 'Всё равно написать @{name}',
+    peopleYouFollow: 'Люди, на которых вы подписаны',
+    fromDiscover: 'Из Поиска',
+    cancel: 'Отмена',
+    openFailed: 'Не удалось открыть переписку ({code}). Попробуйте ещё раз.',
   },
   public: {
     brand:       'TEC · Connection',

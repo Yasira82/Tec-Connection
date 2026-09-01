@@ -162,6 +162,13 @@ export const vi: Dictionary = {
     today: 'Hôm nay',
     yesterday: 'Hôm qua',
     noMessagesYet: 'Chưa có tin nhắn. Hãy chào một câu.',
+    searchOrType: 'Tìm một tên, hoặc nhập tên người dùng Pi',
+    noPeopleFound: 'Không tìm thấy ai với tên đó',
+    messageExact: 'Vẫn nhắn cho @{name}',
+    peopleYouFollow: 'Những người bạn theo dõi',
+    fromDiscover: 'Từ Khám phá',
+    cancel: 'Hủy',
+    openFailed: 'Không mở được cuộc trò chuyện ({code}). Vui lòng thử lại.',
   },
   public: {
     brand:       'TEC · Connection',

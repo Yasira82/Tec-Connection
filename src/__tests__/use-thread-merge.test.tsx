@@ -142,3 +142,53 @@ describe('“is this message mine?”', () => {
     expect(isMine('alice', '')).toBe(false);
   });
 });
+
+// `openDirect` used to return `null` for every failure. The screen closed the
+// composer, discarded the typed name, and said nothing — which is precisely what
+// "New chat doesn't work" looks like from the outside, whatever the real cause.
+// It now returns either the id or the HTTP status, so the reason reaches the
+// screen and, from there, a screenshot.
+describe('openDirect reports why it failed', () => {
+  const load = async () => {};
+
+  const openDirect = async (username: string): Promise<{ id: string } | { code: number }> => {
+    try {
+      const res = await fetch('/api/bff/connection/conversations/direct', {
+        method: 'POST', credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: username.trim().replace(/^@+/, '') }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) return { code: res.status };
+      await load();
+      const d = ((json as Record<string, unknown>)?.data ?? json ?? {}) as Record<string, unknown>;
+      const id = (d.conversation as { id?: string } | undefined)?.id;
+      return id ? { id } : { code: 502 };
+    } catch {
+      return { code: 0 };
+    }
+  };
+
+  it('returns the id on success', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+      ok: true, status: 200, json: async () => ({ data: { conversation: { id: 'dm-1' } } }),
+    }));
+    expect(await openDirect('@Bob')).toEqual({ id: 'dm-1' });
+  });
+
+  it('surfaces the status instead of a bare null', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 404, json: async () => ({}) }));
+    expect(await openDirect('bob')).toEqual({ code: 404 });
+  });
+
+  it('treats a 200 with no conversation id as a failure, not a success', async () => {
+    // The worst outcome is a "successful" call that leaves the screen unchanged.
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, status: 200, json: async () => ({ data: {} }) }));
+    expect(await openDirect('bob')).toEqual({ code: 502 });
+  });
+
+  it('reports a thrown network error rather than swallowing it', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('offline')));
+    expect(await openDirect('bob')).toEqual({ code: 0 });
+  });
+});

@@ -175,6 +175,13 @@ export const ar: Dictionary = {
     today: 'اليوم',
     yesterday: 'أمس',
     noMessagesYet: 'لا رسائل بعد. ابدأ بالسلام.',
+    searchOrType: 'ابحث باسم، أو اكتب اسم مستخدم Pi',
+    noPeopleFound: 'لا أحد بهذا الاسم',
+    messageExact: 'راسل ‎@{name}‎ على أي حال',
+    peopleYouFollow: 'مَن تتابعهم',
+    fromDiscover: 'من الاكتشاف',
+    cancel: 'إلغاء',
+    openFailed: 'تعذّر فتح المحادثة ({code}). حاول مرة أخرى.',
   },
   public: {
     brand:        'TEC · Connection',

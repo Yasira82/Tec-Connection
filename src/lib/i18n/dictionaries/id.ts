@@ -162,6 +162,13 @@ export const id: Dictionary = {
     today: 'Hari ini',
     yesterday: 'Kemarin',
     noMessagesYet: 'Belum ada pesan. Sapa dulu.',
+    searchOrType: 'Cari nama, atau ketik nama pengguna Pi',
+    noPeopleFound: 'Tidak ada yang ditemukan dengan nama itu',
+    messageExact: 'Tetap kirim pesan ke @{name}',
+    peopleYouFollow: 'Orang yang Anda ikuti',
+    fromDiscover: 'Dari Jelajahi',
+    cancel: 'Batal',
+    openFailed: 'Tidak dapat membuka obrolan ({code}). Silakan coba lagi.',
   },
   public: {
     brand:       'TEC · Connection',

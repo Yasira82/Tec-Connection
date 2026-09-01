@@ -76,17 +76,30 @@ export function useConversations() {
 
   const unreadTotal = conversations.reduce((n, c) => n + c.unread, 0);
 
-  const openDirect = useCallback(async (username: string): Promise<string | null> => {
-    const res = await fetch('/api/bff/connection/conversations/direct', {
-      method: 'POST', credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username: username.trim().replace(/^@+/, '') }),
-    });
-    const json = await res.json().catch(() => ({}));
-    if (!res.ok) { setError(res.status === 403 ? 'blocked' : 'failed'); return null; }
-    setError(null);
-    await load();
-    return unwrap<{ id: string }>(json, 'conversation')?.id ?? null;
+  // Returns the conversation id, or an object carrying the HTTP status. The
+  // previous version returned null for every failure, so the screen closed the
+  // composer and said nothing — which is what "New chat doesn't work" looked
+  // like from the outside. A status the user can read is also a status they can
+  // send back in a screenshot.
+  const openDirect = useCallback(async (username: string): Promise<{ id: string } | { code: number }> => {
+    try {
+      const res = await fetch('/api/bff/connection/conversations/direct', {
+        method: 'POST', credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: username.trim().replace(/^@+/, '') }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) { setError(res.status === 403 ? 'blocked' : 'failed'); return { code: res.status }; }
+      setError(null);
+      await load();
+      const id = unwrap<{ id: string }>(json, 'conversation')?.id;
+      // A 200 with no id is a contract break, not a success — say so rather than
+      // returning to an unchanged screen.
+      return id ? { id } : { code: 502 };
+    } catch {
+      setError('failed');
+      return { code: 0 };
+    }
   }, [load]);
 
   const createGroup = useCallback(async (title: string, members: string[] = []): Promise<string | null> => {

@@ -162,6 +162,13 @@ export const zh: Dictionary = {
     today: '今天',
     yesterday: '昨天',
     noMessagesYet: '还没有消息。打个招呼吧。',
+    searchOrType: '搜索名字，或输入 Pi 用户名',
+    noPeopleFound: '没有找到这个名字',
+    messageExact: '仍然给 @{name} 发消息',
+    peopleYouFollow: '你关注的人',
+    fromDiscover: '来自发现',
+    cancel: '取消',
+    openFailed: '无法打开对话（{code}）。请重试。',
   },
   public: {
     brand:       'TEC · Connection',
