@@ -12,7 +12,8 @@
 import { useRef, useState } from 'react';
 import { TEC_COLORS } from '@yasser172/tec-ui';
 import { useTranslation } from '@/lib/i18n';
-import { useStories, type StoryAuthor } from '@/lib-client/connection/useStories';
+import { useStories, type StoryAuthor, type StoryItem } from '@/lib-client/connection/useStories';
+import { Avatar as PersonAvatar } from '@/components/public/Avatar';
 import { downscaleImage } from '@/lib-client/connection/downscaleImage';
 import { StatusViewer } from './StatusViewer';
 
@@ -34,11 +35,10 @@ function Ring({ name, unseen, onClick, label }: {
         padding: 3,
         border: `2px solid ${unseen ? TEC_COLORS.gold : TEC_COLORS.border}`,
       }}>
-        <span style={{
-          width: '100%', height: '100%', borderRadius: 999, display: 'grid', placeItems: 'center',
-          background: `linear-gradient(135deg, ${TEC_COLORS.gold}, ${TEC_COLORS.goldDark})`,
-          color: '#0a0800', fontSize: 20, fontWeight: 800,
-        }}>{(name || '?').charAt(0).toUpperCase()}</span>
+        {/* The real photo when there is one — the ring is a person, and a wall
+            of initials beside a photo in Settings is what made the upload look
+            like it had not worked. */}
+        <PersonAvatar username={(name || '?').replace(/^@/, '')} size={52} tryPhoto />
       </span>
       <span style={{
         fontSize: 10.5, color: unseen ? TEC_COLORS.text : TEC_COLORS.subtext,
@@ -48,7 +48,12 @@ function Ring({ name, unseen, onClick, label }: {
   );
 }
 
-export function StatusStrip({ me }: { me: string }) {
+export function StatusStrip({ me, onReply }: {
+  me: string;
+  /** Reply to a status → a direct message to its author. Owned by the page,
+      which owns conversations; the strip only finds statuses. */
+  onReply?: (author: string, text: string, story: StoryItem) => Promise<boolean>;
+}) {
   const { t } = useTranslation();
   const a = t.app;
   const { authors, mine, loading, busy, error, post, markSeen, remove } = useStories(me);
@@ -172,6 +177,7 @@ export function StatusStrip({ me }: { me: string }) {
         <StatusViewer
           group={viewing} isMine={viewing.author === meNorm}
           onSeen={markSeen} onDelete={remove}
+          onReply={onReply ? (text, story) => onReply(viewing.author, text, story) : undefined}
           onClose={() => setViewing(null)}
         />
       )}

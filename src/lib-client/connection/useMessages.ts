@@ -57,6 +57,27 @@ const unwrap = <T,>(json: unknown, key: string): T | null => {
   return (d?.[key] as T) ?? null;
 };
 
+/**
+ * Send one message into a conversation you already have the id for, without
+ * opening it.
+ *
+ * `useThread` is bound to the OPEN thread; a status reply has no thread open —
+ * it resolves the author's DM and writes into it. Same endpoint, same
+ * membership check server-side; the only thing missing is the polling.
+ */
+export async function sendToConversation(id: string, body: string): Promise<boolean> {
+  const text = body.trim();
+  if (!id || !text) return false;
+  try {
+    const res = await fetch(`/api/bff/connection/conversations/${encodeURIComponent(id)}/messages`, {
+      method: 'POST', credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ body: text }),
+    });
+    return res.ok;
+  } catch { return false; }
+}
+
 /** The caller's conversations, refreshed in the background. */
 export function useConversations() {
   const [conversations, setConversations] = useState<Summary[]>([]);

@@ -1,3 +1,7 @@
+'use client';
+
+import { useState } from 'react';
+
 // A person's mark on the public surfaces.
 //
 // Two states, and the fallback is the important one. When someone has uploaded a
@@ -41,9 +45,24 @@ export const avatarSrc = (username: string): string =>
   `/api/avatar/${encodeURIComponent(username)}`;
 
 export function Avatar({
-  username, size = 46, hasPhoto = false,
-}: { username: string; size?: number; hasPhoto?: boolean }) {
+  username, size = 46, hasPhoto = false, tryPhoto = false,
+}: {
+  username: string; size?: number; hasPhoto?: boolean;
+  /**
+   * Attempt the photo without being told there is one.
+   *
+   * The directory knows `hasAvatar` because it queries for it; the messaging
+   * surfaces do NOT — a conversation carries a peer's handle and nothing else.
+   * Rather than thread a flag through every message payload, this asks the
+   * avatar route, which 404s cleanly when there is no photo, and falls back to
+   * the coloured initial on error. That is why a profile photo used to appear
+   * only in Settings.
+   */
+  tryPhoto?: boolean;
+}) {
   const hue = hueFor(username.toLowerCase());
+  const [failed, setFailed] = useState(false);
+  const show = (hasPhoto || tryPhoto) && !failed;
 
   return (
     <div
@@ -58,7 +77,7 @@ export function Avatar({
         // hole while the image loads or if it 404s.
         background: `linear-gradient(140deg, hsl(${hue} 92% 78%), hsl(${hue} 82% 58%))`,
       }}>
-      {hasPhoto ? (
+      {show ? (
         // A plain <img> on purpose: next/image would proxy through the optimizer
         // for a route that is already ours and already cached hard. `lazy` covers
         // the directory list; `decoding="async"` keeps a slow decode off the main
@@ -70,6 +89,9 @@ export function Avatar({
           height={size}
           loading="lazy"
           decoding="async"
+          // No photo is a 404, not an image — falling back here is what makes
+          // `tryPhoto` safe to use where `hasAvatar` is unknown.
+          onError={() => setFailed(true)}
           style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
         />
       ) : (
