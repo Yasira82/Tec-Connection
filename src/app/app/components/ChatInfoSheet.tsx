@@ -53,6 +53,7 @@ function ActionRow({ label, icon, danger, onClick, disabled }: {
 
 export function ChatInfoSheet({
   isGroup, title, members, role, me, onClose, convId, visibility, description,
+  admins = [], ownerName, onRemoved,
   onAddMember, onLeave, onDelete, onClear,
   blocked, onBlock, onUnblock, blockBusy, blockError, peerName,
 }: {
@@ -62,6 +63,11 @@ export function ChatInfoSheet({
   /** PUBLIC means the group is findable — not that its contents are readable. */
   visibility?: 'PUBLIC' | 'PRIVATE';
   description?: string | null;
+  /** Who helps run the group. The owner is NOT in here — they are `ownerName`. */
+  admins?: string[];
+  ownerName?: string | null;
+  /** So the parent can drop the row from its own copy of the member list. */
+  onRemoved?: (username: string) => void;
   title: string;
   members: string[];
   role?: string;
@@ -102,6 +108,43 @@ export function ChatInfoSheet({
   const groupPhotoUrl = `/api/bff/connection/conversations/${encodeURIComponent(convId)}/avatar`;
 
   const isOwner = isGroup && role === 'owner';
+  const isAdmin = isGroup && (role === 'owner' || role === 'admin');
+  const [roleBusy, setRoleBusy] = useState<string | null>(null);
+  const [roster, setRoster] = useState<string[]>(admins ?? []);
+  useEffect(() => { setRoster(admins ?? []); }, [admins]);
+
+  const norm = (u: string) => (u ?? '').trim().replace(/^@+/, '').toLowerCase();
+
+  const setRole = async (username: string, makeAdmin: boolean) => {
+    setRoleBusy(username);
+    try {
+      const res = await fetch(
+        `/api/bff/connection/conversations/${encodeURIComponent(convId)}/members/${encodeURIComponent(username)}/role`,
+        {
+          method: 'PUT', credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ role: makeAdmin ? 'ADMIN' : 'MEMBER' }),
+        },
+      );
+      if (!res.ok) return;
+      // Updated locally rather than refetched: the sheet is open over the chat
+      // and a reload would collapse it under the thumb that just tapped.
+      setRoster((r) => (makeAdmin ? [...r, username] : r.filter((x) => norm(x) !== norm(username))));
+    } catch { /* the badge simply does not change */ }
+    finally { setRoleBusy(null); }
+  };
+
+  const removeFromGroup = async (username: string) => {
+    setRoleBusy(username);
+    try {
+      await fetch(
+        `/api/bff/connection/conversations/${encodeURIComponent(convId)}/members/${encodeURIComponent(username)}`,
+        { method: 'DELETE', credentials: 'include' },
+      );
+      onRemoved?.(username);
+    } catch { /* the row stays; the next open shows the truth */ }
+    finally { setRoleBusy(null); }
+  };
   const { requests, decide } = useJoinRequests(isOwner ? convId : null, isOwner);
   const [listed, setListed] = useState(visibility === 'PUBLIC');
   const [about, setAbout] = useState(description ?? '');
@@ -393,19 +436,61 @@ export function ChatInfoSheet({
             <div style={{ display: 'grid' }}>
               {members.map((u) => {
                 const mine = u.trim().toLowerCase() === me;
+                const isTheOwner = !!ownerName && norm(u) === norm(ownerName);
+                const isAnAdmin = roster.some((x) => norm(x) === norm(u));
+                // Who this caller may act on. Mirrors the service exactly —
+                // showing a control the server will refuse is worse than not
+                // showing it, because the refusal arrives as a silent failure.
+                const canPromote = isOwner && !mine && !isTheOwner;
+                const canRemove = !mine && !isTheOwner && (isOwner || (isAdmin && !isAnAdmin));
+
                 return (
                   <div key={u} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0' }}>
-                    <span style={{
-                      width: 32, height: 32, borderRadius: 999, display: 'grid', placeItems: 'center', flexShrink: 0,
-                      background: TEC_COLORS.surface2, border: `1px solid ${TEC_COLORS.border}`,
-                      color: TEC_COLORS.gold, fontSize: 13, fontWeight: 800,
-                    }}>{(u || '?').charAt(0).toUpperCase()}</span>
+                    <Avatar username={u} size={32} tryPhoto />
                     <span style={{
                       flex: 1, minWidth: 0, fontSize: 13.5, color: TEC_COLORS.text,
                       overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                     }}><bdi>@{u}</bdi></span>
+
+                    {/* The badge says what someone IS; the buttons say what you
+                        may do about it. Keeping them separate means a member
+                        with no controls still sees who runs the group. */}
+                    {(isTheOwner || isAnAdmin) && (
+                      <span style={{
+                        fontSize: 10.5, fontWeight: 800, letterSpacing: 0.3, flexShrink: 0,
+                        textTransform: 'uppercase', borderRadius: 999, padding: '2px 8px',
+                        color: isTheOwner ? TEC_COLORS.gold : TEC_COLORS.subtext,
+                        background: isTheOwner ? `${TEC_COLORS.gold}14` : 'transparent',
+                        border: `1px solid ${isTheOwner ? `${TEC_COLORS.gold}44` : TEC_COLORS.border}`,
+                      }}>{isTheOwner ? a.roleOwner : a.roleAdmin}</span>
+                    )}
                     {mine && (
                       <span style={{ fontSize: 11, color: TEC_COLORS.subtext, flexShrink: 0 }}>{a.you}</span>
+                    )}
+
+                    {canPromote && (
+                      <button
+                        onClick={() => { void setRole(u, !isAnAdmin); }}
+                        disabled={roleBusy === u}
+                        style={{
+                          background: 'none', border: `1px solid ${TEC_COLORS.border}`,
+                          color: TEC_COLORS.text, borderRadius: 999, padding: '4px 10px',
+                          fontSize: 11.5, cursor: roleBusy === u ? 'not-allowed' : 'pointer',
+                          flexShrink: 0, whiteSpace: 'nowrap',
+                        }}
+                      >{isAnAdmin ? a.demoteAdmin : a.makeAdmin}</button>
+                    )}
+                    {canRemove && (
+                      <button
+                        onClick={() => { void removeFromGroup(u); }}
+                        disabled={roleBusy === u}
+                        aria-label={a.removeMember}
+                        style={{
+                          background: 'none', border: 'none', color: TEC_COLORS.error,
+                          fontSize: 15, padding: '2px 6px', flexShrink: 0,
+                          cursor: roleBusy === u ? 'not-allowed' : 'pointer',
+                        }}
+                      >✕</button>
                     )}
                   </div>
                 );

@@ -22,7 +22,7 @@ export interface Summary {
   peer: string | null;
   members: number;
   unread: number;
-  role: 'owner' | 'member';
+  role: 'owner' | 'admin' | 'member';
   last: { body: string; by: string; at: string; media?: string | null } | null;
   last_message_at: string;
 }
@@ -40,7 +40,9 @@ export interface Thread {
   kind: 'DIRECT' | 'GROUP';
   title: string | null;
   owner: string | null;
-  role: 'owner' | 'member';
+  role: 'owner' | 'admin' | 'member';
+  /** GROUP only — who helps run it. The OWNER is `owner`, and is not in here. */
+  admins?: string[];
   peer: string | null;
   members: string[];
   /**
