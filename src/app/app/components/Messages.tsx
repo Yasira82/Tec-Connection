@@ -30,6 +30,7 @@ import { useTyping } from '@/lib-client/connection/useTyping';
 import { NewChat } from './NewChat';
 import { Lightbox } from './Lightbox';
 import { ChatInfoSheet } from './ChatInfoSheet';
+import { GroupDiscovery } from './GroupDiscovery';
 import { MessageActions } from './MessageActions';
 import { StatusStrip } from './StatusStrip';
 import { ReportSheet } from './ReportSheet';
@@ -447,6 +448,8 @@ function Chat({ id, me, onBack }: { id: string; me: string; onBack: () => void }
         <ChatInfoSheet
           isGroup={!!isGroup}
           convId={id}
+          visibility={thread?.visibility}
+          description={thread?.description}
           title={title}
           members={thread.members}
           role={thread.role}
@@ -532,6 +535,7 @@ export function Messages({ me, conversations, loading, openDirect, createGroup, 
   const [composing, setComposing] = useState<null | 'direct' | 'group'>(null);
   const [groupTitle, setGroupTitle] = useState('');
   const [pickError, setPickError] = useState<string | null>(null);
+  const [discovering, setDiscovering] = useState(false);
 
   // Picking a person is the ONLY path that closes the picker. A failure keeps it
   // open with the reason on screen — closing it on failure is what silently
@@ -598,6 +602,25 @@ export function Messages({ me, conversations, loading, openDirect, createGroup, 
           </button>
         </div>
       )}
+
+      {/* Finding a group you were never invited to. Its own quiet row rather
+          than a third button beside the two above: creating and joining are
+          different intentions, and three equal-weight buttons make neither
+          obvious. */}
+      <button
+        onClick={() => setDiscovering(true)}
+        style={{
+          width: '100%', marginBottom: 8, padding: '10px 14px',
+          background: 'none', border: `1px dashed ${TEC_COLORS.border}`,
+          borderRadius: 14, color: TEC_COLORS.subtext, fontSize: 13,
+          cursor: 'pointer', textAlign: 'center',
+        }}
+      >🔎 {a.discoverGroups}</button>
+
+      {/* No reload on close: asking to join is a REQUEST, so nothing has been
+          added to this list. The conversation appears when the owner approves,
+          which the normal poll picks up. */}
+      {discovering && <GroupDiscovery onClose={() => setDiscovering(false)} />}
 
       {pickError && <p style={{ color: TEC_COLORS.error, fontSize: 12.5, margin: '0 0 6px' }}>{pickError}</p>}
 

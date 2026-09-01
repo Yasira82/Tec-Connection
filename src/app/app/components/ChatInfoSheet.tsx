@@ -18,6 +18,7 @@ import { useTranslation } from '@/lib/i18n';
 import { useBackButton } from '@/lib-client/connection/useBackButton';
 import { Avatar } from '@/components/public/Avatar';
 import { downscaleImage, AVATAR_MAX_EDGE } from '@/lib-client/connection/downscaleImage';
+import { useJoinRequests } from '@/lib-client/connection/useGroupDiscovery';
 
 /** What a group photo may be. Same three as a profile photo, same 2MB ceiling. */
 const PHOTO_ACCEPT = 'image/jpeg,image/png,image/webp';
@@ -51,13 +52,16 @@ function ActionRow({ label, icon, danger, onClick, disabled }: {
 }
 
 export function ChatInfoSheet({
-  isGroup, title, members, role, me, onClose, convId,
+  isGroup, title, members, role, me, onClose, convId, visibility, description,
   onAddMember, onLeave, onDelete, onClear,
   blocked, onBlock, onUnblock, blockBusy, blockError, peerName,
 }: {
   isGroup: boolean;
   /** Needed for the group photo, which is keyed by the conversation. */
   convId: string;
+  /** PUBLIC means the group is findable — not that its contents are readable. */
+  visibility?: 'PUBLIC' | 'PRIVATE';
+  description?: string | null;
   title: string;
   members: string[];
   role?: string;
@@ -96,6 +100,30 @@ export function ChatInfoSheet({
   useBackButton(true, onClose);
 
   const groupPhotoUrl = `/api/bff/connection/conversations/${encodeURIComponent(convId)}/avatar`;
+
+  const isOwner = isGroup && role === 'owner';
+  const { requests, decide } = useJoinRequests(isOwner ? convId : null, isOwner);
+  const [listed, setListed] = useState(visibility === 'PUBLIC');
+  const [about, setAbout] = useState(description ?? '');
+  const [listBusy, setListBusy] = useState(false);
+  const [listMsg, setListMsg] = useState('');
+
+  const saveVisibility = async (next: boolean, desc: string) => {
+    setListBusy(true); setListMsg('');
+    try {
+      const res = await fetch(
+        `/api/bff/connection/conversations/${encodeURIComponent(convId)}/visibility`,
+        {
+          method: 'PUT', credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ visibility: next ? 'PUBLIC' : 'PRIVATE', description: desc.trim() || null }),
+        },
+      );
+      if (!res.ok) { setListMsg(a.groupRequestFailed); return; }
+      setListed(next);
+    } catch { setListMsg(a.groupRequestFailed); }
+    finally { setListBusy(false); }
+  };
 
   const uploadPhoto = async (file: File) => {
     // Type first, on the ORIGINAL: shrinking a format we will not accept is
@@ -232,6 +260,109 @@ export function ChatInfoSheet({
             </>
           )}
         </div>
+
+        {/* Listing the group — owner only.
+            Deliberately ABOVE the member list: whether strangers can find this
+            group is a bigger decision than who is currently in it, and burying
+            it under the roster is how a privacy switch gets flipped by
+            accident. */}
+        {isOwner && (
+          <section style={{ borderTop: `1px solid ${TEC_COLORS.border}`, padding: '14px 16px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 14, fontWeight: 700, color: TEC_COLORS.text }}>
+                  {listed ? a.groupListed : a.groupPrivate}
+                </div>
+                <div style={{ fontSize: 11.5, color: TEC_COLORS.subtext, marginTop: 3, lineHeight: 1.5 }}>
+                  {listed ? a.groupListedHint : a.groupPrivateHint}
+                </div>
+              </div>
+              <button
+                onClick={() => { void saveVisibility(!listed, about); }}
+                disabled={listBusy}
+                aria-pressed={listed}
+                style={{
+                  width: 46, height: 27, borderRadius: 999, flexShrink: 0, padding: 2,
+                  border: `1px solid ${listed ? TEC_COLORS.gold : TEC_COLORS.border}`,
+                  background: listed ? `${TEC_COLORS.gold}33` : 'transparent',
+                  cursor: listBusy ? 'not-allowed' : 'pointer',
+                  display: 'flex', justifyContent: listed ? 'flex-end' : 'flex-start',
+                }}
+              >
+                <span style={{
+                  width: 21, height: 21, borderRadius: 999, display: 'block',
+                  background: listed ? TEC_COLORS.gold : TEC_COLORS.subtext,
+                }} />
+              </button>
+            </div>
+
+            {/* The description is what a stranger reads before deciding to ask,
+                so it only matters once the group is findable. */}
+            {listed && (
+              <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
+                <input
+                  style={sheetInput} value={about} onChange={(e) => setAbout(e.target.value)}
+                  placeholder={a.groupDescriptionPlaceholder} maxLength={300} dir="auto"
+                />
+                <button
+                  onClick={() => { void saveVisibility(true, about); }}
+                  disabled={listBusy}
+                  style={{
+                    background: 'none', border: `1px solid ${TEC_COLORS.border}`,
+                    color: TEC_COLORS.text, borderRadius: 999, padding: '0 16px',
+                    fontSize: 13, cursor: listBusy ? 'not-allowed' : 'pointer', whiteSpace: 'nowrap',
+                  }}
+                >{a.save}</button>
+              </div>
+            )}
+            {listMsg && (
+              <p style={{ margin: '8px 0 0', fontSize: 12, color: TEC_COLORS.error }}>{listMsg}</p>
+            )}
+          </section>
+        )}
+
+        {/* People asking to join. Shown whenever there are any, whether or not
+            the group is currently listed: un-listing does not withdraw the
+            requests already made, and leaving them undecidable would strand
+            whoever sent them. */}
+        {isOwner && requests.length > 0 && (
+          <section style={{ borderTop: `1px solid ${TEC_COLORS.border}`, padding: '14px 16px' }}>
+            <h4 style={{
+              margin: '0 0 10px', fontSize: 11, fontWeight: 700, letterSpacing: 0.6,
+              textTransform: 'uppercase', color: TEC_COLORS.subtext,
+            }}>{a.groupRequests} · {requests.length}</h4>
+
+            {requests.map((r) => (
+              <div key={r.username} style={{
+                display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0',
+              }}>
+                <Avatar username={r.username} size={32} tryPhoto />
+                <span style={{
+                  flex: 1, minWidth: 0, fontSize: 13.5, color: TEC_COLORS.text,
+                  overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                }}>
+                  <bdi>@{r.username}</bdi>
+                </span>
+                <button
+                  onClick={() => { void decide(r.username, true); }}
+                  style={{
+                    background: `linear-gradient(135deg, ${TEC_COLORS.gold}, ${TEC_COLORS.goldDark})`,
+                    color: '#0a0800', border: 'none', borderRadius: 999,
+                    padding: '6px 14px', fontSize: 12.5, fontWeight: 700, cursor: 'pointer',
+                  }}
+                >{a.groupApprove}</button>
+                <button
+                  onClick={() => { void decide(r.username, false); }}
+                  style={{
+                    background: 'none', border: `1px solid ${TEC_COLORS.border}`,
+                    color: TEC_COLORS.subtext, borderRadius: 999,
+                    padding: '6px 12px', fontSize: 12.5, cursor: 'pointer',
+                  }}
+                >{a.groupReject}</button>
+              </div>
+            ))}
+          </section>
+        )}
 
         {isGroup && (
           <section style={{ borderTop: `1px solid ${TEC_COLORS.border}`, padding: '14px 16px' }}>

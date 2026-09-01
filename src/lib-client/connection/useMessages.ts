@@ -48,6 +48,10 @@ export interface Thread {
    * nothing: "read" there is per member, and one tick cannot say "three of five".
    */
   peerReadAt?: string | null;
+  /** GROUP only — whether the group is FINDABLE. Not whether it is readable. */
+  visibility?: 'PUBLIC' | 'PRIVATE';
+  /** GROUP only — the blurb a stranger reads before asking to join. */
+  description?: string | null;
   messages: Msg[];
 }
 
