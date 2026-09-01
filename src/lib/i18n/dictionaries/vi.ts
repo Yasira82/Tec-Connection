@@ -181,6 +181,7 @@ export const vi: Dictionary = {
     inviteLinkHint: "Ai có liên kết sẽ vào mà không cần xin phép. Tạo lại sẽ khiến liên kết cũ ngừng hoạt động.",
     createInviteLink: "Tạo liên kết",
     revokeInviteLink: "Thu hồi liên kết",
+    inviteLinkFailed: "Không thể thay đổi liên kết. Dịch vụ nhóm có thể vẫn đang khởi động — thử lại sau giây lát.",
     linkCopied: "Đã sao chép liên kết",
     joiningByInvite: "Đang tham gia…",
     inviteInvalid: "Liên kết đó không còn hiệu lực.",

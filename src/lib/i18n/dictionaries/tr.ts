@@ -181,6 +181,7 @@ export const tr: Dictionary = {
     inviteLinkHint: "Bağlantısı olan herkes sormadan katılır. Yeniden oluşturmak eskisini geçersiz kılar.",
     createInviteLink: "Bağlantı oluştur",
     revokeInviteLink: "Bağlantıyı iptal et",
+    inviteLinkFailed: "Bağlantı değiştirilemedi. Grup servisi hâlâ başlıyor olabilir — birazdan tekrar deneyin.",
     linkCopied: "Bağlantı kopyalandı",
     joiningByInvite: "Katılıyor…",
     inviteInvalid: "Bu bağlantı artık geçerli değil.",

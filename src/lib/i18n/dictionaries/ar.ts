@@ -194,6 +194,7 @@ export const ar: Dictionary = {
     inviteLinkHint: "أي حد معاه اللينك ينضم من غير ما يستأذن. لما تعمله من جديد اللينك القديم بيبطل.",
     createInviteLink: "اعمل لينك",
     revokeInviteLink: "الغي اللينك",
+    inviteLinkFailed: "مقدرناش نغيّر اللينك. يمكن خدمة الجروبات لسه بتشتغل — جرب تاني بعد شوية.",
     linkCopied: "اتنسخ اللينك",
     joiningByInvite: "بينضم…",
     inviteInvalid: "اللينك ده مابقاش شغال.",

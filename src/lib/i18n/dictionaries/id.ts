@@ -181,6 +181,7 @@ export const id: Dictionary = {
     inviteLinkHint: "Siapa pun yang punya tautan langsung bergabung. Membuat ulang membuat tautan lama tidak berlaku.",
     createInviteLink: "Buat tautan",
     revokeInviteLink: "Cabut tautan",
+    inviteLinkFailed: "Tidak bisa mengubah tautan. Layanan grup mungkin masih menyala — coba lagi sebentar.",
     linkCopied: "Tautan disalin",
     joiningByInvite: "Bergabung…",
     inviteInvalid: "Tautan itu sudah tidak berlaku.",

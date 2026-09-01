@@ -478,8 +478,11 @@ export function ChatInfoSheet({
                 }}
               >{a.createInviteLink}</button>
             )}
+            {/* Only after the owner asked for something. `read` no longer sets
+                this — an error on open is an error about an action nobody
+                took. */}
             {invite.failed && (
-              <p style={{ margin: '8px 0 0', fontSize: 12, color: TEC_COLORS.error }}>{a.saveFailed}</p>
+              <p style={{ margin: '8px 0 0', fontSize: 12, color: TEC_COLORS.error }}>{a.inviteLinkFailed}</p>
             )}
           </section>
         )}
