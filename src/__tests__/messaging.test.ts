@@ -319,3 +319,143 @@ describe('deleting a message — the scope is forwarded, never decided here', ()
     expect(fetchMock).not.toHaveBeenCalled();
   });
 });
+
+describe('clearing and deleting a conversation', () => {
+  const params = { params: Promise.resolve({ id: 'c1' }) };
+  const post = (body?: unknown) =>
+    makeReq({ cookies: session, method: 'POST', body, url: 'http://localhost/api/bff/connection/conversations/c1/hide' });
+
+  it('clear reaches the service and sends no identity of its own', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(ok({ cleared: true }));
+    vi.stubGlobal('fetch', fetchMock);
+    const { POST } = await import('@/app/api/bff/connection/conversations/[id]/clear/route');
+    await POST(makeReq({ cookies: session, method: 'POST', url: 'http://localhost/api/bff/connection/conversations/c1/clear' }), params);
+    expect(String(fetchMock.mock.calls[0]?.[0])).toContain('/conversations/c1/clear');
+    expect(String(fetchMock.mock.calls[0]?.[1]?.body)).not.toContain('alice');
+  });
+
+  it('forwards permanent:true when asked', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(ok({ hidden: true }));
+    vi.stubGlobal('fetch', fetchMock);
+    const { POST } = await import('@/app/api/bff/connection/conversations/[id]/hide/route');
+    await POST(post({ permanent: true }), params);
+    expect(JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body))).toEqual({ permanent: true });
+  });
+
+  it('sends permanent:false for anything that is not literally true', async () => {
+    // A truthy string must not erase a transcript. This is the one flag in the
+    // app whose effect cannot be undone.
+    const fetchMock = vi.fn().mockResolvedValue(ok({ hidden: true }));
+    vi.stubGlobal('fetch', fetchMock);
+    const { POST } = await import('@/app/api/bff/connection/conversations/[id]/hide/route');
+    await POST(post({ permanent: 'yes' }), params);
+    expect(JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body))).toEqual({ permanent: false });
+  });
+
+  it('defaults to a plain hide when the body is absent', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(ok({ hidden: true }));
+    vi.stubGlobal('fetch', fetchMock);
+    const { POST } = await import('@/app/api/bff/connection/conversations/[id]/hide/route');
+    await POST(post(), params);
+    expect(JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body))).toEqual({ permanent: false });
+  });
+});
+
+describe('status BFF — the audience is never the client’s to name', () => {
+  it('asks for the feed without saying whose statuses it wants', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(ok({ authors: [] }));
+    vi.stubGlobal('fetch', fetchMock);
+    const { GET } = await import('@/app/api/bff/connection/stories/route');
+    await GET(makeReq({ cookies: session, url: 'http://localhost/api/bff/connection/stories' }));
+    const url = String(fetchMock.mock.calls[0]?.[0]);
+    expect(url).toContain('/api/identity/connection/stories');
+    expect(url).not.toContain('author');
+    expect(url).not.toContain('alice');
+  });
+
+  it('refuses the feed without a session and never reaches the gateway', async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+    const { GET } = await import('@/app/api/bff/connection/stories/route');
+    const res = await GET(makeReq({ url: 'http://localhost/api/bff/connection/stories' }));
+    expect(res.status).toBe(401);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('rejects an empty status before a round trip', async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+    const { POST } = await import('@/app/api/bff/connection/stories/route');
+    const res = await POST(makeReq({ cookies: session, method: 'POST', body: { caption: '   ' }, url: 'http://localhost/api/bff/connection/stories' }));
+    expect(res.status).toBe(400);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('rejects an over-long caption before a round trip', async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+    const { POST } = await import('@/app/api/bff/connection/stories/route');
+    const res = await POST(makeReq({ cookies: session, method: 'POST', body: { caption: 'x'.repeat(301) }, url: 'http://localhost/api/bff/connection/stories' }));
+    expect(res.status).toBe(400);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+});
+
+describe('a status photo is private', () => {
+  const params = { params: Promise.resolve({ id: 's1' }) };
+  const get = (cookie?: string) =>
+    new NextRequest('http://localhost/api/bff/connection/stories/s1/media', {
+      headers: cookie ? { Cookie: cookie } : {},
+    });
+
+  it('404s with no body when signed out — never 401', async () => {
+    // The same answer for "no such status" and "not for you", so the URL
+    // cannot be used to probe what exists.
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+    const { GET } = await import('@/app/api/bff/connection/stories/[id]/media/route');
+    const res = await GET(get(), params);
+    expect(res.status).toBe(404);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('404s when the backend refuses the audience check', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({ ok: false, status: 404, json: async () => ({}) });
+    vi.stubGlobal('fetch', fetchMock);
+    const { GET } = await import('@/app/api/bff/connection/stories/[id]/media/route');
+    expect((await GET(get('tec_access_token=tok'), params)).status).toBe(404);
+  });
+
+  it('caches PRIVATELY and for less than a status lives', async () => {
+    // A year-long cache would outlive the status and the audience check that
+    // authorised it; a shared cache would serve it to whoever asked next.
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(ok({ key: 'stories/a.jpg' }))
+      .mockResolvedValueOnce({
+        ok: true, status: 200,
+        headers: new Headers({ 'content-type': 'image/jpeg' }),
+        arrayBuffer: async () => new ArrayBuffer(8),
+      });
+    vi.stubGlobal('fetch', fetchMock);
+    const { GET } = await import('@/app/api/bff/connection/stories/[id]/media/route');
+    const res = await GET(get('tec_access_token=tok'), params);
+    expect(res.status).toBe(200);
+    const cc = res.headers.get('cache-control') ?? '';
+    expect(cc).toContain('private');
+    expect(cc).not.toContain('immutable');
+    expect(res.headers.get('x-content-type-options')).toBe('nosniff');
+  });
+
+  it('refuses to pass through a type it never accepted on the way in', async () => {
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(ok({ key: 'stories/a.svg' }))
+      .mockResolvedValueOnce({
+        ok: true, status: 200,
+        headers: new Headers({ 'content-type': 'image/svg+xml' }),
+        arrayBuffer: async () => new ArrayBuffer(8),
+      });
+    vi.stubGlobal('fetch', fetchMock);
+    const { GET } = await import('@/app/api/bff/connection/stories/[id]/media/route');
+    expect((await GET(get('tec_access_token=tok'), params)).status).toBe(404);
+  });
+});

@@ -45,7 +45,7 @@ function ActionRow({ label, icon, danger, onClick, disabled }: {
 
 export function ChatInfoSheet({
   isGroup, title, members, role, me, onClose,
-  onAddMember, onLeave, onDelete,
+  onAddMember, onLeave, onDelete, onClear,
   blocked, onBlock, onUnblock, blockBusy, blockError, peerName,
 }: {
   isGroup: boolean;
@@ -57,7 +57,10 @@ export function ChatInfoSheet({
   onClose: () => void;
   onAddMember: (username: string) => void;
   onLeave: () => void;
+  /** Removes the conversation AND its history — it does not come back. */
   onDelete: () => void;
+  /** Empties the transcript but keeps the conversation. */
+  onClear: () => void;
   blocked: boolean;
   onBlock: () => void;
   onUnblock: () => void;
@@ -73,6 +76,7 @@ export function ChatInfoSheet({
   const [armedBlock, setArmedBlock] = useState(false);
   const [armedDelete, setArmedDelete] = useState(false);
   const [armedLeave, setArmedLeave] = useState(false);
+  const [armedClear, setArmedClear] = useState(false);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
@@ -207,11 +211,27 @@ export function ChatInfoSheet({
             />
           )}
 
+          {/* Emptying the thread and removing it are different acts, and the
+              first is the reversible-feeling one, so it comes first. */}
+          <ActionRow
+            icon="🧹" danger
+            label={armedClear ? a.confirmClear : a.clearChat}
+            onClick={() => { if (armedClear) { onClear(); onClose(); } else setArmedClear(true); }}
+          />
+
           <ActionRow
             icon="🗑" danger
             label={armedDelete ? a.confirmDelete : a.deleteChat}
             onClick={() => { if (armedDelete) onDelete(); else setArmedDelete(true); }}
           />
+
+          {/* Said once, plainly, rather than left to be discovered: deleting
+              erases YOUR copy for good, and it is not a block — if they write
+              again the conversation returns, empty. */}
+          <p style={{
+            margin: 0, padding: '2px 16px 12px', fontSize: 11.5,
+            color: TEC_COLORS.subtext, lineHeight: 1.5,
+          }}>{a.deleteChatHint}</p>
 
           {blockError && (
             <p style={{ color: TEC_COLORS.error, fontSize: 12, margin: 0, padding: '0 16px 10px' }}>{a.blockFailed}</p>

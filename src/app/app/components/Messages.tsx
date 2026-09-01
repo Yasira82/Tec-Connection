@@ -31,6 +31,7 @@ import { NewChat } from './NewChat';
 import { Lightbox } from './Lightbox';
 import { ChatInfoSheet } from './ChatInfoSheet';
 import { MessageActions } from './MessageActions';
+import { StatusStrip } from './StatusStrip';
 import { VoiceNote } from './VoiceNote';
 import { downscaleImage } from '@/lib-client/connection/downscaleImage';
 
@@ -96,7 +97,7 @@ function Avatar({ name, size = 44 }: { name: string; size?: number }) {
 function Chat({ id, me, onBack }: { id: string; me: string; onBack: () => void }) {
   const { t } = useTranslation();
   const a = t.app;
-  const { thread, busy, error, send, sendMedia, deleteMessage, hide, addMember, leave } = useThread(id);
+  const { thread, busy, error, send, sendMedia, deleteMessage, hide, clear, addMember, leave } = useThread(id);
   const fileRef = useRef<HTMLInputElement | null>(null);
   const [draft, setDraft] = useState('');
   const [showInfo, setShowInfo] = useState(false);
@@ -409,7 +410,8 @@ function Chat({ id, me, onBack }: { id: string; me: string; onBack: () => void }
           onClose={() => setShowInfo(false)}
           onAddMember={(u) => { void addMember(u); }}
           onLeave={async () => { if (await leave()) onBack(); }}
-          onDelete={async () => { if (await hide()) onBack(); }}
+          onClear={() => { void clear(); }}
+          onDelete={async () => { if (await hide(true)) onBack(); }}
           blocked={peerBlocked}
           onBlock={() => { void block(peerName); }}
           onUnblock={() => { void unblock(peerName); }}
@@ -512,6 +514,9 @@ export function Messages({ me, conversations, loading, openDirect, createGroup, 
 
   return (
     <section>
+      {/* Status sits ABOVE the chat list, not in a tab of its own: it is worth
+          a glance on the way to a conversation, not a destination. */}
+      <StatusStrip me={me} />
       {/* No section heading. The page header above already reads
           "Messages · Your conversations"; repeating it was the exact defect the
           previous IA pass removed from every other tab. */}
