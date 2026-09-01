@@ -23,7 +23,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { TEC_COLORS } from '@yasser172/tec-ui';
 import { useTranslation } from '@/lib/i18n';
-import { useThread, type Summary, type Msg } from '@/lib-client/connection/useMessages';
+import { useThread, sendToConversation, type Summary, type Msg } from '@/lib-client/connection/useMessages';
 import { VoiceRecorder } from './VoiceRecorder';
 import { useBlocks } from '@/lib-client/connection/useBlocks';
 import { useTyping } from '@/lib-client/connection/useTyping';
@@ -33,6 +33,7 @@ import { ChatInfoSheet } from './ChatInfoSheet';
 import { MessageActions } from './MessageActions';
 import { StatusStrip } from './StatusStrip';
 import { ReportSheet } from './ReportSheet';
+import { Avatar as PersonAvatar } from '@/components/public/Avatar';
 import { VoiceNote } from './VoiceNote';
 import { downscaleImage } from '@/lib-client/connection/downscaleImage';
 
@@ -84,7 +85,22 @@ const dayKey = (iso: string) => {
   return Number.isNaN(d.getTime()) ? '' : d.toDateString();
 };
 
-function Avatar({ name, size = 44 }: { name: string; size?: number }) {
+/**
+ * A person in the chat surfaces.
+ *
+ * `group` keeps the old letter disc: a group has a title, not a face, and there
+ * is no avatar route for one. A PERSON gets their real photo — messaging knows
+ * only a handle, so it asks the avatar route and falls back to the initial when
+ * that 404s. Without this a profile photo appeared in Settings and nowhere else.
+ */
+function Avatar({ name, size = 44, group = false }: { name: string; size?: number; group?: boolean }) {
+  if (!group) {
+    return (
+      <span style={{ flexShrink: 0, display: 'block' }}>
+        <PersonAvatar username={(name || '?').replace(/^@/, '')} size={size} tryPhoto />
+      </span>
+    );
+  }
   return (
     <span style={{
       width: size, height: size, borderRadius: 999, display: 'grid', placeItems: 'center', flexShrink: 0,
@@ -170,7 +186,7 @@ function Chat({ id, me, onBack }: { id: string; me: string; onBack: () => void }
           background: 'none', border: 'none', color: TEC_COLORS.gold, cursor: 'pointer',
           fontSize: 26, lineHeight: 1, padding: '0 4px',
         }}>›</button>
-        <Avatar name={isGroup ? (thread?.title ?? 'G') : (thread?.peer ?? '?')} size={40} />
+        <Avatar name={isGroup ? (thread?.title ?? 'G') : (thread?.peer ?? '?')} size={40} group={!!isGroup} />
         <button
           onClick={() => setShowInfo(true)}
           style={{ flex: 1, minWidth: 0, background: 'none', border: 'none', padding: 0, textAlign: 'start', cursor: 'pointer' }}
@@ -223,8 +239,12 @@ function Chat({ id, me, onBack }: { id: string; me: string; onBack: () => void }
               <button
                 onClick={() => setMenuFor(m.id)} aria-label={a.deleteMessage}
                 style={{
-                  background: 'none', border: 'none', color: TEC_COLORS.subtext,
-                  fontSize: 15, lineHeight: 1, cursor: 'pointer', padding: '0 2px', opacity: 0.45,
+                  // Gold, at full strength. It was `subtext` at 45% opacity —
+                  // three dots the same colour as the background, which is why
+                  // nobody could find the way to delete a message. Every other
+                  // tappable mark in this app is the amber.
+                  background: 'none', border: 'none', color: TEC_COLORS.gold,
+                  fontSize: 18, lineHeight: 1, cursor: 'pointer', padding: '0 4px',
                   flexShrink: 0,
                   // Always on the side AWAY from the edge the bubble hugs, so
                   // it never sits between the message and the screen edge.
@@ -456,7 +476,7 @@ function Row({ c, onOpen, a }: { c: Summary; onOpen: () => void; a: Record<strin
       width: '100%', textAlign: 'start', display: 'flex', alignItems: 'center', gap: 12,
       padding: '12px 2px', background: 'none', border: 'none', cursor: 'pointer',
     }}>
-      <Avatar name={isGroup ? (c.title ?? 'G') : (c.peer ?? '?')} />
+      <Avatar name={isGroup ? (c.title ?? 'G') : (c.peer ?? '?')} group={isGroup} />
       <span style={{ flex: 1, minWidth: 0 }}>
         <span style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
           <span style={{ flex: 1, minWidth: 0, fontSize: 15, fontWeight: 700, color: TEC_COLORS.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -529,7 +549,20 @@ export function Messages({ me, conversations, loading, openDirect, createGroup, 
     <section>
       {/* Status sits ABOVE the chat list, not in a tab of its own: it is worth
           a glance on the way to a conversation, not a destination. */}
-      <StatusStrip me={me} />
+      <StatusStrip
+        me={me}
+        // A reply to a status is a DIRECT MESSAGE to its author, quoting what it
+        // was a reply to. Statuses get no comment list of their own: that would
+        // be a second, public place to talk, and this app moderates one.
+        onReply={async (author, text, story) => {
+          const res = await openDirect(author);
+          if (!('id' in res)) return false;
+          const quoted = story.caption
+            ? `↪ ${story.caption.slice(0, 80)}${story.caption.length > 80 ? '…' : ''}\n${text}`
+            : `↪ ${a.statusReplyToPhoto}\n${text}`;
+          return sendToConversation(res.id, quoted);
+        }}
+      />
       {/* No section heading. The page header above already reads
           "Messages · Your conversations"; repeating it was the exact defect the
           previous IA pass removed from every other tab. */}

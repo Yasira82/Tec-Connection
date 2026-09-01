@@ -13,7 +13,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { TEC_COLORS } from '@yasser172/tec-ui';
 import { useTranslation } from '@/lib/i18n';
-import { storyMediaUrl, type StoryAuthor } from '@/lib-client/connection/useStories';
+import { storyMediaUrl, type StoryAuthor, type StoryItem } from '@/lib-client/connection/useStories';
 import { ReportSheet } from './ReportSheet';
 
 const relative = (iso: string, a: Record<string, string>) => {
@@ -25,11 +25,18 @@ const relative = (iso: string, a: Record<string, string>) => {
   return (a.hoursAgo ?? '{n}h').replace('{n}', String(Math.floor(mins / 60)));
 };
 
-export function StatusViewer({ group, isMine, onSeen, onDelete, onClose }: {
+export function StatusViewer({ group, isMine, onSeen, onDelete, onReply, onClose }: {
   group: StoryAuthor;
   isMine: boolean;
   onSeen: (id: string) => void;
   onDelete: (id: string) => Promise<boolean>;
+  /**
+   * Reply to a status. It becomes a DIRECT MESSAGE to the author, quoting what
+   * you replied to — a status is not a thread and giving it its own comment
+   * list would create a second, public place to talk that nobody moderates.
+   * A reply is a conversation, so it goes where conversations live.
+   */
+  onReply?: (text: string, story: StoryItem) => Promise<boolean>;
   onClose: () => void;
 }) {
   const { t } = useTranslation();
@@ -41,6 +48,8 @@ export function StatusViewer({ group, isMine, onSeen, onDelete, onClose }: {
   const [armedDelete, setArmedDelete] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [reporting, setReporting] = useState(false);
+  const [reply, setReply] = useState('');
+  const [replyState, setReplyState] = useState<'idle' | 'sending' | 'sent' | 'failed'>('idle');
 
   const current = group.stories[i];
 
@@ -173,16 +182,72 @@ export function StatusViewer({ group, isMine, onSeen, onDelete, onClose }: {
         }} dir="auto">{current.caption}</p>
       )}
 
-      {/* Someone else's status: report it. Quiet and at the edge — most
-          statuses are not a problem, and a prominent accusation button on every
-          one of them changes how the whole feed reads. */}
+      {/* Reply — the whole point of watching someone's status is being able to
+          say something about it. It lands in the DM with them. */}
+      {!isMine && onReply && (
+        <div style={{ padding: '8px 12px 6px' }}>
+          {replyState === 'sent' ? (
+            <p style={{
+              margin: 0, textAlign: 'center', fontSize: 12.5, color: TEC_COLORS.success,
+              padding: '10px 0',
+            }}>{a.statusReplySent}</p>
+          ) : (
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+              <input
+                value={reply} onChange={(e) => setReply(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key !== 'Enter' || !reply.trim() || !current) return;
+                  setReplyState('sending');
+                  void onReply(reply, current).then((ok) => {
+                    setReplyState(ok ? 'sent' : 'failed');
+                    if (ok) setReply('');
+                  });
+                }}
+                placeholder={a.statusReplyPlaceholder} maxLength={2000} dir="auto"
+                style={{
+                  flex: 1, minWidth: 0, background: 'rgba(255,255,255,0.06)', color: TEC_COLORS.text,
+                  border: `1px solid ${TEC_COLORS.border}`, borderRadius: 999,
+                  padding: '11px 16px', fontSize: 14, outline: 'none',
+                }}
+              />
+              <button
+                onClick={() => {
+                  if (!reply.trim() || !current) return;
+                  setReplyState('sending');
+                  void onReply(reply, current).then((ok) => {
+                    setReplyState(ok ? 'sent' : 'failed');
+                    if (ok) setReply('');
+                  });
+                }}
+                disabled={!reply.trim() || replyState === 'sending'}
+                aria-label={a.send}
+                style={{
+                  width: 42, height: 42, borderRadius: 999, flexShrink: 0, border: 'none',
+                  background: reply.trim()
+                    ? `linear-gradient(135deg, ${TEC_COLORS.gold}, ${TEC_COLORS.goldDark})`
+                    : 'rgba(255,255,255,0.08)',
+                  color: reply.trim() ? '#0a0800' : TEC_COLORS.subtext,
+                  fontSize: 17, cursor: reply.trim() ? 'pointer' : 'not-allowed',
+                  display: 'grid', placeItems: 'center',
+                }}
+              ><span dir="ltr">➤</span></button>
+            </div>
+          )}
+          {replyState === 'failed' && (
+            <p style={{ margin: '6px 0 0', color: TEC_COLORS.error, fontSize: 12 }}>{a.messageFailed}</p>
+          )}
+        </div>
+      )}
+
+      {/* Report — quiet and at the edge. Most statuses are not a problem, and a
+          prominent accusation button on every one changes how the feed reads. */}
       {!isMine && (
-        <div style={{ padding: '6px 16px 14px', textAlign: 'center' }}>
+        <div style={{ padding: '2px 16px 14px', textAlign: 'center' }}>
           <button
             onClick={() => setReporting(true)}
             style={{
               background: 'none', border: 'none', color: TEC_COLORS.subtext,
-              padding: '8px 14px', fontSize: 12, cursor: 'pointer', textDecoration: 'underline',
+              padding: '6px 14px', fontSize: 12, cursor: 'pointer', textDecoration: 'underline',
             }}
           >{a.report}</button>
         </div>
