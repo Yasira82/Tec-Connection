@@ -28,7 +28,12 @@ export interface Summary {
 }
 
 export interface MsgMedia { type: 'image' | 'audio'; mime?: string | null; durationMs?: number | null }
-export interface Msg { id: string; body: string; by: string; at: string; media?: MsgMedia | null }
+export interface Msg {
+  id: string; body: string; by: string; at: string;
+  media?: MsgMedia | null;
+  /** A tombstone: the row survives so the transcript keeps its order. */
+  deleted?: boolean;
+}
 
 export interface Thread {
   id: string;
@@ -38,6 +43,11 @@ export interface Thread {
   role: 'owner' | 'member';
   peer: string | null;
   members: string[];
+  /**
+   * DIRECT only — when the other person last read this thread. A group reports
+   * nothing: "read" there is per member, and one tick cannot say "three of five".
+   */
+  peerReadAt?: string | null;
   messages: Msg[];
 }
 
@@ -229,6 +239,35 @@ export function useThread(id: string | null) {
     }
   }, [id, poll]);
 
+  /** Delete one of your own messages. The service enforces "your own". */
+  const deleteMessage = useCallback(async (messageId: string) => {
+    if (!id) return false;
+    try {
+      const res = await fetch(
+        `/api/bff/connection/conversations/${encodeURIComponent(id)}/messages/${encodeURIComponent(messageId)}`,
+        { method: 'DELETE', credentials: 'include' },
+      );
+      if (!res.ok) { setError('failed'); return false; }
+      // A tombstone REPLACES a message rather than adding one, and the poll only
+      // fetches what is new — so the whole thread has to be re-read for the
+      // deletion to show at all.
+      cursor.current = null;
+      await poll();
+      return true;
+    } catch { setError('failed'); return false; }
+  }, [id, poll]);
+
+  /** Remove this conversation from MY list. A new message brings it back. */
+  const hide = useCallback(async () => {
+    if (!id) return false;
+    try {
+      const res = await fetch(`/api/bff/connection/conversations/${encodeURIComponent(id)}/hide`, {
+        method: 'POST', credentials: 'include',
+      });
+      return res.ok;
+    } catch { return false; }
+  }, [id]);
+
   const addMember = useCallback(async (username: string) => {
     if (!id) return false;
     const res = await fetch(`/api/bff/connection/conversations/${encodeURIComponent(id)}/members`, {
@@ -250,5 +289,5 @@ export function useThread(id: string | null) {
     return res.ok;
   }, [id]);
 
-  return { thread, busy, error, send, sendMedia, addMember, leave, reload: poll };
+  return { thread, busy, error, send, sendMedia, deleteMessage, hide, addMember, leave, reload: poll };
 }

@@ -242,3 +242,76 @@ describe('unblock reaches the route that exists', () => {
     expect(JSON.parse((init as RequestInit).body as string)).toEqual({ username: 'magy888' });
   });
 });
+
+// A read receipt is the other side of the unread badge: the peer's marker moves
+// to "now" when they open the thread, so anything older has been in front of
+// them. The comparison is easy to get backwards, and a wrong tick is worse than
+// no tick — it asserts something about another person that is not true.
+describe('read ticks', () => {
+  const seenBy = (at: string, peerReadAt?: string | null): boolean => {
+    if (!peerReadAt) return false;
+    const sent = new Date(at).getTime();
+    const read = new Date(peerReadAt).getTime();
+    return Number.isFinite(sent) && Number.isFinite(read) && read >= sent;
+  };
+
+  it('is read when the peer’s marker is AFTER the message', () => {
+    expect(seenBy('2026-01-01T10:00:00Z', '2026-01-01T10:05:00Z')).toBe(true);
+  });
+
+  it('counts a marker exactly on the message as read', () => {
+    // Sending advances the sender's own marker to the message timestamp, so an
+    // exclusive comparison would under-report by one message forever.
+    expect(seenBy('2026-01-01T10:00:00Z', '2026-01-01T10:00:00Z')).toBe(true);
+  });
+
+  it('is NOT read when the message is newer than the marker', () => {
+    expect(seenBy('2026-01-01T10:05:00Z', '2026-01-01T10:00:00Z')).toBe(false);
+  });
+
+  it('claims nothing when there is no marker — a group, or a thread never opened', () => {
+    expect(seenBy('2026-01-01T10:00:00Z', null)).toBe(false);
+    expect(seenBy('2026-01-01T10:00:00Z', undefined)).toBe(false);
+  });
+
+  it('claims nothing on an unparseable date rather than guessing', () => {
+    expect(seenBy('not-a-date', '2026-01-01T10:00:00Z')).toBe(false);
+  });
+});
+
+describe('deleting a message re-reads the whole thread', () => {
+  it('resets the cursor, because a tombstone REPLACES a row', async () => {
+    // The poll only fetches what is NEW. A deletion changes an existing message,
+    // so an incremental poll would never see it and the words would stay on
+    // screen after being deleted.
+    const full = {
+      ok: true, status: 200,
+      json: async () => ({ data: { conversation: {
+        id: 'c1', kind: 'DIRECT', title: null, owner: null, role: 'member',
+        peer: 'bob', members: ['alice', 'bob'],
+        messages: [{ id: 'm1', body: '', by: 'alice', at: '2026-01-01T00:00:00.000Z', deleted: true }],
+      } } }),
+    };
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce({ ok: true, status: 200, json: async () => ({ data: { conversation: {
+        id: 'c1', kind: 'DIRECT', title: null, owner: null, role: 'member',
+        peer: 'bob', members: ['alice', 'bob'],
+        messages: [{ id: 'm1', body: 'secret', by: 'alice', at: '2026-01-01T00:00:00.000Z' }],
+      } } }) })
+      .mockResolvedValueOnce({ ok: true, status: 200, json: async () => ({}) })  // read receipt
+      .mockResolvedValueOnce({ ok: true, status: 200, json: async () => ({ data: { deleted: true } }) })
+      .mockResolvedValue(full);
+    vi.stubGlobal('fetch', fetchMock);
+
+    const { result } = renderHook(() => useThread('c1'));
+    await waitFor(() => expect(result.current.thread?.messages[0]?.body).toBe('secret'));
+
+    await act(async () => { await result.current.deleteMessage('m1'); });
+    await waitFor(() => expect(result.current.thread?.messages[0]?.deleted).toBe(true));
+    expect(result.current.thread?.messages[0]?.body).toBe('');
+
+    // The re-read must NOT carry ?after — that is what makes the change visible.
+    const reread = fetchMock.mock.calls.at(-1)?.[0];
+    expect(String(reread)).not.toContain('after=');
+  });
+});

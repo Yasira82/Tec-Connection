@@ -26,6 +26,7 @@ import { useTranslation } from '@/lib/i18n';
 import { useThread, type Summary, type Msg } from '@/lib-client/connection/useMessages';
 import { VoiceRecorder } from './VoiceRecorder';
 import { useBlocks } from '@/lib-client/connection/useBlocks';
+import { useTyping } from '@/lib-client/connection/useTyping';
 import { NewChat } from './NewChat';
 
 /** The service normalizes every username; the session hook does not. */
@@ -57,6 +58,20 @@ const clock = (iso: string) => {
 const mediaUrl = (conversationId: string, messageId: string) =>
   `/api/bff/connection/conversations/${encodeURIComponent(conversationId)}/media/${encodeURIComponent(messageId)}`;
 
+/**
+ * Has the other person read a message sent at `at`?
+ *
+ * Their read marker moves to "now" when they open the thread, so anything older
+ * has been in front of them. It is the same data the unread badge counts — a
+ * receipt is just the other side of it.
+ */
+const seenBy = (at: string, peerReadAt?: string | null): boolean => {
+  if (!peerReadAt) return false;
+  const sent = new Date(at).getTime();
+  const read = new Date(peerReadAt).getTime();
+  return Number.isFinite(sent) && Number.isFinite(read) && read >= sent;
+};
+
 const secs = (ms: number) => {
   const total = Math.round(ms / 1000);
   return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, '0')}`;
@@ -81,7 +96,7 @@ function Avatar({ name, size = 44 }: { name: string; size?: number }) {
 function Chat({ id, me, onBack }: { id: string; me: string; onBack: () => void }) {
   const { t } = useTranslation();
   const a = t.app;
-  const { thread, busy, error, send, sendMedia, addMember, leave } = useThread(id);
+  const { thread, busy, error, send, sendMedia, deleteMessage, hide, addMember, leave } = useThread(id);
   const fileRef = useRef<HTMLInputElement | null>(null);
   const [draft, setDraft] = useState('');
   const [invitee, setInvitee] = useState('');
@@ -90,6 +105,11 @@ function Chat({ id, me, onBack }: { id: string; me: string; onBack: () => void }
   // Blocking is reversible but not trivial, and a mis-tap on a phone is easy.
   // Two taps rather than a modal: the button states its own confirmation.
   const [armed, setArmed] = useState(false);
+  const [armedDeleteChat, setArmedDeleteChat] = useState(false);
+  // Which message has its Delete showing. One at a time — a delete button on
+  // every bubble is a row of hazards down the side of the transcript.
+  const [menuFor, setMenuFor] = useState<string | null>(null);
+  const { typing, ping } = useTyping(id, thread?.members ?? []);
   const endRef = useRef<HTMLDivElement | null>(null);
   const meNorm = norm(me);
 
@@ -155,8 +175,10 @@ function Chat({ id, me, onBack }: { id: string; me: string; onBack: () => void }
           <span style={{ display: 'block', fontSize: 16, fontWeight: 700, color: TEC_COLORS.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             <bdi dir="auto">{title}</bdi>
           </span>
-          <span style={{ fontSize: 11.5, color: TEC_COLORS.subtext }}>
-            {isGroup ? <bdi>{thread?.members.length} {a.membersLabel}</bdi> : a.directLabel}
+          <span style={{ fontSize: 11.5, color: typing.length ? TEC_COLORS.success : TEC_COLORS.subtext }}>
+            {typing.length
+              ? <bdi dir="auto">{isGroup ? `@${typing[0]} ${a.typingNow}` : a.typingNow}</bdi>
+              : isGroup ? <bdi>{thread?.members.length} {a.membersLabel}</bdi> : a.directLabel}
           </span>
         </button>
         <button onClick={() => { setShowInfo((v) => !v); setArmed(false); }} aria-label={isGroup ? a.groupInfo : a.block} style={{
@@ -185,7 +207,16 @@ function Chat({ id, me, onBack }: { id: string; me: string; onBack: () => void }
               }}><bdi>@{u}</bdi></span>
             ))}
           </div>
-          <div><button style={quietBtn} onClick={async () => { if (await leave()) onBack(); }}>{a.leaveGroup}</button></div>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <button style={quietBtn} onClick={async () => { if (await leave()) onBack(); }}>{a.leaveGroup}</button>
+            <button
+              style={{ ...quietBtn, borderColor: armedDeleteChat ? TEC_COLORS.error : TEC_COLORS.border, color: armedDeleteChat ? TEC_COLORS.error : TEC_COLORS.subtext }}
+              onClick={async () => {
+                if (!armedDeleteChat) { setArmedDeleteChat(true); return; }
+                if (await hide()) onBack();
+              }}
+            >{armedDeleteChat ? a.confirmDelete : a.deleteChat}</button>
+          </div>
         </div>
       )}
 
@@ -212,6 +243,15 @@ function Chat({ id, me, onBack }: { id: string; me: string; onBack: () => void }
               >{armed ? a.confirmBlock : a.block}</button>
             </div>
           )}
+          <div>
+            <button
+              style={{ ...quietBtn, borderColor: armedDeleteChat ? TEC_COLORS.error : TEC_COLORS.border, color: armedDeleteChat ? TEC_COLORS.error : TEC_COLORS.subtext }}
+              onClick={async () => {
+                if (!armedDeleteChat) { setArmedDeleteChat(true); return; }
+                if (await hide()) onBack();
+              }}
+            >{armedDeleteChat ? a.confirmDelete : a.deleteChat}</button>
+          </div>
           {blockError && <p style={{ color: TEC_COLORS.error, fontSize: 12, margin: 0 }}>{a.blockFailed}</p>}
         </div>
       )}
@@ -241,7 +281,30 @@ function Chat({ id, me, onBack }: { id: string; me: string; onBack: () => void }
                 }}>{dayLabel(m.at, a)}</span>
               </div>
             )}
-            <div style={{ display: 'flex', justifyContent: mine ? 'flex-end' : 'flex-start', marginTop: showSender ? 8 : 2 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, justifyContent: mine ? 'flex-end' : 'flex-start', marginTop: showSender ? 8 : 2 }}>
+              {/* The delete affordance sits OUTSIDE the bubble and only for your
+                  own, un-deleted messages — a hazard on every row would be a
+                  column of them down the side of the transcript. */}
+              {mine && !m.deleted && (
+                menuFor === m.id ? (
+                  <button
+                    onClick={() => { void deleteMessage(m.id); setMenuFor(null); }}
+                    style={{
+                      background: `${TEC_COLORS.error}1F`, border: `1px solid ${TEC_COLORS.error}66`,
+                      color: TEC_COLORS.error, borderRadius: 999, padding: '4px 10px',
+                      fontSize: 11.5, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap',
+                    }}
+                  >{a.deleteMessage}</button>
+                ) : (
+                  <button
+                    onClick={() => setMenuFor(m.id)} aria-label={a.deleteMessage}
+                    style={{
+                      background: 'none', border: 'none', color: TEC_COLORS.subtext,
+                      fontSize: 15, lineHeight: 1, cursor: 'pointer', padding: '0 2px', opacity: 0.5,
+                    }}
+                  >⋯</button>
+                )
+              )}
               <div style={{
                 maxWidth: '78%', padding: '8px 12px 6px',
                 background: mine ? `${TEC_COLORS.gold}1F` : TEC_COLORS.surface2,
@@ -256,6 +319,11 @@ function Chat({ id, me, onBack }: { id: string; me: string; onBack: () => void }
                     <bdi>@{m.by}</bdi>
                   </div>
                 )}
+                {m.deleted ? (
+                  <div style={{ fontSize: 13.5, lineHeight: 1.5, color: TEC_COLORS.subtext, fontStyle: 'italic' }}>
+                    {a.messageDeleted}
+                  </div>
+                ) : (<>
                 {m.media?.type === 'image' && (
                   // Same-origin, session-gated bytes. `loading="lazy"` matters in
                   // a long transcript: without it every photo in the history is
@@ -291,10 +359,20 @@ function Chat({ id, me, onBack }: { id: string; me: string; onBack: () => void }
                     <bdi dir="auto">{m.body}</bdi>
                   </div>
                 )}
-                <div style={{ fontSize: 10, color: TEC_COLORS.subtext, textAlign: 'end', marginTop: 2 }}>
+                </>)}
+                <div style={{ fontSize: 10, color: TEC_COLORS.subtext, textAlign: 'end', marginTop: 2, display: 'flex', gap: 4, justifyContent: 'flex-end', alignItems: 'center' }}>
                   {/* "12:52 AM" is mostly bidi-neutral, so an RTL paragraph moves
                       the meridiem to the front: "AM 12:52". */}
                   <bdi>{clock(m.at)}</bdi>
+                  {/* Ticks on YOUR OWN messages in a DIRECT thread only. In a
+                      group "read" is per member and one tick cannot say "three
+                      of five", so nothing is claimed there. */}
+                  {mine && !m.deleted && !isGroup && (
+                    <span
+                      title={seenBy(m.at, thread?.peerReadAt) ? a.seen : a.delivered}
+                      style={{ color: seenBy(m.at, thread?.peerReadAt) ? TEC_COLORS.success : TEC_COLORS.subtext }}
+                    >{seenBy(m.at, thread?.peerReadAt) ? '✓✓' : '✓'}</span>
+                  )}
                 </div>
               </div>
             </div>
@@ -340,7 +418,8 @@ function Chat({ id, me, onBack }: { id: string; me: string; onBack: () => void }
         <VoiceRecorder busy={busy} onRecorded={(blob, ms) => { void sendMedia(blob, '', ms); }} />
 
         <input
-          style={input} value={draft} onChange={(e) => setDraft(e.target.value)}
+          style={input} value={draft}
+          onChange={(e) => { setDraft(e.target.value); ping(); }}
           onKeyDown={(e) => { if (e.key === 'Enter') submit(); }}
           placeholder={a.messagePlaceholder} maxLength={2000} dir="auto"
         />
