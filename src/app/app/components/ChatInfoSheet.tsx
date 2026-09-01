@@ -147,6 +147,10 @@ export function ChatInfoSheet({
   };
   const { requests, decide } = useJoinRequests(isOwner ? convId : null, isOwner);
   const [listed, setListed] = useState(visibility === 'PUBLIC');
+  // `useState` reads its argument ONCE. Without this the switch keeps whatever
+  // it was told at mount, so a value that changed on the server — or a write
+  // that quietly did not land — is never corrected on screen.
+  useEffect(() => { setListed(visibility === 'PUBLIC'); }, [visibility]);
   const [about, setAbout] = useState(description ?? '');
   const [listBusy, setListBusy] = useState(false);
   const [listMsg, setListMsg] = useState('');
@@ -162,17 +166,27 @@ export function ChatInfoSheet({
           body: JSON.stringify({ visibility: next ? 'PUBLIC' : 'PRIVATE', description: desc.trim() || null }),
         },
       );
+      const json = await res.json().catch(() => ({}));
       if (!res.ok) {
         // The name is only checked when a group is PUBLISHED, so this is the
-        // one place the collision can surface — and it is fixable, not fatal.
-        const json = await res.json().catch(() => ({}));
+        // one place that collision can surface — and it is fixable, not fatal.
         const raw = json?.message ?? json?.error ?? '';
         const code = Array.isArray(raw) ? String(raw[0] ?? '') : String(raw);
         setListMsg(code === 'GROUP_NAME_TAKEN_PUBLIC' ? a.groupNameTakenPublic : a.groupRequestFailed);
+        // The switch stays where it was. Leaving it flipped after a refused
+        // write is what made this look saved when it was not.
+        setListed(!next);
         return;
       }
-      setListed(next);
-    } catch { setListMsg(a.groupRequestFailed); }
+      // What the SERVER stored, not what was asked for.
+      //
+      // This used to be `setListed(next)` — the switch moved because the
+      // request finished, not because anything was written. A group could read
+      // "Listed publicly" on this screen while the database still had it
+      // private, and the only symptom was that nobody could find it.
+      const stored = json?.data?.visibility;
+      setListed(stored ? stored === 'PUBLIC' : next);
+    } catch { setListMsg(a.groupRequestFailed); setListed(!next); }
     finally { setListBusy(false); }
   };
 

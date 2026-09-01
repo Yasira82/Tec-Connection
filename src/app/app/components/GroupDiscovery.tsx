@@ -135,6 +135,15 @@ export function GroupDiscovery({ onClose }: { onClose: () => void }) {
           placeholder={a.searchGroupsPlaceholder} maxLength={120} dir="auto"
           autoCapitalize="none" autoCorrect="off"
           style={{
+            // border-box, and it is NOT optional here.
+            //
+            // This project has no platform-wide `* { box-sizing: border-box }`
+            // — deliberately, per public-surface.css — so `width: 100%` plus
+            // 16px of padding and a border makes the field 34px WIDER than the
+            // column that holds it. It overflows the screen, and in a
+            // right-to-left layout the overflow is on the LEADING edge: the
+            // first character of what you typed is cut in half.
+            boxSizing: 'border-box',
             width: '100%', background: TEC_COLORS.surface, color: TEC_COLORS.text,
             border: `1px solid ${TEC_COLORS.border}`, borderRadius: 999,
             padding: '11px 16px', fontSize: 14, outline: 'none',
