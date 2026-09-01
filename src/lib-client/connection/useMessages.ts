@@ -62,6 +62,12 @@ export interface Msg {
    * stranger does not get highlighted as if it reached them.
    */
   mentions?: string[];
+  /** When the sender last rewrote it, or null. The original text is not kept. */
+  editedAt?: string | null;
+  /** Who WROTE it, when this copy was forwarded here. A name, never an id. */
+  forwardedFrom?: string | null;
+  /** Counts per emoji, and whether I am in each. Never who else is. */
+  reactions?: { emoji: string; count: number; mine: boolean }[];
   /** A tombstone: the row survives so the transcript keeps its order. */
   deleted?: boolean;
 }
@@ -94,6 +100,15 @@ export interface Thread {
   myLastReadAt?: string | null;
   /** Muted for me. Per-member; nobody else can see it. */
   muted?: boolean;
+  /** GROUP only — who may write here. Sent to every member, not just admins. */
+  posting?: 'EVERYONE' | 'ADMINS';
+  /** The one message held at the top, or null. Resolved server-side each read. */
+  pinned?: { id: string; by: string; at: string; body: string; media: string | null } | null;
+  /**
+   * Whether an invite link EXISTS. Never the code — that is a credential, and
+   * only the owner fetches it, on demand.
+   */
+  hasInvite?: boolean;
   messages: Msg[];
 }
 
@@ -485,6 +500,136 @@ export function useThread(id: string | null) {
     } catch { setError('failed'); return false; }
   }, [id]);
 
+  /**
+   * React, or take it back.
+   *
+   * Optimistic, and it has to be: a reaction is a tap that must feel instant,
+   * and waiting a poll cycle to see your own thumb appear makes the button feel
+   * broken. The server's counts replace the guess on the next read; a refusal
+   * simply loses the guess, which is the smallest possible wrong outcome.
+   */
+  const react = useCallback(async (messageId: string, emoji: string, on: boolean) => {
+    if (!id) return false;
+    setThread((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        messages: prev.messages.map((m) => {
+          if (m.id !== messageId) return m;
+          const list = [...(m.reactions ?? [])];
+          const i = list.findIndex((r) => r.emoji === emoji);
+          const hit = i >= 0 ? list[i] : undefined;
+          if (on) {
+            if (!hit) list.push({ emoji, count: 1, mine: true });
+            // Already mine: nothing to add. Counting again would show two of
+            // your own thumbs until the next poll corrected it.
+            else if (!hit.mine) list[i] = { ...hit, count: hit.count + 1, mine: true };
+          } else if (hit?.mine) {
+            if (hit.count <= 1) list.splice(i, 1);
+            else list[i] = { ...hit, count: hit.count - 1, mine: false };
+          }
+          return { ...m, reactions: list };
+        }),
+      };
+    });
+    try {
+      const res = await fetch(
+        `/api/bff/connection/conversations/${encodeURIComponent(id)}/messages/${encodeURIComponent(messageId)}/reactions`,
+        {
+          method: 'PUT', credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ emoji, on }),
+        },
+      );
+      if (!res.ok) { await poll(); return false; }
+      return true;
+    } catch { await poll(); return false; }
+  }, [id, poll]);
+
+  /**
+   * Rewrite one of your own messages.
+   *
+   * A full re-read afterwards, not an append: an edit REPLACES a message rather
+   * than adding one, and the poll only fetches what is new — so without this
+   * the corrected text would not appear until something else was said.
+   */
+  const editMessage = useCallback(async (messageId: string, body: string) => {
+    if (!id) return false;
+    const text = body.trim();
+    if (!text) return false;
+    try {
+      const res = await fetch(
+        `/api/bff/connection/conversations/${encodeURIComponent(id)}/messages/${encodeURIComponent(messageId)}`,
+        {
+          method: 'PUT', credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ body: text }),
+        },
+      );
+      if (!res.ok) { setError(res.status === 403 ? 'editWindow' : 'failed'); return false; }
+      setError(null);
+      cursor.current = null;
+      await poll();
+      return true;
+    } catch { setError('failed'); return false; }
+  }, [id, poll]);
+
+  /** Copy a message into another conversation the caller also belongs to. */
+  const forwardMessage = useCallback(async (messageId: string, to: string) => {
+    if (!id) return false;
+    try {
+      const res = await fetch(
+        `/api/bff/connection/conversations/${encodeURIComponent(id)}/messages/${encodeURIComponent(messageId)}/forward`,
+        {
+          method: 'POST', credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ to }),
+        },
+      );
+      if (!res.ok) { setError(res.status === 403 ? 'refused' : 'failed'); return false; }
+      setError(null);
+      return true;
+    } catch { setError('failed'); return false; }
+  }, [id]);
+
+  /** Pin a message, or pass null to take the pin down. */
+  const setPinned = useCallback(async (messageId: string | null) => {
+    if (!id) return false;
+    try {
+      const res = await fetch(`/api/bff/connection/conversations/${encodeURIComponent(id)}/pin`, {
+        method: 'PUT', credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messageId }),
+      });
+      if (!res.ok) { setError('failed'); return false; }
+      const next = unwrap<Thread['pinned']>(await res.json().catch(() => ({})), 'pinned');
+      setThread((prev) => (prev ? { ...prev, pinned: next ?? null } : prev));
+      return true;
+    } catch { setError('failed'); return false; }
+  }, [id]);
+
+  /**
+   * Open or close the group to ordinary members.
+   *
+   * Written from the SERVER's answer, like every other switch here — the
+   * control should move because something was stored, not because a request
+   * came back.
+   */
+  const setPosting = useCallback(async (posting: 'EVERYONE' | 'ADMINS') => {
+    if (!id) return false;
+    try {
+      const res = await fetch(`/api/bff/connection/conversations/${encodeURIComponent(id)}/posting`, {
+        method: 'PUT', credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ posting }),
+      });
+      if (!res.ok) { setError('failed'); return false; }
+      const next = unwrap<'EVERYONE' | 'ADMINS'>(await res.json().catch(() => ({})), 'posting');
+      setThread((prev) => (prev ? { ...prev, posting: next ?? posting } : prev));
+      return true;
+    } catch { setError('failed'); return false; }
+  }, [id]);
+
   const leave = useCallback(async () => {
     if (!id) return false;
     const res = await fetch(`/api/bff/connection/conversations/${encodeURIComponent(id)}/leave`, {
@@ -496,5 +641,6 @@ export function useThread(id: string | null) {
   return {
     thread, busy, error, send, sendMedia, deleteMessage, hide, clear, addMember, leave,
     loadOlder, loadingOlder, hasMore, reload: poll, setMuted, readMark,
+    react, editMessage, forwardMessage, setPinned, setPosting,
   };
 }

@@ -15,7 +15,7 @@
 //     so it moved there — a tab called Discover should not be half a form.
 //   · Principles (verification is presented, Featured is reach only) are stated
 //     once per screen, small, at the bottom — not after every card.
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { usePiAuth } from '@yasser172/tec-auth';
 import { TEC_COLORS } from '@yasser172/tec-ui';
 import { useTranslation } from '@/lib/i18n';
@@ -31,6 +31,7 @@ import { Notifications } from './components/Notifications';
 import { Collaboration } from './components/Collaboration';
 import { Messages } from './components/Messages';
 import { useConversations } from '@/lib-client/connection/useMessages';
+import { joinByInvite } from '@/lib-client/connection/useInvite';
 
 export default function ConnectionHome() {
   const { user, isLoading } = usePiAuth();
@@ -46,6 +47,36 @@ export default function ConnectionHome() {
   // only place that sees both.
   const [openChatId, setOpenChatId] = useState<string | null>(null);
   const chatOpen = openChatId !== null;
+  const [inviteState, setInviteState] = useState<'idle' | 'joining' | 'failed'>('idle');
+
+  // Someone arrived on an invite link.
+  //
+  // Redeemed HERE rather than on a page of its own: joining needs the session,
+  // and a dedicated /invite route would send anyone not yet signed in through
+  // SSO and back to a URL whose code had already been consumed.
+  //
+  // The code is stripped from the address bar either way. Leaving it there means
+  // a refresh replays the join, and — worse — that a screenshot of this screen
+  // is a working key to the group.
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    const code = url.searchParams.get('invite');
+    if (!code) return;
+    url.searchParams.delete('invite');
+    window.history.replaceState({}, '', url.toString());
+
+    setInviteState('joining');
+    void joinByInvite(code).then((res) => {
+      if (!res) { setInviteState('failed'); return; }
+      setInviteState('idle');
+      setTab('messages');
+      setOpenChatId(res.id);
+      void convo.reload();
+    });
+    // Once, on arrival. `convo.reload` is stable and the code is read from the
+    // URL at mount — re-running this would try to redeem a code already spent.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const messagePerson = async (username: string) => {
     const res = await convo.openDirect(username);
@@ -71,6 +102,21 @@ export default function ConnectionHome() {
   return (
     <main style={{ minHeight: '100vh', background: TEC_COLORS.bg, color: TEC_COLORS.text, fontFamily: 'system-ui, -apple-system, sans-serif' }}>
       <div style={{ maxWidth: 760, margin: '0 auto', padding: '28px 20px calc(96px + env(safe-area-inset-bottom))' }}>
+        {/* Arriving on an invite link. Said out loud, because a link that opens
+            the app and then appears to do nothing reads as a broken link — and
+            a revoked one has to say so rather than leaving someone waiting. */}
+        {inviteState !== 'idle' && (
+          <div style={{
+            margin: '0 0 16px', padding: '10px 14px', borderRadius: 12,
+            background: inviteState === 'failed' ? 'rgba(239,68,68,0.10)' : `${TEC_COLORS.gold}14`,
+            border: `1px solid ${inviteState === 'failed' ? 'rgba(239,68,68,0.30)' : `${TEC_COLORS.gold}44`}`,
+            fontSize: 13, lineHeight: 1.5,
+            color: inviteState === 'failed' ? TEC_COLORS.error : TEC_COLORS.text,
+          }}>
+            {inviteState === 'failed' ? t.app.inviteInvalid : t.app.joiningByInvite}
+          </div>
+        )}
+
         {/* An open chat owns the screen, the way it does in every messaging app
             people already know. Keeping the page header above it left the
             conversation in a box under a title that repeated its own name. */}

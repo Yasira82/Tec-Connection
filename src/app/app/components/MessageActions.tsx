@@ -21,7 +21,11 @@ import { TEC_COLORS } from '@yasser172/tec-ui';
 import { useTranslation } from '@/lib/i18n';
 import { useBackButton } from '@/lib-client/connection/useBackButton';
 
-function Choice({ label, hint, onClick }: { label: string; hint: string; onClick: () => void }) {
+function Choice({ label, hint, onClick, danger = true }: {
+  label: string; hint: string; onClick: () => void;
+  /** Red by default — this sheet began life as two deletes. */
+  danger?: boolean;
+}) {
   return (
     <button
       onClick={onClick}
@@ -30,7 +34,10 @@ function Choice({ label, hint, onClick }: { label: string; hint: string; onClick
         padding: '13px 16px', background: 'none', border: 'none',
       }}
     >
-      <span style={{ display: 'block', fontSize: 14.5, fontWeight: 600, color: TEC_COLORS.error }}>{label}</span>
+      <span style={{
+        display: 'block', fontSize: 14.5, fontWeight: 600,
+        color: danger ? TEC_COLORS.error : TEC_COLORS.text,
+      }}>{label}</span>
       <span style={{ display: 'block', fontSize: 11.5, color: TEC_COLORS.subtext, marginTop: 2, lineHeight: 1.45 }}>
         {hint}
       </span>
@@ -38,7 +45,13 @@ function Choice({ label, hint, onClick }: { label: string; hint: string; onClick
   );
 }
 
-export function MessageActions({ mine, deleted, onReply, onDelete, onReport, onClose }: {
+/** The six the service accepts. Anything else is refused there, so nothing else is offered here. */
+const REACTIONS = ['👍', '❤️', '😂', '😮', '😢', '🙏'] as const;
+
+export function MessageActions({
+  mine, deleted, onReply, onDelete, onReport, onClose,
+  onReact, myReactions = [], canEdit, onEdit, onForward, canPin, pinned, onPin,
+}: {
   /** Only the sender may clear a message for both sides. */
   mine: boolean;
   /** A tombstone can still be removed from your own copy. */
@@ -49,6 +62,22 @@ export function MessageActions({ mine, deleted, onReply, onDelete, onReport, onC
   /** Absent for your own message — reporting yourself is not a thing. */
   onReport?: () => void;
   onClose: () => void;
+  /** React, or take one back. `on` is the END state, never a toggle. */
+  onReact?: (emoji: string, on: boolean) => void;
+  /** Which of the six this caller has already used, so the row shows it. */
+  myReactions?: string[];
+  /**
+   * Whether the edit is still open. Computed by the caller from the send time —
+   * offering an option the server will refuse is worse than not offering it.
+   */
+  canEdit?: boolean;
+  onEdit?: () => void;
+  onForward?: () => void;
+  /** Group: owner/admin only. Direct: either person. */
+  canPin?: boolean;
+  /** Whether THIS message is the pinned one, so the label says pin or unpin. */
+  pinned?: boolean;
+  onPin?: (next: boolean) => void;
 }) {
   const { t } = useTranslation();
   const a = t.app;
@@ -84,11 +113,66 @@ export function MessageActions({ mine, deleted, onReply, onDelete, onReport, onC
           <span style={{ width: 38, height: 4, borderRadius: 999, background: TEC_COLORS.border }} />
         </div>
 
+        {/* The reactions, at the very top and as one tap.
+            A reaction is the cheapest thing on this menu and the most used —
+            burying it under four rows of text would make writing "ok" easier
+            than tapping 👍, which is the opposite of the point. Tapping one you
+            already gave takes it back. */}
+        {onReact && !deleted && (
+          <div style={{
+            display: 'flex', gap: 4, padding: '4px 10px 12px',
+            justifyContent: 'space-between', borderBottom: `1px solid ${TEC_COLORS.border}`,
+          }}>
+            {REACTIONS.map((e) => {
+              const on = myReactions.includes(e);
+              return (
+                <button
+                  key={e}
+                  onClick={() => { onReact(e, !on); onClose(); }}
+                  aria-label={e} aria-pressed={on}
+                  style={{
+                    flex: 1, minWidth: 0, padding: '8px 0', fontSize: 22, lineHeight: 1,
+                    cursor: 'pointer', borderRadius: 12,
+                    background: on ? `${TEC_COLORS.gold}22` : 'none',
+                    border: `1px solid ${on ? `${TEC_COLORS.gold}66` : 'transparent'}`,
+                  }}
+                >{e}</button>
+              );
+            })}
+          </div>
+        )}
+
         {/* First, and not a destructive action: replying is the thing people
             open this menu for most, and it should not sit under two deletes. */}
         {onReply && !deleted && (
           <div style={{ borderBottom: `1px solid ${TEC_COLORS.border}` }}>
-            <Choice label={a.reply} hint={a.replyHint} onClick={() => { onReply(); onClose(); }} />
+            <Choice danger={false} label={a.reply} hint={a.replyHint} onClick={() => { onReply(); onClose(); }} />
+          </div>
+        )}
+
+        {/* Editing is offered only while the window is open. An option that is
+            always shown and sometimes refused teaches people to distrust the
+            menu. */}
+        {onEdit && canEdit && !deleted && (
+          <div style={{ borderBottom: `1px solid ${TEC_COLORS.border}` }}>
+            <Choice danger={false} label={a.editMessage} hint={a.editMessageHint} onClick={() => { onEdit(); onClose(); }} />
+          </div>
+        )}
+
+        {onForward && !deleted && (
+          <div style={{ borderBottom: `1px solid ${TEC_COLORS.border}` }}>
+            <Choice danger={false} label={a.forward} hint={a.forwardHint} onClick={() => { onForward(); onClose(); }} />
+          </div>
+        )}
+
+        {onPin && canPin && !deleted && (
+          <div style={{ borderBottom: `1px solid ${TEC_COLORS.border}` }}>
+            <Choice
+              danger={false}
+              label={pinned ? a.unpinMessage : a.pinMessage}
+              hint={pinned ? a.unpinMessageHint : a.pinMessageHint}
+              onClick={() => { onPin(!pinned); onClose(); }}
+            />
           </div>
         )}
 

@@ -32,6 +32,8 @@ import { Lightbox } from './Lightbox';
 import { ChatInfoSheet } from './ChatInfoSheet';
 import { GroupDiscovery } from './GroupDiscovery';
 import { MessageActions } from './MessageActions';
+import { ChatSearch } from './ChatSearch';
+import { ForwardPicker } from './ForwardPicker';
 import { StatusStrip } from './StatusStrip';
 import { ReportSheet } from './ReportSheet';
 import { Avatar as PersonAvatar } from '@/components/public/Avatar';
@@ -85,6 +87,23 @@ const seenBy = (at: string, peerReadAt?: string | null): boolean => {
 const dayKey = (iso: string) => {
   const d = new Date(iso);
   return Number.isNaN(d.getTime()) ? '' : d.toDateString();
+};
+
+/**
+ * How long a message stays editable — the SAME fifteen minutes the service
+ * enforces.
+ *
+ * Duplicated deliberately, and it is the one duplication in this file worth
+ * having: the alternative is offering Edit on every message and letting the
+ * server refuse half of them, which is how a menu stops being trusted. If the
+ * two ever disagree the server still wins, so the failure is a missing option,
+ * never a message edited outside the window.
+ */
+const EDIT_WINDOW_MS = 15 * 60 * 1000;
+
+const withinEditWindow = (at: string): boolean => {
+  const t = new Date(at).getTime();
+  return Number.isFinite(t) && Date.now() - t <= EDIT_WINDOW_MS;
 };
 
 /**
@@ -180,16 +199,27 @@ function Avatar({ name, size = 44, group = false, convId }: {
 }
 
 // ── the open chat ───────────────────────────────────────────────────────────
-function Chat({ id, me, onBack }: { id: string; me: string; onBack: () => void }) {
+function Chat({ id, me, conversations, onBack }: {
+  id: string; me: string;
+  /** For the forward picker: the only destinations that exist are these. */
+  conversations: Summary[];
+  onBack: () => void;
+}) {
   const { t } = useTranslation();
   const a = t.app;
   const {
     thread, busy, error, send, sendMedia, deleteMessage, hide, clear, addMember, leave,
     loadOlder, loadingOlder, hasMore, setMuted, readMark,
+    react, editMessage, forwardMessage, setPinned, setPosting,
   } = useThread(id);
   // The message being answered. Held here rather than in the composer so the
   // bubble it points at can be highlighted while it is being answered.
   const [replyTo, setReplyTo] = useState<Msg | null>(null);
+  // The message being rewritten. Mutually exclusive with a reply: the composer
+  // is one box, and it cannot be both answering something and replacing it.
+  const [editing, setEditing] = useState<Msg | null>(null);
+  const [forwarding, setForwarding] = useState<Msg | null>(null);
+  const [searching, setSearching] = useState(false);
   const fileRef = useRef<HTMLInputElement | null>(null);
   const [draft, setDraft] = useState('');
   const [showInfo, setShowInfo] = useState(false);
@@ -214,9 +244,29 @@ function Chat({ id, me, onBack }: { id: string; me: string; onBack: () => void }
   // would push the composer off screen every time a message arrived.
   useEffect(() => { endRef.current?.scrollIntoView({ block: 'nearest' }); }, [thread?.messages.length]);
 
+  // Entering the editor puts the existing words in the box — an edit that
+  // starts from an empty field is a retype, not a correction.
+  useEffect(() => {
+    if (!editing) return;
+    setDraft(editing.body);
+    setReplyTo(null);
+  }, [editing]);
+
   const submit = async () => {
     const text = draft.trim();
     if (!text) return;
+
+    // Editing takes the whole submit path over. Falling through to `send` would
+    // post the correction as a NEW message and leave the typo above it.
+    if (editing) {
+      const target = editing;
+      setDraft('');
+      setEditing(null);
+      const okEdit = await editMessage(target.id, text);
+      if (!okEdit) { setDraft(text); setEditing(target); }
+      return;
+    }
+
     const quoting = replyTo?.id;
     setDraft('');
     // Cleared BEFORE the round trip so the banner does not linger over a sent
@@ -236,6 +286,13 @@ function Chat({ id, me, onBack }: { id: string; me: string; onBack: () => void }
   // A blocked thread stays READABLE — a block ends contact, it does not delete
   // the history you already have.
   const peerBlocked = !isGroup && !!peerName && isBlocked(peerName);
+  // An announcement group the caller may not write in. The service refuses the
+  // write regardless; this is so nobody types a message first and finds out
+  // afterwards.
+  const readOnly = isGroup
+    && thread?.posting === 'ADMINS'
+    && thread?.role !== 'owner'
+    && thread?.role !== 'admin';
   const alone = isGroup && (thread?.members.length ?? 0) <= 1;
 
   // Day separators are computed once per render of the transcript rather than
@@ -332,10 +389,54 @@ function Chat({ id, me, onBack }: { id: string; me: string; onBack: () => void }
               : isGroup ? <bdi>{thread?.members.length} {a.membersLabel}</bdi> : a.directLabel}
           </span>
         </button>
+        <button onClick={() => setSearching(true)} aria-label={a.searchMessages} style={{
+          background: 'none', border: 'none', color: TEC_COLORS.subtext, cursor: 'pointer', fontSize: 17, padding: '0 4px',
+        }}>🔍</button>
         <button onClick={() => setShowInfo(true)} aria-label={isGroup ? a.groupInfo : a.contactInfo} style={{
           background: 'none', border: 'none', color: TEC_COLORS.subtext, cursor: 'pointer', fontSize: 20, padding: '0 4px',
         }}>⋯</button>
       </div>
+
+      {/* The pinned message, under the header and above everything else — which
+          is the only place it means anything. Tapping it goes to the message;
+          the ✕ is offered only to whoever is allowed to take it down, so a
+          member cannot be shown a control that will refuse them. */}
+      {thread?.pinned && (
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 8,
+          margin: '10px 0 0', padding: '8px 12px', borderRadius: 10,
+          background: `${TEC_COLORS.gold}12`,
+          borderInlineStart: `3px solid ${TEC_COLORS.gold}`,
+        }}>
+          <button
+            onClick={() => {
+              document.getElementById(`msg-${thread.pinned!.id}`)
+                ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }}
+            style={{ flex: 1, minWidth: 0, background: 'none', border: 'none', padding: 0, textAlign: 'start', cursor: 'pointer' }}
+          >
+            <span style={{ display: 'block', fontSize: 11, fontWeight: 700, color: TEC_COLORS.gold }}>
+              📌 {a.pinnedMessage}
+            </span>
+            <span style={{
+              display: 'block', fontSize: 12.5, color: TEC_COLORS.text, marginTop: 1,
+              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+            }} dir="auto">
+              {thread.pinned.body || (thread.pinned.media === 'audio' ? a.voiceNote : a.photo)}
+            </span>
+          </button>
+          {(!isGroup || thread.role === 'owner' || thread.role === 'admin') && (
+            <button
+              onClick={() => { void setPinned(null); }} aria-label={a.unpinMessage}
+              style={{
+                width: 28, height: 28, borderRadius: 999, flexShrink: 0,
+                background: 'none', border: 'none', color: TEC_COLORS.subtext,
+                fontSize: 13, cursor: 'pointer', display: 'grid', placeItems: 'center',
+              }}
+            >✕</button>
+          )}
+        </div>
+      )}
 
       {/* a group of one is the reason a message "never arrives" */}
       {alone && (
@@ -440,6 +541,14 @@ function Chat({ id, me, onBack }: { id: string; me: string; onBack: () => void }
                     {a.messageDeleted}
                   </div>
                 ) : (<>
+                {/* Where it came from, before anything it says. Named as the
+                    person who WROTE it — the chain of who passed it on is not
+                    the interesting fact, and the service only keeps the origin. */}
+                {m.forwardedFrom && (
+                  <div style={{ fontSize: 11, color: TEC_COLORS.subtext, marginBottom: 3, fontStyle: 'italic' }}>
+                    ↪ {a.forwardedFrom} <bdi>@{m.forwardedFrom}</bdi>
+                  </div>
+                )}
                 {/* What this message answers. Above the body, quieter than it,
                     and tappable — a quote you cannot follow back is decoration. */}
                 {m.replyTo && (
@@ -517,8 +626,41 @@ function Chat({ id, me, onBack }: { id: string; me: string; onBack: () => void }
                     <Body text={m.body} mentions={m.mentions} me={meNorm} />
                   </div>
                 )}
+                {/* The reactions, INSIDE the bubble and under the words.
+                    Outside it they would shift the transcript's layout every
+                    time one landed; a row that appears and disappears inside a
+                    bubble only moves that bubble. Tapping one you gave takes it
+                    back — the same gesture, both directions. */}
+                {(m.reactions ?? []).length > 0 && (
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginTop: 5 }}>
+                    {(m.reactions ?? []).map((r) => (
+                      <button
+                        key={r.emoji}
+                        onClick={() => { void react(m.id, r.emoji, !r.mine); }}
+                        aria-pressed={r.mine}
+                        style={{
+                          display: 'flex', alignItems: 'center', gap: 3,
+                          padding: '2px 7px', borderRadius: 999, cursor: 'pointer',
+                          fontSize: 12, lineHeight: 1.6,
+                          background: r.mine ? `${TEC_COLORS.gold}22` : 'rgba(255,255,255,0.06)',
+                          border: `1px solid ${r.mine ? `${TEC_COLORS.gold}66` : 'transparent'}`,
+                          color: TEC_COLORS.text,
+                        }}
+                      >
+                        <span>{r.emoji}</span>
+                        {/* The count only once there is more than one. "👍 1"
+                            is noise; "👍" already says one person did. */}
+                        {r.count > 1 && <span style={{ fontSize: 10.5, fontWeight: 700 }}>{r.count}</span>}
+                      </button>
+                    ))}
+                  </div>
+                )}
                 </>)}
                 <div style={{ fontSize: 10, color: TEC_COLORS.subtext, textAlign: 'end', marginTop: 2, display: 'flex', gap: 4, justifyContent: 'flex-end', alignItems: 'center' }}>
+                  {/* Said, not hidden. A message whose words changed after
+                      people read them must say so, or the edit is a quiet
+                      rewrite of what everyone remembers. */}
+                  {m.editedAt && <span style={{ fontStyle: 'italic' }}>{a.edited}</span>}
                   {/* "12:52 AM" is mostly bidi-neutral, so an RTL paragraph moves
                       the meridiem to the front: "AM 12:52". */}
                   <bdi>{clock(m.at)}</bdi>
@@ -554,13 +696,54 @@ function Chat({ id, me, onBack }: { id: string; me: string; onBack: () => void }
           <p style={{ flex: 1, fontSize: 12.5, color: TEC_COLORS.subtext, margin: 0, lineHeight: 1.5 }}>{a.blockedNotice}</p>
           <button style={quietBtn} disabled={blockBusy} onClick={() => { void unblock(peerName); }}>{a.unblock}</button>
         </div>
+      ) : readOnly ? (
+        // An announcement group, seen by someone who may not post.
+        //
+        // The composer is REPLACED, not disabled. A greyed-out box with a
+        // keyboard that will not open is a bug as far as anyone using it is
+        // concerned; a sentence saying only admins can post here is the answer
+        // to the question they were about to ask.
+        <div style={{ paddingTop: 12, borderTop: `1px solid ${TEC_COLORS.border}` }}>
+          <p style={{ fontSize: 12.5, color: TEC_COLORS.subtext, margin: 0, lineHeight: 1.5, textAlign: 'center' }}>
+            📣 {a.announcementOnly}
+          </p>
+        </div>
       ) : (<>
       {/* What is being answered, above the composer.
           Shown while typing rather than only after sending, because a reply
           you cannot see you are writing is a reply you attach to the wrong
           message. The ✕ is deliberately large enough to hit — dropping the
           quote is the correction someone reaches for most. */}
-      {replyTo && (
+      {/* Editing, above the composer and unmistakably not a reply.
+          The two look alike and mean opposite things — one adds a message, the
+          other replaces one — so this one is labelled and the ✕ restores the
+          composer to an ordinary empty box. */}
+      {editing && (
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 10, marginTop: 10,
+          padding: '8px 12px', borderRadius: 10,
+          background: `${TEC_COLORS.gold}14`,
+          borderInlineStart: `3px solid ${TEC_COLORS.gold}`,
+        }}>
+          <span style={{ flex: 1, minWidth: 0 }}>
+            <span style={{ display: 'block', fontSize: 11.5, fontWeight: 700, color: TEC_COLORS.gold }}>
+              {a.editingMessage}
+            </span>
+            <span style={{ display: 'block', fontSize: 11.5, color: TEC_COLORS.subtext, marginTop: 1, lineHeight: 1.4 }}>
+              {a.editMessageHint}
+            </span>
+          </span>
+          <button
+            onClick={() => { setEditing(null); setDraft(''); }} aria-label={a.cancel}
+            style={{
+              width: 30, height: 30, borderRadius: 999, flexShrink: 0,
+              background: 'none', border: 'none', color: TEC_COLORS.subtext,
+              fontSize: 15, cursor: 'pointer', display: 'grid', placeItems: 'center',
+            }}
+          >✕</button>
+        </div>
+      )}
+      {replyTo && !editing && (
         <div style={{
           display: 'flex', alignItems: 'center', gap: 10, marginTop: 10,
           padding: '8px 12px', borderRadius: 10,
@@ -665,6 +848,31 @@ function Chat({ id, me, onBack }: { id: string; me: string; onBack: () => void }
 
       {viewing && <Lightbox src={viewing} alt={a.photo} onClose={() => setViewing(null)} />}
 
+      {searching && (
+        <ChatSearch
+          conversationId={id}
+          onClose={() => setSearching(false)}
+          // Returns whether it could actually go there. A result older than what
+          // has been loaded has no element to scroll to, and jumping to nothing
+          // — or silently doing nothing — both read as broken, so the panel
+          // simply stays open on that row.
+          onOpen={(hit) => {
+            const el = document.getElementById(`msg-${hit.id}`);
+            if (!el) return false;
+            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            return true;
+          }}
+        />
+      )}
+
+      {forwarding && (
+        <ForwardPicker
+          conversations={conversations} exceptId={id}
+          onPick={(to) => forwardMessage(forwarding.id, to)}
+          onClose={() => setForwarding(null)}
+        />
+      )}
+
       {reporting && (
         <ReportSheet
           kind="message" target={reporting.id} author={reporting.by}
@@ -685,6 +893,17 @@ function Chat({ id, me, onBack }: { id: string; me: string; onBack: () => void }
             onDelete={(scope) => { void deleteMessage(menuFor, scope); }}
             onReport={() => setReporting({ id: target.m.id, by: target.m.by })}
             onClose={() => setMenuFor(null)}
+            onReact={(emoji, on) => { void react(target.m.id, emoji, on); }}
+            myReactions={(target.m.reactions ?? []).filter((r) => r.mine).map((r) => r.emoji)}
+            // Computed here, from the send time, using the same window the
+            // service enforces. Offering an option the server will refuse is
+            // how a menu teaches people to distrust it.
+            canEdit={target.mine && !!target.m.body && withinEditWindow(target.m.at)}
+            onEdit={() => setEditing(target.m)}
+            onForward={() => setForwarding(target.m)}
+            canPin={!isGroup || thread?.role === 'owner' || thread?.role === 'admin'}
+            pinned={thread?.pinned?.id === target.m.id}
+            onPin={(next) => { void setPinned(next ? target.m.id : null); }}
           />
         );
       })()}
@@ -708,6 +927,12 @@ function Chat({ id, me, onBack }: { id: string; me: string; onBack: () => void }
           onClear={() => { void clear(); }}
           muted={!!thread.muted}
           onToggleMute={async (next) => { await setMuted(next); }}
+          posting={thread.posting}
+          // Offered ONLY to a group's owner. The service refuses anyone else,
+          // and a switch that always refuses is worse than no switch.
+          onSetPosting={isGroup && thread.role === 'owner'
+            ? async (next) => { await setPosting(next); }
+            : undefined}
           onDelete={async () => { if (await hide(true)) onBack(); }}
           blocked={peerBlocked}
           onBlock={() => { void block(peerName); }}
@@ -824,7 +1049,7 @@ export function Messages({ me, conversations, loading, openDirect, createGroup, 
     );
   };
 
-  if (openId) return <Chat id={openId} me={me} onBack={() => setOpenId(null)} />;
+  if (openId) return <Chat id={openId} me={me} conversations={conversations} onBack={() => setOpenId(null)} />;
 
   if (composing === 'direct') {
     return <NewChat onPick={pick} onCancel={() => { setComposing(null); setPickError(null); }} error={pickError} />;
