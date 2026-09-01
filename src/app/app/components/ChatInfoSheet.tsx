@@ -17,6 +17,7 @@ import { TEC_COLORS } from '@yasser172/tec-ui';
 import { useTranslation } from '@/lib/i18n';
 import { useBackButton } from '@/lib-client/connection/useBackButton';
 import { Avatar } from '@/components/public/Avatar';
+import { downscaleImage, AVATAR_MAX_EDGE } from '@/lib-client/connection/downscaleImage';
 
 /** What a group photo may be. Same three as a profile photo, same 2MB ceiling. */
 const PHOTO_ACCEPT = 'image/jpeg,image/png,image/webp';
@@ -97,18 +98,27 @@ export function ChatInfoSheet({
   const groupPhotoUrl = `/api/bff/connection/conversations/${encodeURIComponent(convId)}/avatar`;
 
   const uploadPhoto = async (file: File) => {
-    // Checked here as well as in the BFF and in storage. Not redundancy for its
-    // own sake: it turns a failed round-trip into a sentence, and a 5MB photo is
-    // never uploaded at all.
+    // Type first, on the ORIGINAL: shrinking a format we will not accept is
+    // wasted work, and the message should name the real problem.
     if (!PHOTO_ACCEPT.split(',').includes(file.type)) { setPhotoMsg(a.photoWrongType); return; }
-    if (file.size > PHOTO_MAX_BYTES) { setPhotoMsg(a.photoTooBig); return; }
 
     setPhotoBusy(true); setPhotoMsg('');
     try {
+      // SHRINK, then check the size. A phone camera produces a 3-6MB photo and
+      // the ceiling is 2MB — checking first would reject almost every real
+      // picture with "too large" when the browser can simply make it smaller.
+      // Best-effort: the original comes back if it cannot, and then the size
+      // check below is what catches it, with a sentence the person can act on.
+      const blob = await downscaleImage(file, AVATAR_MAX_EDGE);
+      if (blob.size > PHOTO_MAX_BYTES) { setPhotoMsg(a.photoTooBig); return; }
+
       const res = await fetch(groupPhotoUrl, {
         method: 'POST', credentials: 'include',
-        headers: { 'Content-Type': file.type },
-        body: file,
+        // The BLOB's type, not the file's: a re-encoded PNG comes back as JPEG,
+        // and a Content-Type that disagrees with the bytes is rejected by the
+        // presigned PUT with an opaque signature error.
+        headers: { 'Content-Type': blob.type || file.type },
+        body: blob,
       });
       if (!res.ok) { setPhotoMsg(a.photoFailed); return; }
       setPhotoVersion((v) => v + 1);

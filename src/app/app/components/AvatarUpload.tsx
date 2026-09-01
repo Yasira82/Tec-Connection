@@ -16,6 +16,7 @@
 import { useRef, useState, useEffect } from 'react';
 import { TEC_COLORS } from '@yasser172/tec-ui';
 import { useTranslation } from '@/lib/i18n';
+import { downscaleImage, AVATAR_MAX_EDGE } from '@/lib-client/connection/downscaleImage';
 
 const MAX_BYTES = 2 * 1024 * 1024;
 const ACCEPT    = 'image/jpeg,image/png,image/webp';
@@ -47,14 +48,10 @@ export function AvatarUpload({
   const pick = () => fileRef.current?.click();
 
   const upload = async (file: File) => {
-    // Checked here as well as in the BFF and in storage. Not redundancy for its
-    // own sake: catching it in the browser means the user gets a sentence
-    // instead of a failed round-trip, and a 5MB photo is never uploaded at all.
+    // Type first, on the ORIGINAL: shrinking a format we will not accept is
+    // wasted work, and the message should name the real problem.
     if (!ACCEPT.split(',').includes(file.type)) {
       setMsg(a.photoWrongType); return;
-    }
-    if (file.size > MAX_BYTES) {
-      setMsg(a.photoTooBig); return;
     }
 
     setBusy(true); setMsg('');
@@ -62,6 +59,19 @@ export function AvatarUpload({
     setPreview(localUrl);
 
     try {
+      // SHRINK, then check the size. Chat and status photos have done this from
+      // the start; the avatar did not, and a phone camera produces 3-6MB against
+      // a 2MB ceiling — so the most common way to set a profile photo was to be
+      // told the photo is too large. The browser can simply make it smaller.
+      //
+      // Best-effort by design: the original comes back if it cannot be
+      // re-encoded, and the size check below is then what catches it — with a
+      // sentence the person can act on rather than a failed round-trip.
+      const blob = await downscaleImage(file, AVATAR_MAX_EDGE);
+      if (blob.size > MAX_BYTES) {
+        setMsg(a.photoTooBig); setPreview(null); return;
+      }
+
       // ONE request, to our own origin. The previous version asked for a
       // presigned URL and PUT the file straight to R2 from the browser — which
       // needs a CORS policy on the bucket that does not exist, so every upload
@@ -69,8 +79,11 @@ export function AvatarUpload({
       // server does the presign and the PUT now; see the route for the full note.
       const res = await fetch('/api/bff/connection/avatar/upload', {
         method: 'POST', credentials: 'include',
-        headers: { 'Content-Type': file.type },
-        body: file,
+        // The BLOB's type, not the file's: a re-encoded PNG comes back as JPEG,
+        // and a Content-Type that disagrees with the bytes is rejected by the
+        // presigned PUT with an opaque signature error.
+        headers: { 'Content-Type': blob.type || file.type },
+        body: blob,
       });
       const out = await res.json().catch(() => ({}));
       if (!res.ok || !out?.ok) {
