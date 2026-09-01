@@ -188,6 +188,13 @@ export const en = {
     messageFailed: 'Could not send. Please retry.',
     threadUnavailable: 'This conversation is unavailable.',
     membersLabel: 'members',
+    startChat: 'Start',
+    newChat: 'New chat',
+    onlyYouInGroup: 'You are the only one here. Add someone so your messages reach them.',
+    groupInfo: 'Group info',
+    today: 'Today',
+    yesterday: 'Yesterday',
+    noMessagesYet: 'No messages yet. Say hello.',
   },
   public: {
     brand:        'TEC · Connection',

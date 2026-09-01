@@ -155,6 +155,13 @@ export const zh: Dictionary = {
     messageFailed: '发送失败。请重试。',
     threadUnavailable: '此会话不可用。',
     membersLabel: '成员',
+    startChat: '开始',
+    newChat: '新对话',
+    onlyYouInGroup: '这里只有你。添加成员后你的消息才能送达。',
+    groupInfo: '群组信息',
+    today: '今天',
+    yesterday: '昨天',
+    noMessagesYet: '还没有消息。打个招呼吧。',
   },
   public: {
     brand:       'TEC · Connection',

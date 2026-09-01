@@ -155,6 +155,13 @@ export const ko: Dictionary = {
     messageFailed: '보낼 수 없습니다. 다시 시도하세요.',
     threadUnavailable: '이 대화를 사용할 수 없습니다.',
     membersLabel: '명',
+    startChat: '시작',
+    newChat: '새 대화',
+    onlyYouInGroup: '여기에는 당신뿐입니다. 메시지가 전달되도록 누군가를 추가하세요.',
+    groupInfo: '그룹 정보',
+    today: '오늘',
+    yesterday: '어제',
+    noMessagesYet: '아직 메시지가 없습니다. 인사를 건네보세요.',
   },
   public: {
     brand:       'TEC · Connection',

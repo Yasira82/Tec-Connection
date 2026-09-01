@@ -155,6 +155,13 @@ export const ru: Dictionary = {
     messageFailed: 'Не удалось отправить. Попробуйте ещё раз.',
     threadUnavailable: 'Эта переписка недоступна.',
     membersLabel: 'участников',
+    startChat: 'Начать',
+    newChat: 'Новый чат',
+    onlyYouInGroup: 'Здесь только вы. Добавьте кого-нибудь, чтобы ваши сообщения дошли.',
+    groupInfo: 'О группе',
+    today: 'Сегодня',
+    yesterday: 'Вчера',
+    noMessagesYet: 'Сообщений пока нет. Поздоровайтесь.',
   },
   public: {
     brand:       'TEC · Connection',

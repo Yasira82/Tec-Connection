@@ -155,6 +155,13 @@ export const tr: Dictionary = {
     messageFailed: 'Gönderilemedi. Lütfen tekrar deneyin.',
     threadUnavailable: 'Bu sohbet kullanılamıyor.',
     membersLabel: 'üye',
+    startChat: 'Başlat',
+    newChat: 'Yeni sohbet',
+    onlyYouInGroup: 'Burada yalnızsınız. Mesajlarınızın ulaşması için birini ekleyin.',
+    groupInfo: 'Grup bilgisi',
+    today: 'Bugün',
+    yesterday: 'Dün',
+    noMessagesYet: 'Henüz mesaj yok. Selam verin.',
   },
   public: {
     brand:       'TEC · Connection',

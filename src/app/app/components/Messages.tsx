@@ -1,270 +1,379 @@
 'use client';
 
-// TEC Connection (C-107) — Messages. Two views in one component: the thread LIST,
-// and one OPEN thread. They are never both on screen, because on a phone a
-// split view means each half is too narrow to use.
+// TEC Connection (C-107) — Messages, rebuilt as a chat surface rather than a card.
 //
-// Everything a person reads here was written by someone else, so every piece of
-// it is rendered as `<bdi dir="auto">`: a message, a group name and a handle each
-// lay out by their OWN script rather than the interface's. Without that, an
-// English message inside an Arabic interface reverses its punctuation, and a
-// Latin handle renders as `yas55eR82@`.
-import { useEffect, useRef, useState } from 'react';
+// The first version put the thread inside the same bordered card every other
+// section uses, under a page header that already said "Messages · Your
+// conversations". That reads as a form with text in it, not as a conversation.
+// The shape people already know — WhatsApp, Telegram — is: a list of chats, and
+// a chat that OWNS the screen (its own header, a scrolling transcript, a
+// composer pinned to the bottom). That is what this is.
+//
+// Two things here are correctness, not decoration:
+//
+//   · `isMine` compares NORMALIZED usernames. The session hook returns the Pi
+//     username as typed (`yas55eR82`); the service stores and returns it
+//     lowercased. A `===` between them is always false, so every message you
+//     sent was drawn as if a stranger had sent it — labelled with your own
+//     handle instead of "You", on the wrong side of the screen.
+//
+//   · a group with one member says so. Sending into a group you are alone in
+//     looks identical to sending into a real conversation, and the message
+//     "not arriving" is the only symptom.
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { TEC_COLORS } from '@yasser172/tec-ui';
 import { useTranslation } from '@/lib/i18n';
-import { useConversations, useThread, type Summary } from '@/lib-client/connection/useMessages';
+import { useThread, type Summary, type Msg } from '@/lib-client/connection/useMessages';
 
-const card = {
-  background: TEC_COLORS.surface, border: `1px solid ${TEC_COLORS.border}`,
-  borderRadius: 16, padding: '20px 22px',
-} as const;
+/** The service normalizes every username; the session hook does not. */
+const norm = (u: string) => (u ?? '').trim().replace(/^@+/, '').toLowerCase();
 
 const input = {
   flex: 1, minWidth: 0, background: TEC_COLORS.bg, color: TEC_COLORS.text,
-  border: `1px solid ${TEC_COLORS.border}`, borderRadius: 10, padding: '10px 12px', fontSize: 14,
+  border: `1px solid ${TEC_COLORS.border}`, borderRadius: 999, padding: '11px 16px', fontSize: 14,
+  outline: 'none',
 } as const;
 
 const goldBtn = {
   background: `linear-gradient(135deg, ${TEC_COLORS.gold}, ${TEC_COLORS.goldDark})`,
-  color: '#0a0800', border: 'none', borderRadius: 10, padding: '10px 16px',
+  color: '#0a0800', border: 'none', borderRadius: 999, padding: '11px 18px',
   fontSize: 14, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap',
 } as const;
 
 const quietBtn = {
   background: 'none', border: `1px solid ${TEC_COLORS.border}`, color: TEC_COLORS.subtext,
-  borderRadius: 8, padding: '5px 12px', fontSize: 12, cursor: 'pointer', whiteSpace: 'nowrap',
+  borderRadius: 999, padding: '7px 14px', fontSize: 12.5, cursor: 'pointer', whiteSpace: 'nowrap',
 } as const;
 
-/** Local clock format — the browser already knows the reader's conventions. */
-const timeOf = (iso: string) => {
+const clock = (iso: string) => {
   const d = new Date(iso);
   return Number.isNaN(d.getTime()) ? '' : d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 };
 
-function Avatar({ name }: { name: string }) {
+const dayKey = (iso: string) => {
+  const d = new Date(iso);
+  return Number.isNaN(d.getTime()) ? '' : d.toDateString();
+};
+
+function Avatar({ name, size = 44 }: { name: string; size?: number }) {
   return (
     <span style={{
-      width: 34, height: 34, borderRadius: 999, display: 'grid', placeItems: 'center', flexShrink: 0,
-      background: TEC_COLORS.bg, border: `1px solid ${TEC_COLORS.border}`,
-      color: TEC_COLORS.gold, fontSize: 14, fontWeight: 800,
+      width: size, height: size, borderRadius: 999, display: 'grid', placeItems: 'center', flexShrink: 0,
+      background: `linear-gradient(135deg, ${TEC_COLORS.gold}, ${TEC_COLORS.goldDark})`,
+      color: '#0a0800', fontSize: size * 0.42, fontWeight: 800,
     }}>{(name || '?').charAt(0).toUpperCase()}</span>
   );
 }
 
-// ── one open thread ─────────────────────────────────────────────────────────
-function ThreadView({ id, me, onBack }: { id: string; me: string; onBack: () => void }) {
+// ── the open chat ───────────────────────────────────────────────────────────
+function Chat({ id, me, onBack }: { id: string; me: string; onBack: () => void }) {
   const { t } = useTranslation();
   const a = t.app;
   const { thread, busy, error, send, addMember, leave } = useThread(id);
   const [draft, setDraft] = useState('');
   const [invitee, setInvitee] = useState('');
+  const [showInfo, setShowInfo] = useState(false);
   const endRef = useRef<HTMLDivElement | null>(null);
+  const meNorm = norm(me);
 
-  // Follow the conversation down as it grows. `block: 'nearest'` scrolls the
-  // message list, not the page — scrolling the page would move the composer off
-  // screen on a phone every time a message arrived.
-  useEffect(() => {
-    endRef.current?.scrollIntoView({ block: 'nearest' });
-  }, [thread?.messages.length]);
+  // `block: 'nearest'` scrolls the transcript, not the page — scrolling the page
+  // would push the composer off screen every time a message arrived.
+  useEffect(() => { endRef.current?.scrollIntoView({ block: 'nearest' }); }, [thread?.messages.length]);
 
   const submit = async () => {
     const text = draft.trim();
     if (!text) return;
     setDraft('');
-    const ok = await send(text);
-    if (!ok) setDraft(text);   // put the words back rather than losing them
+    const okSent = await send(text);
+    if (!okSent) setDraft(text);   // put the words back rather than losing them
   };
 
-  const title = thread?.kind === 'GROUP' ? (thread.title ?? '') : `@${thread?.peer ?? ''}`;
+  const isGroup = thread?.kind === 'GROUP';
+  const title = isGroup ? (thread?.title ?? '') : `@${thread?.peer ?? ''}`;
+  const alone = isGroup && (thread?.members.length ?? 0) <= 1;
+
+  // Day separators are computed once per render of the transcript rather than
+  // per message, so the comparison is with the PREVIOUS message, not with today.
+  const rows = useMemo(() => {
+    const out: { m: Msg; mine: boolean; newDay: boolean; showSender: boolean }[] = [];
+    (thread?.messages ?? []).forEach((m, i) => {
+      const prev = thread?.messages[i - 1];
+      const mine = norm(m.by) === meNorm;
+      out.push({
+        m, mine,
+        newDay: !prev || dayKey(prev.at) !== dayKey(m.at),
+        // In a 1:1 the sender is never in doubt, so naming them is noise — the
+        // side of the screen already says who wrote it.
+        showSender: !!isGroup && !mine && (!prev || norm(prev.by) !== norm(m.by)),
+      });
+    });
+    return out;
+  }, [thread?.messages, meNorm, isGroup]);
 
   return (
-    <div style={card}>
-      <button onClick={onBack} style={{ background: 'none', border: 'none', color: TEC_COLORS.subtext, cursor: 'pointer', fontSize: 13, padding: 0, marginBottom: 10 }}>
-        {a.backToMessages}
-      </button>
+    <div style={{
+      display: 'flex', flexDirection: 'column',
+      // Matches the page wrapper's own padding (28px top, 96px bottom + safe
+      // area). Guessing at this is what slid the composer under the nav bar.
+      height: 'calc(100vh - 124px - env(safe-area-inset-bottom))',
+    }}>
+      {/* header */}
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: 12, padding: '10px 4px 14px',
+        borderBottom: `1px solid ${TEC_COLORS.border}`,
+      }}>
+        <button onClick={onBack} aria-label={a.messages} style={{
+          background: 'none', border: 'none', color: TEC_COLORS.gold, cursor: 'pointer',
+          fontSize: 26, lineHeight: 1, padding: '0 4px',
+        }}>›</button>
+        <Avatar name={isGroup ? (thread?.title ?? 'G') : (thread?.peer ?? '?')} size={40} />
+        <button
+          onClick={() => isGroup && setShowInfo((v) => !v)}
+          style={{ flex: 1, minWidth: 0, background: 'none', border: 'none', padding: 0, textAlign: 'start', cursor: isGroup ? 'pointer' : 'default' }}
+        >
+          <span style={{ display: 'block', fontSize: 16, fontWeight: 700, color: TEC_COLORS.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <bdi dir="auto">{title}</bdi>
+          </span>
+          <span style={{ fontSize: 11.5, color: TEC_COLORS.subtext }}>
+            {isGroup ? <bdi>{thread?.members.length} {a.membersLabel}</bdi> : a.directLabel}
+          </span>
+        </button>
+        {isGroup && (
+          <button onClick={() => setShowInfo((v) => !v)} aria-label={a.groupInfo} style={{
+            background: 'none', border: 'none', color: TEC_COLORS.subtext, cursor: 'pointer', fontSize: 20, padding: '0 4px',
+          }}>⋯</button>
+        )}
+      </div>
 
-      {!thread ? (
-        <p style={{ color: TEC_COLORS.subtext, fontSize: 13, margin: 0 }}>
-          {error === 'notfound' ? a.threadUnavailable : a.loading}
-        </p>
-      ) : (
-        <>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, paddingBottom: 12, borderBottom: `1px solid ${TEC_COLORS.border}` }}>
-            <Avatar name={thread.kind === 'GROUP' ? (thread.title ?? 'G') : (thread.peer ?? '?')} />
-            <span style={{ flex: 1, minWidth: 0 }}>
-              <span style={{ display: 'block', fontSize: 15, fontWeight: 700, color: TEC_COLORS.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                <bdi dir="auto">{title}</bdi>
-              </span>
-              <span style={{ fontSize: 11, color: TEC_COLORS.subtext }}>
-                {thread.kind === 'GROUP'
-                  ? <bdi>{thread.members.length} {a.membersLabel}</bdi>
-                  : a.directLabel}
-              </span>
-            </span>
-          </div>
-
-          <div style={{ maxHeight: 380, overflowY: 'auto', padding: '12px 0', display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {thread.messages.length === 0 ? (
-              <p style={{ color: TEC_COLORS.subtext, fontSize: 13, margin: 0 }}>{a.startConversation}</p>
-            ) : thread.messages.map((m) => {
-              const mine = m.by === me;
-              return (
-                <div key={m.id} style={{ display: 'flex', flexDirection: 'column', alignItems: mine ? 'flex-end' : 'flex-start' }}>
-                  <span style={{ fontSize: 10.5, color: TEC_COLORS.subtext, marginBottom: 3 }}>
-                    <bdi>{mine ? a.you : `@${m.by}`}</bdi> · {timeOf(m.at)}
-                  </span>
-                  <span style={{
-                    maxWidth: '85%', padding: '9px 12px', borderRadius: 14, fontSize: 14, lineHeight: 1.5,
-                    background: mine ? `${TEC_COLORS.gold}22` : TEC_COLORS.bg,
-                    border: `1px solid ${mine ? `${TEC_COLORS.gold}55` : TEC_COLORS.border}`,
-                    color: TEC_COLORS.text, wordBreak: 'break-word',
-                  }}>
-                    {/* Written by another person: it lays out by its own script. */}
-                    <bdi dir="auto">{m.body}</bdi>
-                  </span>
-                </div>
-              );
-            })}
-            <div ref={endRef} />
-          </div>
-
-          <div style={{ display: 'flex', gap: 8, paddingTop: 10, borderTop: `1px solid ${TEC_COLORS.border}` }}>
-            <input
-              style={input} value={draft} onChange={(e) => setDraft(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter') submit(); }}
-              placeholder={a.messagePlaceholder} maxLength={2000} dir="auto"
-            />
-            <button style={{ ...goldBtn, opacity: busy ? 0.6 : 1 }} onClick={submit} disabled={busy}>{a.send}</button>
-          </div>
-
-          {error === 'refused' && <p style={{ color: TEC_COLORS.error, fontSize: 12, marginTop: 8 }}>{a.messageRefused}</p>}
-          {error === 'failed' && <p style={{ color: TEC_COLORS.error, fontSize: 12, marginTop: 8 }}>{a.messageFailed}</p>}
-
-          {thread.kind === 'GROUP' && (
-            <div style={{ marginTop: 14, paddingTop: 14, borderTop: `1px solid ${TEC_COLORS.border}` }}>
-              {thread.role === 'owner' && (
-                <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
-                  <input
-                    style={input} value={invitee} onChange={(e) => setInvitee(e.target.value)}
-                    onKeyDown={(e) => { if (e.key === 'Enter') { addMember(invitee); setInvitee(''); } }}
-                    placeholder={a.addMemberPlaceholder} maxLength={100} autoCapitalize="none"
-                  />
-                  <button style={goldBtn} onClick={() => { addMember(invitee); setInvitee(''); }}>{a.addMember}</button>
-                </div>
-              )}
-              <button style={quietBtn} onClick={async () => { if (await leave()) onBack(); }}>{a.leaveGroup}</button>
+      {/* group management — behind the header, not permanently under the composer */}
+      {isGroup && showInfo && (
+        <div style={{ padding: '12px 4px', borderBottom: `1px solid ${TEC_COLORS.border}`, display: 'grid', gap: 10 }}>
+          {thread?.role === 'owner' && (
+            <div style={{ display: 'flex', gap: 8 }}>
+              <input
+                style={input} value={invitee} onChange={(e) => setInvitee(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') { addMember(invitee); setInvitee(''); } }}
+                placeholder={a.addMemberPlaceholder} maxLength={100} autoCapitalize="none" autoCorrect="off"
+              />
+              <button style={goldBtn} onClick={() => { addMember(invitee); setInvitee(''); }}>{a.addMember}</button>
             </div>
           )}
-        </>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+            {(thread?.members ?? []).map((u) => (
+              <span key={u} style={{
+                fontSize: 12, color: TEC_COLORS.subtext, border: `1px solid ${TEC_COLORS.border}`,
+                borderRadius: 999, padding: '3px 10px',
+              }}><bdi>@{u}</bdi></span>
+            ))}
+          </div>
+          <div><button style={quietBtn} onClick={async () => { if (await leave()) onBack(); }}>{a.leaveGroup}</button></div>
+        </div>
       )}
+
+      {/* a group of one is the reason a message "never arrives" */}
+      {alone && (
+        <div style={{
+          margin: '12px 0 0', padding: '10px 14px', borderRadius: 12,
+          background: `${TEC_COLORS.gold}14`, border: `1px solid ${TEC_COLORS.gold}44`,
+          fontSize: 12.5, color: TEC_COLORS.text, lineHeight: 1.5,
+        }}>{a.onlyYouInGroup}</div>
+      )}
+
+      {/* transcript */}
+      <div style={{ flex: 1, overflowY: 'auto', padding: '14px 2px', display: 'flex', flexDirection: 'column', gap: 4 }}>
+        {!thread ? (
+          <p style={{ color: TEC_COLORS.subtext, fontSize: 13 }}>{error === 'notfound' ? a.threadUnavailable : a.loading}</p>
+        ) : rows.length === 0 ? (
+          <p style={{ color: TEC_COLORS.subtext, fontSize: 13, textAlign: 'center', marginTop: 24 }}>{a.noMessagesYet}</p>
+        ) : rows.map(({ m, mine, newDay, showSender }) => (
+          <div key={m.id}>
+            {newDay && (
+              <div style={{ textAlign: 'center', margin: '14px 0 10px' }}>
+                <span style={{
+                  fontSize: 11, color: TEC_COLORS.subtext, background: TEC_COLORS.surface,
+                  border: `1px solid ${TEC_COLORS.border}`, borderRadius: 999, padding: '3px 12px',
+                }}>{dayLabel(m.at, a)}</span>
+              </div>
+            )}
+            <div style={{ display: 'flex', justifyContent: mine ? 'flex-end' : 'flex-start', marginTop: showSender ? 8 : 2 }}>
+              <div style={{
+                maxWidth: '78%', padding: '8px 12px 6px',
+                background: mine ? `${TEC_COLORS.gold}1F` : TEC_COLORS.surface2,
+                border: `1px solid ${mine ? `${TEC_COLORS.gold}44` : TEC_COLORS.border}`,
+                borderRadius: 16,
+                // The squared corner marks the speaker, the way a tail does.
+                borderEndEndRadius: mine ? 5 : 16,
+                borderEndStartRadius: mine ? 16 : 5,
+              }}>
+                {showSender && (
+                  <div style={{ fontSize: 11.5, fontWeight: 700, color: TEC_COLORS.gold, marginBottom: 3 }}>
+                    <bdi>@{m.by}</bdi>
+                  </div>
+                )}
+                {/* Written by another person: it lays out by its own script. */}
+                <div style={{ fontSize: 14.5, lineHeight: 1.5, color: TEC_COLORS.text, wordBreak: 'break-word' }}>
+                  <bdi dir="auto">{m.body}</bdi>
+                </div>
+                <div style={{ fontSize: 10, color: TEC_COLORS.subtext, textAlign: 'end', marginTop: 2 }}>
+                  {/* "12:52 AM" is mostly bidi-neutral, so an RTL paragraph moves
+                      the meridiem to the front: "AM 12:52". */}
+                  <bdi>{clock(m.at)}</bdi>
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+        <div ref={endRef} />
+      </div>
+
+      {error === 'refused' && <p style={{ color: TEC_COLORS.error, fontSize: 12, margin: '0 0 6px' }}>{a.messageRefused}</p>}
+      {error === 'failed' && <p style={{ color: TEC_COLORS.error, fontSize: 12, margin: '0 0 6px' }}>{a.messageFailed}</p>}
+
+      {/* composer */}
+      <div style={{ display: 'flex', gap: 8, alignItems: 'center', paddingTop: 10, borderTop: `1px solid ${TEC_COLORS.border}` }}>
+        <input
+          style={input} value={draft} onChange={(e) => setDraft(e.target.value)}
+          onKeyDown={(e) => { if (e.key === 'Enter') submit(); }}
+          placeholder={a.messagePlaceholder} maxLength={2000} dir="auto"
+        />
+        <button
+          onClick={submit} disabled={busy || !draft.trim()} aria-label={a.send}
+          style={{
+            width: 44, height: 44, borderRadius: 999, flexShrink: 0, border: 'none',
+            background: draft.trim() ? `linear-gradient(135deg, ${TEC_COLORS.gold}, ${TEC_COLORS.goldDark})` : TEC_COLORS.surface2,
+            color: draft.trim() ? '#0a0800' : TEC_COLORS.subtext,
+            fontSize: 18, cursor: draft.trim() ? 'pointer' : 'not-allowed',
+            display: 'grid', placeItems: 'center',
+          }}
+        >
+          {/* A paper plane mirrors with the writing direction. */}
+          <span style={{ transform: 'scaleX(1)', display: 'block' }} dir="ltr">➤</span>
+        </button>
+      </div>
     </div>
   );
 }
 
-// ── the list ────────────────────────────────────────────────────────────────
+function dayLabel(iso: string, a: Record<string, string>): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '';
+  const today = new Date();
+  const yest = new Date(today);
+  yest.setDate(today.getDate() - 1);
+  if (d.toDateString() === today.toDateString()) return a.today ?? '';
+  if (d.toDateString() === yest.toDateString()) return a.yesterday ?? '';
+  return d.toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
+}
+
+// ── the chat list ───────────────────────────────────────────────────────────
 function Row({ c, onOpen, a }: { c: Summary; onOpen: () => void; a: Record<string, string> }) {
-  const name = c.kind === 'GROUP' ? (c.title ?? '') : `@${c.peer ?? ''}`;
+  const isGroup = c.kind === 'GROUP';
+  const name = isGroup ? (c.title ?? '') : `@${c.peer ?? ''}`;
   return (
     <button onClick={onOpen} style={{
-      width: '100%', textAlign: 'start', display: 'flex', alignItems: 'center', gap: 10,
-      padding: '11px 0', background: 'none', border: 'none', cursor: 'pointer',
+      width: '100%', textAlign: 'start', display: 'flex', alignItems: 'center', gap: 12,
+      padding: '12px 2px', background: 'none', border: 'none', cursor: 'pointer',
     }}>
-      <Avatar name={c.kind === 'GROUP' ? (c.title ?? 'G') : (c.peer ?? '?')} />
+      <Avatar name={isGroup ? (c.title ?? 'G') : (c.peer ?? '?')} />
       <span style={{ flex: 1, minWidth: 0 }}>
-        <span style={{ display: 'block', fontSize: 14, fontWeight: 600, color: TEC_COLORS.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-          <bdi dir="auto">{name}</bdi>
+        <span style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
+          <span style={{ flex: 1, minWidth: 0, fontSize: 15, fontWeight: 700, color: TEC_COLORS.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <bdi dir="auto">{name}</bdi>
+          </span>
+          {c.last && <span style={{ fontSize: 11, color: TEC_COLORS.subtext, flexShrink: 0 }}><bdi>{clock(c.last.at)}</bdi></span>}
         </span>
-        <span style={{ display: 'block', fontSize: 11.5, color: TEC_COLORS.subtext, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-          {c.last ? <bdi dir="auto">{c.last.body}</bdi>
-                  : c.kind === 'GROUP' ? <bdi>{c.members} {a.membersLabel}</bdi> : a.directLabel}
+        <span style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 2 }}>
+          <span style={{ flex: 1, minWidth: 0, fontSize: 13, color: TEC_COLORS.subtext, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {c.last ? <bdi dir="auto">{c.last.body}</bdi>
+                    : isGroup ? <bdi>{c.members} {a.membersLabel}</bdi> : a.directLabel}
+          </span>
+          {c.unread > 0 && (
+            <span style={{
+              minWidth: 20, height: 20, padding: '0 6px', borderRadius: 999, flexShrink: 0,
+              display: 'grid', placeItems: 'center', fontSize: 11, fontWeight: 800,
+              background: TEC_COLORS.gold, color: '#0a0800',
+            }}>{c.unread}</span>
+          )}
         </span>
       </span>
-      {c.unread > 0 && (
-        <span style={{
-          minWidth: 20, height: 20, padding: '0 6px', borderRadius: 999, flexShrink: 0,
-          display: 'grid', placeItems: 'center', fontSize: 11, fontWeight: 800,
-          background: TEC_COLORS.gold, color: '#0a0800',
-        }}>{c.unread}</span>
-      )}
     </button>
   );
 }
 
-export function Messages({ me }: { me: string }) {
+interface Props {
+  me: string;
+  conversations: Summary[];
+  loading: boolean;
+  openDirect: (username: string) => Promise<string | null>;
+  createGroup: (title: string, members?: string[]) => Promise<string | null>;
+  /** Lets the page hide its own header while a chat owns the screen. */
+  onChatOpenChange?: (open: boolean) => void;
+}
+
+export function Messages({ me, conversations, loading, openDirect, createGroup, onChatOpenChange }: Props) {
   const { t } = useTranslation();
   const a = t.app;
-  const { conversations, loading, openDirect, createGroup } = useConversations();
   const [openId, setOpenId] = useState<string | null>(null);
-  const [to, setTo] = useState('');
-  const [groupTitle, setGroupTitle] = useState('');
-  const [composingGroup, setComposingGroup] = useState(false);
+  const [composing, setComposing] = useState<null | 'direct' | 'group'>(null);
+  const [value, setValue] = useState('');
 
-  const startDirect = async () => {
-    const u = to.trim();
-    if (!u) return;
-    setTo('');
-    const id = await openDirect(u);
+  useEffect(() => { onChatOpenChange?.(openId !== null); }, [openId, onChatOpenChange]);
+
+  const start = async () => {
+    const v = value.trim();
+    if (!v) return;
+    setValue('');
+    const id = composing === 'group' ? await createGroup(v) : await openDirect(v);
+    setComposing(null);
     if (id) setOpenId(id);
   };
 
-  const startGroup = async () => {
-    const title = groupTitle.trim();
-    if (!title) return;
-    setGroupTitle('');
-    setComposingGroup(false);
-    const id = await createGroup(title);
-    if (id) setOpenId(id);
-  };
+  if (openId) return <Chat id={openId} me={me} onBack={() => setOpenId(null)} />;
 
   return (
-    <section style={{ marginTop: 24 }}>
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 12 }}>
-        <span style={{ fontSize: 22 }}>💬</span>
-        <h2 style={{ fontSize: 18, fontWeight: 800, color: TEC_COLORS.text, margin: 0 }}>{a.messages}</h2>
-        <span style={{ fontSize: 12, color: TEC_COLORS.subtext }}>{a.messagesSub}</span>
-      </div>
-
-      {openId ? (
-        <ThreadView id={openId} me={me} onBack={() => setOpenId(null)} />
+    <section>
+      {/* No section heading. The page header above already reads
+          "Messages · Your conversations"; repeating it was the exact defect the
+          previous IA pass removed from every other tab. */}
+      {composing ? (
+        <div style={{ display: 'flex', gap: 8, marginBottom: 6 }}>
+          <input
+            autoFocus style={input} value={value} onChange={(e) => setValue(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') start(); }}
+            placeholder={composing === 'group' ? a.groupTitlePlaceholder : a.newMessage}
+            maxLength={composing === 'group' ? 120 : 100}
+            autoCapitalize="none" autoCorrect="off" dir={composing === 'group' ? 'auto' : 'ltr'}
+          />
+          {/* "Start", not "Send" — this button opens a conversation, it does not
+              deliver anything, and labelling it Send was a promise it never kept. */}
+          <button style={goldBtn} onClick={start}>{composing === 'group' ? a.createGroup : a.startChat}</button>
+        </div>
       ) : (
-        <div style={card}>
-          <div style={{ display: 'flex', gap: 8 }}>
-            <input
-              style={input} value={to} onChange={(e) => setTo(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter') startDirect(); }}
-              placeholder={a.newMessage} maxLength={100} autoCapitalize="none" autoCorrect="off"
-            />
-            <button style={goldBtn} onClick={startDirect}>{a.send}</button>
-          </div>
-
-          {composingGroup ? (
-            <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
-              <input
-                style={input} value={groupTitle} onChange={(e) => setGroupTitle(e.target.value)}
-                onKeyDown={(e) => { if (e.key === 'Enter') startGroup(); }}
-                placeholder={a.groupTitlePlaceholder} maxLength={120} dir="auto"
-              />
-              <button style={goldBtn} onClick={startGroup}>{a.createGroup}</button>
-            </div>
-          ) : (
-            <button style={{ ...quietBtn, marginTop: 10 }} onClick={() => setComposingGroup(true)}>
-              + {a.newGroup}
-            </button>
-          )}
-
-          <div style={{ marginTop: 14 }}>
-            {loading ? (
-              <p style={{ color: TEC_COLORS.subtext, fontSize: 13 }}>{a.loading}</p>
-            ) : conversations.length === 0 ? (
-              <p style={{ color: TEC_COLORS.subtext, fontSize: 13 }}>{a.noConversations}</p>
-            ) : conversations.map((c, i) => (
-              <div key={c.id} style={{ borderTop: i === 0 ? 'none' : `1px solid ${TEC_COLORS.border}` }}>
-                <Row c={c} a={a} onOpen={() => setOpenId(c.id)} />
-              </div>
-            ))}
-          </div>
+        <div style={{ display: 'flex', gap: 8, marginBottom: 6 }}>
+          <button style={{ ...goldBtn, flex: 1 }} onClick={() => { setValue(''); setComposing('direct'); }}>
+            ✉ {a.newChat}
+          </button>
+          <button style={quietBtn} onClick={() => { setValue(''); setComposing('group'); }}>
+            + {a.newGroup}
+          </button>
         </div>
       )}
+
+      <div style={{ marginTop: 8 }}>
+        {loading ? (
+          <p style={{ color: TEC_COLORS.subtext, fontSize: 13 }}>{a.loading}</p>
+        ) : conversations.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '40px 20px' }}>
+            <div style={{ fontSize: 40, marginBottom: 10 }}>💬</div>
+            <p style={{ color: TEC_COLORS.text, fontSize: 14, fontWeight: 600, margin: 0 }}>{a.noConversations}</p>
+            <p style={{ color: TEC_COLORS.subtext, fontSize: 13, margin: '6px 0 0', lineHeight: 1.5 }}>{a.startConversation}</p>
+          </div>
+        ) : conversations.map((c, i) => (
+          <div key={c.id} style={{ borderTop: i === 0 ? 'none' : `1px solid ${TEC_COLORS.border}` }}>
+            <Row c={c} a={a} onOpen={() => setOpenId(c.id)} />
+          </div>
+        ))}
+      </div>
     </section>
   );
 }

@@ -155,6 +155,13 @@ export const vi: Dictionary = {
     messageFailed: 'Không gửi được. Vui lòng thử lại.',
     threadUnavailable: 'Cuộc trò chuyện này không khả dụng.',
     membersLabel: 'thành viên',
+    startChat: 'Bắt đầu',
+    newChat: 'Cuộc trò chuyện mới',
+    onlyYouInGroup: 'Chỉ có bạn ở đây. Thêm ai đó để tin nhắn của bạn đến được họ.',
+    groupInfo: 'Thông tin nhóm',
+    today: 'Hôm nay',
+    yesterday: 'Hôm qua',
+    noMessagesYet: 'Chưa có tin nhắn. Hãy chào một câu.',
   },
   public: {
     brand:       'TEC · Connection',

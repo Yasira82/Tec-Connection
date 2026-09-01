@@ -30,12 +30,18 @@ import { Trust } from './components/Trust';
 import { Notifications } from './components/Notifications';
 import { Collaboration } from './components/Collaboration';
 import { Messages } from './components/Messages';
+import { useConversations } from '@/lib-client/connection/useMessages';
 
 export default function ConnectionHome() {
   const { user, isLoading } = usePiAuth();
   const me = useMe(); // server-resolved Pi username (Pi Browser hides tec_user from client JS — C-123 §3)
   const { t } = useTranslation();
   const [tab, setTab] = useState<ConnTab>('home');
+  // The poll lives HERE, not inside <Messages/>. Owned by the tab, the unread
+  // badge would only update while you were already looking at Messages — which
+  // is the one moment you do not need it.
+  const convo = useConversations();
+  const [chatOpen, setChatOpen] = useState(false);
 
   const piName = me.username ?? user?.piUsername ?? null;
   const name = piName ? `@${piName}` : '';
@@ -54,6 +60,10 @@ export default function ConnectionHome() {
   return (
     <main style={{ minHeight: '100vh', background: TEC_COLORS.bg, color: TEC_COLORS.text, fontFamily: 'system-ui, -apple-system, sans-serif' }}>
       <div style={{ maxWidth: 760, margin: '0 auto', padding: '28px 20px calc(96px + env(safe-area-inset-bottom))' }}>
+        {/* An open chat owns the screen, the way it does in every messaging app
+            people already know. Keeping the page header above it left the
+            conversation in a box under a title that repeated its own name. */}
+        {!(tab === 'messages' && chatOpen) && (
         <header style={{ marginBottom: 20 }}>
           <div style={{ fontSize: 11, letterSpacing: 1.4, color: TEC_COLORS.subtext, textTransform: 'uppercase', fontWeight: 700 }}>
             {t.connection.brand}
@@ -68,6 +78,7 @@ export default function ConnectionHome() {
             <p style={{ fontSize: 13.5, color: TEC_COLORS.subtext, margin: '5px 0 0', lineHeight: 1.5 }}>{sub}</p>
           )}
         </header>
+        )}
 
         {/* HOME — what happened, and who you follow. Nothing to configure here. */}
         {tab === 'home' && (
@@ -81,7 +92,16 @@ export default function ConnectionHome() {
         {/* MESSAGES — direct threads and groups. `me` comes from the server-
             resolved session username, so "is this mine?" is decided by the same
             identity the backend scoped the thread to. */}
-        {tab === 'messages' && <Messages me={piName ?? ''} />}
+        {tab === 'messages' && (
+          <Messages
+            me={piName ?? ''}
+            conversations={convo.conversations}
+            loading={convo.loading}
+            openDirect={convo.openDirect}
+            createGroup={convo.createGroup}
+            onChatOpenChange={setChatOpen}
+          />
+        )}
 
         {/* DISCOVER — people. The profile editor lives in Settings. */}
         {tab === 'discover' && (
@@ -103,7 +123,7 @@ export default function ConnectionHome() {
         {tab === 'settings' && <SettingsView />}
       </div>
 
-      <BottomNav active={tab} onSelect={setTab} />
+      <BottomNav active={tab} onSelect={setTab} badges={{ messages: convo.unreadTotal }} />
     </main>
   );
 }

@@ -155,6 +155,13 @@ export const hi: Dictionary = {
     messageFailed: 'भेजा नहीं जा सका। कृपया फिर से कोशिश करें।',
     threadUnavailable: 'यह बातचीत उपलब्ध नहीं है।',
     membersLabel: 'सदस्य',
+    startChat: 'शुरू करें',
+    newChat: 'नई बातचीत',
+    onlyYouInGroup: 'यहां सिर्फ़ आप हैं। किसी को जोड़ें ताकि आपके संदेश उन तक पहुंचें।',
+    groupInfo: 'समूह जानकारी',
+    today: 'आज',
+    yesterday: 'कल',
+    noMessagesYet: 'अभी कोई संदेश नहीं। नमस्ते कहें।',
   },
   public: {
     brand:       'TEC · Connection',

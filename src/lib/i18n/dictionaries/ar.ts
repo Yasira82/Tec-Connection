@@ -168,6 +168,13 @@ export const ar: Dictionary = {
     messageFailed: 'تعذّر الإرسال. حاول مرة أخرى.',
     threadUnavailable: 'هذه المحادثة غير متاحة.',
     membersLabel: 'أعضاء',
+    startChat: 'ابدأ',
+    newChat: 'محادثة جديدة',
+    onlyYouInGroup: 'أنت الوحيد هنا. أضف شخصاً حتى تصله رسائلك.',
+    groupInfo: 'معلومات المجموعة',
+    today: 'اليوم',
+    yesterday: 'أمس',
+    noMessagesYet: 'لا رسائل بعد. ابدأ بالسلام.',
   },
   public: {
     brand:        'TEC · Connection',
