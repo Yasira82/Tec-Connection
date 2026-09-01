@@ -155,6 +155,13 @@ export const es: Dictionary = {
     messageFailed: 'No se pudo enviar. Inténtalo de nuevo.',
     threadUnavailable: 'Esta conversación no está disponible.',
     membersLabel: 'miembros',
+    startChat: 'Empezar',
+    newChat: 'Nuevo chat',
+    onlyYouInGroup: 'Aquí solo estás tú. Añade a alguien para que tus mensajes le lleguen.',
+    groupInfo: 'Información del grupo',
+    today: 'Hoy',
+    yesterday: 'Ayer',
+    noMessagesYet: 'Aún no hay mensajes. Saluda.',
   },
   public: {
     brand:       'TEC · Connection',

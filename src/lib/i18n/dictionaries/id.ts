@@ -155,6 +155,13 @@ export const id: Dictionary = {
     messageFailed: 'Tidak dapat mengirim. Silakan coba lagi.',
     threadUnavailable: 'Percakapan ini tidak tersedia.',
     membersLabel: 'anggota',
+    startChat: 'Mulai',
+    newChat: 'Obrolan baru',
+    onlyYouInGroup: 'Hanya ada Anda di sini. Tambahkan seseorang agar pesan Anda sampai.',
+    groupInfo: 'Info grup',
+    today: 'Hari ini',
+    yesterday: 'Kemarin',
+    noMessagesYet: 'Belum ada pesan. Sapa dulu.',
   },
   public: {
     brand:       'TEC · Connection',

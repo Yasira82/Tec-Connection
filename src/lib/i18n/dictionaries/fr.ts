@@ -155,6 +155,13 @@ export const fr: Dictionary = {
     messageFailed: 'Envoi impossible. Veuillez réessayer.',
     threadUnavailable: 'Cette conversation est indisponible.',
     membersLabel: 'membres',
+    startChat: 'Démarrer',
+    newChat: 'Nouvelle discussion',
+    onlyYouInGroup: 'Vous êtes seul ici. Ajoutez quelqu’un pour que vos messages lui parviennent.',
+    groupInfo: 'Infos du groupe',
+    today: 'Aujourd’hui',
+    yesterday: 'Hier',
+    noMessagesYet: 'Aucun message. Dites bonjour.',
   },
   public: {
     brand:       'TEC · Connection',

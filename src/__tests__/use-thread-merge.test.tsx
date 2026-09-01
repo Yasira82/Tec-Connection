@@ -110,3 +110,35 @@ describe('useThread poll merge', () => {
     expect(result.current.thread).toBeNull();
   });
 });
+
+// The session hook returns the Pi username as the person typed it (`yas55eR82`);
+// the service normalizes to lowercase before storing, and returns `yas55er82`.
+// A plain `===` between the two is ALWAYS false, so every message you had sent
+// was drawn as a stranger's: labelled with your own handle instead of "You", and
+// on the wrong side of the screen. It looked like a rendering quirk; it was an
+// identity comparison.
+//
+// The rule is pinned as a pure function so it cannot drift back into a `===`
+// somewhere in the component.
+describe('“is this message mine?”', () => {
+  const norm = (u: string) => (u ?? '').trim().replace(/^@+/, '').toLowerCase();
+  const isMine = (by: string, me: string) => norm(by) === norm(me);
+
+  it('matches across the case the service normalizes away', () => {
+    expect(isMine('yas55er82', 'yas55eR82')).toBe(true);
+  });
+
+  it('matches whether or not the handle carries an @', () => {
+    expect(isMine('alice', '@Alice')).toBe(true);
+    expect(isMine('@alice', 'alice')).toBe(true);
+  });
+
+  it('still says no for a different person', () => {
+    expect(isMine('bob', 'yas55eR82')).toBe(false);
+  });
+
+  it('does not claim a message when the session name is missing', () => {
+    // Signed-out or still loading: nothing should be attributed to "You".
+    expect(isMine('alice', '')).toBe(false);
+  });
+});

@@ -7,7 +7,12 @@ import { useTranslation } from '@/lib/i18n';
 
 export type ConnTab = 'home' | 'messages' | 'discover' | 'trust' | 'settings';
 
-export function BottomNav({ active, onSelect }: { active: ConnTab; onSelect: (t: ConnTab) => void }) {
+export function BottomNav({ active, onSelect, badges }: {
+  active: ConnTab;
+  onSelect: (t: ConnTab) => void;
+  /** Unread counts per tab. A message nobody is told about has not arrived. */
+  badges?: Partial<Record<ConnTab, number>>;
+}) {
   const { t } = useTranslation();
   const ITEMS: { key: ConnTab; icon: ConnIconName; label: string }[] = [
     { key: 'home',     icon: 'home',     label: t.connection.nav.home     },
@@ -38,8 +43,16 @@ export function BottomNav({ active, onSelect }: { active: ConnTab; onSelect: (t:
               background: 'none', border: 'none', cursor: 'pointer',
             }}
           >
-            <div style={{ transform: isActive ? 'scale(1.08)' : 'scale(1)', transition: 'transform 0.2s' }}>
+            <div style={{ position: 'relative', transform: isActive ? 'scale(1.08)' : 'scale(1)', transition: 'transform 0.2s' }}>
               <Icon name={item.icon} size={21} color={isActive ? '#FBB44A' : '#3a3a4a'} strokeWidth={isActive ? 2.2 : 1.9} />
+              {(badges?.[item.key] ?? 0) > 0 && (
+                <span style={{
+                  position: 'absolute', top: -5, insetInlineEnd: -8,
+                  minWidth: 16, height: 16, padding: '0 4px', borderRadius: 999,
+                  display: 'grid', placeItems: 'center',
+                  fontSize: 9.5, fontWeight: 800, background: '#FBB44A', color: '#0a0800',
+                }}>{Math.min(badges?.[item.key] ?? 0, 99)}</span>
+              )}
             </div>
             <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: 0.5, color: isActive ? '#FBB44A' : '#3a3a4a', transition: 'color 0.2s' }}>
               {item.label}
