@@ -17,18 +17,26 @@ const getUserId = (req: NextRequest): string => {
 
 type Method = 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE';
 
-/** Forward an authenticated Connection request to the gateway, passing the response through. */
-export async function forwardConnection(
+/**
+ * Call the gateway and hand back the parsed body, WITHOUT turning it into the
+ * response yet.
+ *
+ * Most routes want the passthrough below. A few must read the answer before the
+ * browser does — a delete now returns the storage key it freed, and that key is
+ * for this server to purge, not for a client to receive. Splitting the call from
+ * the response is what makes "read it, act on it, then strip it" possible at all.
+ */
+export async function callConnection(
   req: NextRequest,
   method: Method,
   gatewayPath: string,
   body?: unknown,
-): Promise<NextResponse> {
-  if (!GW) return NextResponse.json({ error: 'Service unavailable' }, { status: 503 });
+): Promise<{ status: number; data: Record<string, unknown> }> {
+  if (!GW) return { status: 503, data: { error: 'Service unavailable' } };
 
   const token  = req.cookies.get('tec_access_token')?.value ?? '';
   const userId = getUserId(req);
-  if (!token || !userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if (!token || !userId) return { status: 401, data: { error: 'Unauthorized' } };
 
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -45,9 +53,20 @@ export async function forwardConnection(
     const res  = await fetch(`${GW}${gatewayPath}`, init);
     const data = await res.json().catch(() => ({}));
     if (!res.ok) console.error('[bff/connection] gateway error:', res.status, method, gatewayPath);
-    return NextResponse.json(data, { status: res.status });
+    return { status: res.status, data: (data ?? {}) as Record<string, unknown> };
   } catch (err) {
     console.error('[bff/connection] network error:', (err as Error).message, gatewayPath);
-    return NextResponse.json({ error: 'Service unavailable' }, { status: 503 });
+    return { status: 503, data: { error: 'Service unavailable' } };
   }
+}
+
+/** Forward an authenticated Connection request to the gateway, passing the response through. */
+export async function forwardConnection(
+  req: NextRequest,
+  method: Method,
+  gatewayPath: string,
+  body?: unknown,
+): Promise<NextResponse> {
+  const { status, data } = await callConnection(req, method, gatewayPath, body);
+  return NextResponse.json(data, { status });
 }

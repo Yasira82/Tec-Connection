@@ -20,6 +20,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { TEC_COLORS } from '@yasser172/tec-ui';
 import { useTranslation } from '@/lib/i18n';
+import { useBackButton } from '@/lib-client/connection/useBackButton';
 
 const MIN = 1;
 const MAX = 4;
@@ -36,6 +37,8 @@ const distance = (t: TouchList) => {
 
 export function Lightbox({ src, alt, onClose }: { src: string; alt: string; onClose: () => void }) {
   const { t } = useTranslation();
+  // The phone's Back closes the viewer instead of leaving the app.
+  useBackButton(true, onClose);
   const [scale, setScale] = useState(1);
   const [tx, setTx] = useState(0);
   const [ty, setTy] = useState(0);

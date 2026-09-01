@@ -15,6 +15,7 @@
 import { useEffect, useState } from 'react';
 import { TEC_COLORS } from '@yasser172/tec-ui';
 import { useTranslation } from '@/lib/i18n';
+import { useBackButton } from '@/lib-client/connection/useBackButton';
 
 const sheetInput = {
   flex: 1, minWidth: 0, background: TEC_COLORS.bg, color: TEC_COLORS.text,
@@ -77,6 +78,7 @@ export function ChatInfoSheet({
   const [armedDelete, setArmedDelete] = useState(false);
   const [armedLeave, setArmedLeave] = useState(false);
   const [armedClear, setArmedClear] = useState(false);
+  useBackButton(true, onClose);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };

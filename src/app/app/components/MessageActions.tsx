@@ -19,6 +19,7 @@
 import { useEffect } from 'react';
 import { TEC_COLORS } from '@yasser172/tec-ui';
 import { useTranslation } from '@/lib/i18n';
+import { useBackButton } from '@/lib-client/connection/useBackButton';
 
 function Choice({ label, hint, onClick }: { label: string; hint: string; onClick: () => void }) {
   return (
@@ -49,6 +50,7 @@ export function MessageActions({ mine, deleted, onDelete, onReport, onClose }: {
 }) {
   const { t } = useTranslation();
   const a = t.app;
+  useBackButton(true, onClose);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
