@@ -147,6 +147,7 @@ export const tr: Dictionary = {
     makeAdmin: "Yönetici yap",
     demoteAdmin: "Yöneticiliği al",
     removeMember: "Gruptan çıkar",
+    confirmRemoveMember: "Çıkarmak için tekrar dokunun",
     reply: "Yanıtla",
     replyHint: "Bu mesajı alıntılayarak yanıtla.",
     replyingTo: "Yanıtlanan",

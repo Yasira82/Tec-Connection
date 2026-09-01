@@ -160,6 +160,7 @@ export const ar: Dictionary = {
     makeAdmin: "خليه مشرف",
     demoteAdmin: "شيل الإشراف",
     removeMember: "اطرده من الجروب",
+    confirmRemoveMember: "دوس تاني للطرد",
     reply: "رد",
     replyHint: "رد على الرسالة دي واقتبسها.",
     replyingTo: "رد على",

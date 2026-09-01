@@ -147,6 +147,7 @@ export const id: Dictionary = {
     makeAdmin: "Jadikan admin",
     demoteAdmin: "Cabut admin",
     removeMember: "Keluarkan dari grup",
+    confirmRemoveMember: "Ketuk lagi untuk mengeluarkan",
     reply: "Balas",
     replyHint: "Balas pesan ini dengan mengutipnya.",
     replyingTo: "Membalas",

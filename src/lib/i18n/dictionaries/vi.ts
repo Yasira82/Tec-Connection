@@ -147,6 +147,7 @@ export const vi: Dictionary = {
     makeAdmin: "Đặt làm quản trị",
     demoteAdmin: "Bỏ quản trị",
     removeMember: "Xoá khỏi nhóm",
+    confirmRemoveMember: "Chạm lần nữa để xoá",
     reply: "Trả lời",
     replyHint: "Trả lời tin nhắn này, kèm trích dẫn.",
     replyingTo: "Đang trả lời",

@@ -179,6 +179,7 @@ export const en = {
     makeAdmin: "Make admin",
     demoteAdmin: "Remove admin",
     removeMember: "Remove from group",
+    confirmRemoveMember: "Tap again to remove",
     reply: "Reply",
     replyHint: "Answer this message, quoting it.",
     replyingTo: "Replying to",

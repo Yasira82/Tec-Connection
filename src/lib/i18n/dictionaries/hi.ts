@@ -147,6 +147,7 @@ export const hi: Dictionary = {
     makeAdmin: "एडमिन बनाएँ",
     demoteAdmin: "एडमिन हटाएँ",
     removeMember: "ग्रुप से हटाएँ",
+    confirmRemoveMember: "हटाने के लिए फिर टैप करें",
     reply: "जवाब दें",
     replyHint: "इस संदेश को उद्धृत करते हुए जवाब दें।",
     replyingTo: "जवाब",

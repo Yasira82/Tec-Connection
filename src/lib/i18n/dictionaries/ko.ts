@@ -147,6 +147,7 @@ export const ko: Dictionary = {
     makeAdmin: "관리자로 지정",
     demoteAdmin: "관리자 해제",
     removeMember: "그룹에서 내보내기",
+    confirmRemoveMember: "한 번 더 눌러 내보내기",
     reply: "답장",
     replyHint: "이 메시지를 인용해 답장합니다.",
     replyingTo: "답장 대상",

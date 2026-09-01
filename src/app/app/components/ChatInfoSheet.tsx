@@ -110,6 +110,10 @@ export function ChatInfoSheet({
   const isOwner = isGroup && role === 'owner';
   const isAdmin = isGroup && (role === 'owner' || role === 'admin');
   const [roleBusy, setRoleBusy] = useState<string | null>(null);
+  // Removing someone is irreversible and sits one thumb-width from a button
+  // that is not. Every other destructive action in this sheet already takes two
+  // taps — this one was the exception, and there was no reason for it to be.
+  const [armedRemove, setArmedRemove] = useState<string | null>(null);
   const [roster, setRoster] = useState<string[]>(admins ?? []);
   useEffect(() => { setRoster(admins ?? []); }, [admins]);
 
@@ -504,15 +508,26 @@ export function ChatInfoSheet({
                     )}
                     {canRemove && (
                       <button
-                        onClick={() => { void removeFromGroup(u); }}
+                        onClick={() => {
+                          // First tap arms, second removes. The label changes
+                          // to say what the second tap will do — a ✕ that turns
+                          // into a bigger ✕ teaches nobody anything.
+                          if (armedRemove !== u) { setArmedRemove(u); return; }
+                          setArmedRemove(null);
+                          void removeFromGroup(u);
+                        }}
                         disabled={roleBusy === u}
                         aria-label={a.removeMember}
                         style={{
-                          background: 'none', border: 'none', color: TEC_COLORS.error,
-                          fontSize: 15, padding: '2px 6px', flexShrink: 0,
+                          background: armedRemove === u ? `${TEC_COLORS.error}1F` : 'none',
+                          border: armedRemove === u ? `1px solid ${TEC_COLORS.error}` : 'none',
+                          borderRadius: 999, color: TEC_COLORS.error,
+                          fontSize: armedRemove === u ? 12 : 15, fontWeight: 700,
+                          padding: armedRemove === u ? '5px 12px' : '2px 6px',
+                          flexShrink: 0, whiteSpace: 'nowrap',
                           cursor: roleBusy === u ? 'not-allowed' : 'pointer',
                         }}
-                      >✕</button>
+                      >{armedRemove === u ? a.confirmRemoveMember : '✕'}</button>
                     )}
                   </div>
                 );

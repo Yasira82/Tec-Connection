@@ -147,6 +147,7 @@ export const es: Dictionary = {
     makeAdmin: "Hacer admin",
     demoteAdmin: "Quitar admin",
     removeMember: "Quitar del grupo",
+    confirmRemoveMember: "Toca otra vez para quitar",
     reply: "Responder",
     replyHint: "Responde a este mensaje, citándolo.",
     replyingTo: "Respondiendo a",

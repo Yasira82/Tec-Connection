@@ -147,6 +147,7 @@ export const ru: Dictionary = {
     makeAdmin: "Сделать админом",
     demoteAdmin: "Снять админа",
     removeMember: "Удалить из группы",
+    confirmRemoveMember: "Нажмите ещё раз, чтобы удалить",
     reply: "Ответить",
     replyHint: "Ответить на это сообщение, процитировав его.",
     replyingTo: "Ответ",

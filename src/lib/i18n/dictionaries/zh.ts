@@ -147,6 +147,7 @@ export const zh: Dictionary = {
     makeAdmin: "设为管理员",
     demoteAdmin: "取消管理员",
     removeMember: "移出群组",
+    confirmRemoveMember: "再次点击以移出",
     reply: "回复",
     replyHint: "引用并回复这条消息。",
     replyingTo: "回复",
