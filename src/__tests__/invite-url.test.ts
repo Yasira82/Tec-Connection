@@ -75,10 +75,15 @@ describe('joinByInvite', () => {
   it('sends the code in the body, never in the URL', async () => {
     fetchMock.mockResolvedValue({ ok: true, json: async () => ({ data: { id: 'c1' } }) });
     await joinByInvite('a-real-code');
-    const [url, init] = fetchMock.mock.calls[0];
+    // Asserted rather than destructured. `mock.calls[0]` is possibly undefined
+    // under this project's strict index checks, and destructuring it is what
+    // failed CI while passing every local run of the tests themselves — a type
+    // error is invisible to the test runner.
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const call = fetchMock.mock.calls[0] as [string, { body: string }];
     // A code in a query string lands in access logs and browser history. It is
     // a credential; it travels in the body.
-    expect(url).not.toContain('a-real-code');
-    expect(JSON.parse(init.body)).toEqual({ code: 'a-real-code' });
+    expect(call[0]).not.toContain('a-real-code');
+    expect(JSON.parse(call[1].body)).toEqual({ code: 'a-real-code' });
   });
 });
