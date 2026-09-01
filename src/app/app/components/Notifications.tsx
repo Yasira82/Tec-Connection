@@ -9,8 +9,12 @@ import { useNotifications } from '@/lib-client/connection/useNotifications';
 
 // The verb is passed in rather than closed over: this helper lives at module
 // scope, outside any component, so it cannot read the locale context itself.
-const label = (type: string, actor: string, followedYou: string) =>
-  type === 'follow' ? `@${actor} ${followedYou}` : `@${actor} · ${type}`;
+const label = (type: string, actor: string, followedYou: string, sentMessage: string) => {
+  if (type === 'follow')  return `@${actor} ${followedYou}`;
+  if (type === 'message') return `@${actor} ${sentMessage}`;
+  // An unknown type still names who caused it rather than rendering nothing.
+  return `@${actor} · ${type}`;
+};
 
 const fmt = (iso: string) => { try { return new Date(iso).toLocaleDateString(); } catch { return ''; } };
 
@@ -55,7 +59,7 @@ export function Notifications() {
               style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 0', borderTop: i === 0 ? `1px solid ${TEC_COLORS.border}` : `1px solid ${TEC_COLORS.border}` }}>
               <span style={{ width: 7, height: 7, borderRadius: 999, background: n.read ? 'transparent' : TEC_COLORS.gold, flexShrink: 0 }} />
               <span style={{ flex: 1, minWidth: 0, fontSize: 13, color: TEC_COLORS.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                <bdi>{label(n.type, n.actor, a.followedYou)}</bdi>
+                <bdi>{label(n.type, n.actor, a.followedYou, a.newMessageFrom)}</bdi>
               </span>
               <span style={{ fontSize: 11, color: TEC_COLORS.subtext, flexShrink: 0 }}>{fmt(n.at)}</span>
             </div>

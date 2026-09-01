@@ -23,11 +23,17 @@ export interface Summary {
   members: number;
   unread: number;
   role: 'owner' | 'member';
-  last: { body: string; by: string; at: string } | null;
+  last: { body: string; by: string; at: string; media?: string | null } | null;
   last_message_at: string;
 }
 
-export interface Msg { id: string; body: string; by: string; at: string }
+export interface MsgMedia { type: 'image' | 'audio'; mime?: string | null; durationMs?: number | null }
+export interface Msg {
+  id: string; body: string; by: string; at: string;
+  media?: MsgMedia | null;
+  /** A tombstone: the row survives so the transcript keeps its order. */
+  deleted?: boolean;
+}
 
 export interface Thread {
   id: string;
@@ -37,6 +43,11 @@ export interface Thread {
   role: 'owner' | 'member';
   peer: string | null;
   members: string[];
+  /**
+   * DIRECT only — when the other person last read this thread. A group reports
+   * nothing: "read" there is per member, and one tick cannot say "three of five".
+   */
+  peerReadAt?: string | null;
   messages: Msg[];
 }
 
@@ -76,17 +87,30 @@ export function useConversations() {
 
   const unreadTotal = conversations.reduce((n, c) => n + c.unread, 0);
 
-  const openDirect = useCallback(async (username: string): Promise<string | null> => {
-    const res = await fetch('/api/bff/connection/conversations/direct', {
-      method: 'POST', credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username: username.trim().replace(/^@+/, '') }),
-    });
-    const json = await res.json().catch(() => ({}));
-    if (!res.ok) { setError(res.status === 403 ? 'blocked' : 'failed'); return null; }
-    setError(null);
-    await load();
-    return unwrap<{ id: string }>(json, 'conversation')?.id ?? null;
+  // Returns the conversation id, or an object carrying the HTTP status. The
+  // previous version returned null for every failure, so the screen closed the
+  // composer and said nothing — which is what "New chat doesn't work" looked
+  // like from the outside. A status the user can read is also a status they can
+  // send back in a screenshot.
+  const openDirect = useCallback(async (username: string): Promise<{ id: string } | { code: number }> => {
+    try {
+      const res = await fetch('/api/bff/connection/conversations/direct', {
+        method: 'POST', credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: username.trim().replace(/^@+/, '') }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) { setError(res.status === 403 ? 'blocked' : 'failed'); return { code: res.status }; }
+      setError(null);
+      await load();
+      const id = unwrap<{ id: string }>(json, 'conversation')?.id;
+      // A 200 with no id is a contract break, not a success — say so rather than
+      // returning to an unchanged screen.
+      return id ? { id } : { code: 502 };
+    } catch {
+      setError('failed');
+      return { code: 0 };
+    }
   }, [load]);
 
   const createGroup = useCallback(async (title: string, members: string[] = []): Promise<string | null> => {
@@ -183,6 +207,67 @@ export function useThread(id: string | null) {
     }
   }, [id, poll]);
 
+  /**
+   * Upload an attachment and post it as a message. The bytes go to this app's
+   * own origin — a presigned PUT from a browser needs bucket CORS that does not
+   * exist, and a blocked cross-origin request looks exactly like a dead network.
+   * The caption and duration ride as query params because the body is the file.
+   */
+  const sendMedia = useCallback(async (blob: Blob, caption = '', durationMs?: number) => {
+    if (!id) return false;
+    setBusy(true);
+    try {
+      const qs = new URLSearchParams();
+      if (caption.trim()) qs.set('caption', caption.trim());
+      if (durationMs && durationMs > 0) qs.set('ms', String(Math.round(durationMs)));
+      const res = await fetch(
+        `/api/bff/connection/conversations/${encodeURIComponent(id)}/media${qs.toString() ? `?${qs}` : ''}`,
+        { method: 'POST', credentials: 'include', headers: { 'Content-Type': blob.type }, body: blob },
+      );
+      if (!res.ok) { setError(res.status === 400 ? 'toobig' : 'attach'); return false; }
+      setError(null);
+      // A full reload rather than an append: the upload response is one message,
+      // but the cursor has not moved, so the next poll would fetch it again.
+      cursor.current = null;
+      await poll();
+      return true;
+    } catch {
+      setError('attach');
+      return false;
+    } finally {
+      setBusy(false);
+    }
+  }, [id, poll]);
+
+  /** Delete one of your own messages. The service enforces "your own". */
+  const deleteMessage = useCallback(async (messageId: string) => {
+    if (!id) return false;
+    try {
+      const res = await fetch(
+        `/api/bff/connection/conversations/${encodeURIComponent(id)}/messages/${encodeURIComponent(messageId)}`,
+        { method: 'DELETE', credentials: 'include' },
+      );
+      if (!res.ok) { setError('failed'); return false; }
+      // A tombstone REPLACES a message rather than adding one, and the poll only
+      // fetches what is new — so the whole thread has to be re-read for the
+      // deletion to show at all.
+      cursor.current = null;
+      await poll();
+      return true;
+    } catch { setError('failed'); return false; }
+  }, [id, poll]);
+
+  /** Remove this conversation from MY list. A new message brings it back. */
+  const hide = useCallback(async () => {
+    if (!id) return false;
+    try {
+      const res = await fetch(`/api/bff/connection/conversations/${encodeURIComponent(id)}/hide`, {
+        method: 'POST', credentials: 'include',
+      });
+      return res.ok;
+    } catch { return false; }
+  }, [id]);
+
   const addMember = useCallback(async (username: string) => {
     if (!id) return false;
     const res = await fetch(`/api/bff/connection/conversations/${encodeURIComponent(id)}/members`, {
@@ -204,5 +289,5 @@ export function useThread(id: string | null) {
     return res.ok;
   }, [id]);
 
-  return { thread, busy, error, send, addMember, leave, reload: poll };
+  return { thread, busy, error, send, sendMedia, deleteMessage, hide, addMember, leave, reload: poll };
 }

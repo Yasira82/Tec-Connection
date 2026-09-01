@@ -162,3 +162,117 @@ describe('blocks', () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 });
+
+describe('attachment upload', () => {
+  const bin = (bytes: number, type: string) =>
+    new NextRequest('http://localhost/api/bff/connection/conversations/c1/media', {
+      method: 'POST',
+      headers: { Cookie: `tec_access_token=tok; tec_user=${encodeURIComponent(JSON.stringify({ id: 'u1' }))}`, 'Content-Type': type },
+      body: new Uint8Array(bytes),
+    });
+  const params = { params: Promise.resolve({ id: 'c1' }) };
+
+  it('refuses without a session and never touches storage', async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+    const { POST } = await import('@/app/api/bff/connection/conversations/[id]/media/route');
+    const req = new NextRequest('http://localhost/x', { method: 'POST', headers: { 'Content-Type': 'image/jpeg' }, body: new Uint8Array(10) });
+    expect((await POST(req, params)).status).toBe(401);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('rejects a type outside the accepted set', async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+    const { POST } = await import('@/app/api/bff/connection/conversations/[id]/media/route');
+    // SVG is an image to a user and a script container to a browser.
+    expect((await POST(bin(100, 'image/svg+xml'), params)).status).toBe(400);
+    expect((await POST(bin(100, 'application/pdf'), params)).status).toBe(400);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('rejects an oversized image on the ACTUAL byte length', async () => {
+    // Not on a size the client declared — a declared size is a suggestion.
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+    const { POST } = await import('@/app/api/bff/connection/conversations/[id]/media/route');
+    expect((await POST(bin(3 * 1024 * 1024 + 1, 'image/jpeg'), params)).status).toBe(400);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('presigns, PUTs, then posts the message with the key', async () => {
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce({ ok: true, status: 200, json: async () => ({ data: { uploadUrl: 'https://r2/put', key: 'chat/u1/a.jpg' } }) })
+      .mockResolvedValueOnce({ ok: true, status: 200 })
+      .mockResolvedValueOnce({ ok: true, status: 200, json: async () => ({ data: { message: { id: 'm1' } } }) });
+    vi.stubGlobal('fetch', fetchMock);
+    const { POST } = await import('@/app/api/bff/connection/conversations/[id]/media/route');
+    const res = await POST(bin(64, 'image/jpeg'), params);
+    expect(res.status).toBe(200);
+
+    const put = fetchMock.mock.calls[1] ?? [];
+    expect(put[0]).toBe('https://r2/put');
+    // R2 checks the signature against the Content-Type it was signed for.
+    expect((put[1] as RequestInit & { headers: Record<string, string> }).headers['Content-Type']).toBe('image/jpeg');
+
+    const attach = JSON.parse((fetchMock.mock.calls[2]?.[1] as RequestInit).body as string);
+    expect(attach).toMatchObject({ media_key: 'chat/u1/a.jpg', media_type: 'image', media_mime: 'image/jpeg' });
+  });
+});
+
+describe('attachment read is private', () => {
+  const get = (cookie?: string) =>
+    new NextRequest('http://localhost/api/bff/connection/conversations/c1/media/m1', {
+      headers: cookie ? { Cookie: cookie } : {},
+    });
+  const params = { params: Promise.resolve({ id: 'c1', messageId: 'm1' }) };
+
+  it('404s with no body when signed out — never 401', async () => {
+    // 401 would confirm the message exists to anyone who asked.
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+    const { GET } = await import('@/app/api/bff/connection/conversations/[id]/media/[messageId]/route');
+    const res = await GET(get(), params);
+    expect(res.status).toBe(404);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('404s when the backend refuses the membership check', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 404, json: async () => ({}) }));
+    const { GET } = await import('@/app/api/bff/connection/conversations/[id]/media/[messageId]/route');
+    expect((await GET(get('tec_access_token=tok'), params)).status).toBe(404);
+  });
+
+  it('streams the bytes with a PRIVATE cache and nosniff', async () => {
+    // A shared cache holding a private conversation's photo would hand it to
+    // whoever asked next.
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce({ ok: true, status: 200, json: async () => ({ data: { key: 'chat/u1/a.jpg' } }) })
+      .mockResolvedValueOnce({
+        ok: true, status: 200,
+        headers: new Headers({ 'content-type': 'image/jpeg' }),
+        arrayBuffer: async () => new ArrayBuffer(8),
+      });
+    vi.stubGlobal('fetch', fetchMock);
+    const { GET } = await import('@/app/api/bff/connection/conversations/[id]/media/[messageId]/route');
+    const res = await GET(get('tec_access_token=tok'), params);
+    expect(res.status).toBe(200);
+    expect(res.headers.get('Cache-Control')).toContain('private');
+    expect(res.headers.get('X-Content-Type-Options')).toBe('nosniff');
+  });
+
+  it('drops bytes whose type is not one we accept', async () => {
+    // Storage returning something unexpected must not become a response a
+    // browser might decide to execute.
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce({ ok: true, status: 200, json: async () => ({ data: { key: 'chat/u1/x' } }) })
+      .mockResolvedValueOnce({
+        ok: true, status: 200,
+        headers: new Headers({ 'content-type': 'text/html' }),
+        arrayBuffer: async () => new ArrayBuffer(8),
+      });
+    vi.stubGlobal('fetch', fetchMock);
+    const { GET } = await import('@/app/api/bff/connection/conversations/[id]/media/[messageId]/route');
+    expect((await GET(get('tec_access_token=tok'), params)).status).toBe(404);
+  });
+});

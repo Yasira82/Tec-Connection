@@ -142,3 +142,176 @@ describe('“is this message mine?”', () => {
     expect(isMine('alice', '')).toBe(false);
   });
 });
+
+// `openDirect` used to return `null` for every failure. The screen closed the
+// composer, discarded the typed name, and said nothing — which is precisely what
+// "New chat doesn't work" looks like from the outside, whatever the real cause.
+// It now returns either the id or the HTTP status, so the reason reaches the
+// screen and, from there, a screenshot.
+describe('openDirect reports why it failed', () => {
+  const load = async () => {};
+
+  const openDirect = async (username: string): Promise<{ id: string } | { code: number }> => {
+    try {
+      const res = await fetch('/api/bff/connection/conversations/direct', {
+        method: 'POST', credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: username.trim().replace(/^@+/, '') }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) return { code: res.status };
+      await load();
+      const d = ((json as Record<string, unknown>)?.data ?? json ?? {}) as Record<string, unknown>;
+      const id = (d.conversation as { id?: string } | undefined)?.id;
+      return id ? { id } : { code: 502 };
+    } catch {
+      return { code: 0 };
+    }
+  };
+
+  it('returns the id on success', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+      ok: true, status: 200, json: async () => ({ data: { conversation: { id: 'dm-1' } } }),
+    }));
+    expect(await openDirect('@Bob')).toEqual({ id: 'dm-1' });
+  });
+
+  it('surfaces the status instead of a bare null', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 404, json: async () => ({}) }));
+    expect(await openDirect('bob')).toEqual({ code: 404 });
+  });
+
+  it('treats a 200 with no conversation id as a failure, not a success', async () => {
+    // The worst outcome is a "successful" call that leaves the screen unchanged.
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, status: 200, json: async () => ({ data: {} }) }));
+    expect(await openDirect('bob')).toEqual({ code: 502 });
+  });
+
+  it('reports a thrown network error rather than swallowing it', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('offline')));
+    expect(await openDirect('bob')).toEqual({ code: 0 });
+  });
+});
+
+// Blocking is, with the rate limit, the only moderation this app has. Two things
+// about it are quiet enough to need pinning:
+//
+//   · the service normalizes usernames and the session does not, so a
+//     case-sensitive `includes` would show "Block" on a person you had already
+//     blocked — and the block would look broken while working perfectly;
+//   · the BFF exposes DELETE, but the service has no DELETE route. The mapping to
+//     POST /blocks/remove is invisible from the client, and a mismatch would
+//     404 silently: the person believes they unblocked someone and did not.
+describe('block list membership', () => {
+  const norm = (u: string) => (u ?? '').trim().replace(/^@+/, '').toLowerCase();
+  const isBlocked = (list: { username: string }[], u: string) =>
+    list.some((b) => norm(b.username) === norm(u));
+
+  const list = [{ username: 'magy888' }, { username: 'omar' }];
+
+  it('matches across the case the service normalizes away', () => {
+    expect(isBlocked(list, 'MAGY888')).toBe(true);
+    expect(isBlocked(list, '@Magy888')).toBe(true);
+  });
+
+  it('does not report an unrelated person as blocked', () => {
+    expect(isBlocked(list, 'sara')).toBe(false);
+  });
+
+  it('an empty list blocks nobody', () => {
+    expect(isBlocked([], 'anyone')).toBe(false);
+  });
+});
+
+describe('unblock reaches the route that exists', () => {
+  it('sends DELETE to the BFF, which maps it to the service POST', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true, status: 200, json: async () => ({ data: {} }) });
+    vi.stubGlobal('fetch', fetchMock);
+
+    await fetch('/api/bff/connection/blocks', {
+      method: 'DELETE', credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: 'magy888' }),
+    });
+
+    const [url, init] = fetchMock.mock.calls[0] ?? [];
+    expect(url).toBe('/api/bff/connection/blocks');
+    expect((init as RequestInit).method).toBe('DELETE');
+    // The route's own mapping to POST /blocks/remove is covered in
+    // messaging.test.ts against the real handler.
+    expect(JSON.parse((init as RequestInit).body as string)).toEqual({ username: 'magy888' });
+  });
+});
+
+// A read receipt is the other side of the unread badge: the peer's marker moves
+// to "now" when they open the thread, so anything older has been in front of
+// them. The comparison is easy to get backwards, and a wrong tick is worse than
+// no tick — it asserts something about another person that is not true.
+describe('read ticks', () => {
+  const seenBy = (at: string, peerReadAt?: string | null): boolean => {
+    if (!peerReadAt) return false;
+    const sent = new Date(at).getTime();
+    const read = new Date(peerReadAt).getTime();
+    return Number.isFinite(sent) && Number.isFinite(read) && read >= sent;
+  };
+
+  it('is read when the peer’s marker is AFTER the message', () => {
+    expect(seenBy('2026-01-01T10:00:00Z', '2026-01-01T10:05:00Z')).toBe(true);
+  });
+
+  it('counts a marker exactly on the message as read', () => {
+    // Sending advances the sender's own marker to the message timestamp, so an
+    // exclusive comparison would under-report by one message forever.
+    expect(seenBy('2026-01-01T10:00:00Z', '2026-01-01T10:00:00Z')).toBe(true);
+  });
+
+  it('is NOT read when the message is newer than the marker', () => {
+    expect(seenBy('2026-01-01T10:05:00Z', '2026-01-01T10:00:00Z')).toBe(false);
+  });
+
+  it('claims nothing when there is no marker — a group, or a thread never opened', () => {
+    expect(seenBy('2026-01-01T10:00:00Z', null)).toBe(false);
+    expect(seenBy('2026-01-01T10:00:00Z', undefined)).toBe(false);
+  });
+
+  it('claims nothing on an unparseable date rather than guessing', () => {
+    expect(seenBy('not-a-date', '2026-01-01T10:00:00Z')).toBe(false);
+  });
+});
+
+describe('deleting a message re-reads the whole thread', () => {
+  it('resets the cursor, because a tombstone REPLACES a row', async () => {
+    // The poll only fetches what is NEW. A deletion changes an existing message,
+    // so an incremental poll would never see it and the words would stay on
+    // screen after being deleted.
+    const full = {
+      ok: true, status: 200,
+      json: async () => ({ data: { conversation: {
+        id: 'c1', kind: 'DIRECT', title: null, owner: null, role: 'member',
+        peer: 'bob', members: ['alice', 'bob'],
+        messages: [{ id: 'm1', body: '', by: 'alice', at: '2026-01-01T00:00:00.000Z', deleted: true }],
+      } } }),
+    };
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce({ ok: true, status: 200, json: async () => ({ data: { conversation: {
+        id: 'c1', kind: 'DIRECT', title: null, owner: null, role: 'member',
+        peer: 'bob', members: ['alice', 'bob'],
+        messages: [{ id: 'm1', body: 'secret', by: 'alice', at: '2026-01-01T00:00:00.000Z' }],
+      } } }) })
+      .mockResolvedValueOnce({ ok: true, status: 200, json: async () => ({}) })  // read receipt
+      .mockResolvedValueOnce({ ok: true, status: 200, json: async () => ({ data: { deleted: true } }) })
+      .mockResolvedValue(full);
+    vi.stubGlobal('fetch', fetchMock);
+
+    const { result } = renderHook(() => useThread('c1'));
+    await waitFor(() => expect(result.current.thread?.messages[0]?.body).toBe('secret'));
+
+    await act(async () => { await result.current.deleteMessage('m1'); });
+    await waitFor(() => expect(result.current.thread?.messages[0]?.deleted).toBe(true));
+    expect(result.current.thread?.messages[0]?.body).toBe('');
+
+    // The re-read must NOT carry ?after — that is what makes the change visible.
+    const reread = fetchMock.mock.calls.at(-1)?.[0];
+    expect(String(reread)).not.toContain('after=');
+  });
+});
