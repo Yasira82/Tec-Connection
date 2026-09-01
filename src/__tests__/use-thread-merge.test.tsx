@@ -19,14 +19,14 @@ import { useThread } from '@/lib-client/connection/useMessages';
 
 const msg = (id: string, at: string) => ({ id, body: id, by: 'bob', at });
 
-const thread = (messages: ReturnType<typeof msg>[]) => ({
+const thread = (messages: ReturnType<typeof msg>[], hasMore = false) => ({
   ok: true,
   status: 200,
   json: async () => ({
     data: {
       conversation: {
         id: 'c1', kind: 'DIRECT', title: null, owner: null, role: 'member',
-        peer: 'bob', members: ['alice', 'bob'], messages,
+        peer: 'bob', members: ['alice', 'bob'], messages, hasMore,
       },
     },
   }),
@@ -313,5 +313,93 @@ describe('deleting a message re-reads the whole thread', () => {
     // The re-read must NOT carry ?after — that is what makes the change visible.
     const reread = fetchMock.mock.calls.at(-1)?.[0];
     expect(String(reread)).not.toContain('after=');
+  });
+});
+
+describe('useThread reading backwards', () => {
+  // The transcript was the last page and nothing else — not slow to reach the
+  // rest, impossible. What is easy to get wrong now is the DIRECTION of the
+  // merge and the poll cursor, and both fail silently:
+  //
+  //   · appending an older page   → history lands at the BOTTOM, out of order;
+  //   · moving the cursor back    → the next poll re-fetches the whole thread
+  //                                 and treats every message as newly arrived.
+
+  it('PREPENDS an older page, oldest first', async () => {
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(thread([msg('m5', '2026-01-05T00:00:00.000Z')], true))
+      .mockResolvedValueOnce({ ok: true, status: 200, json: async () => ({}) })
+      .mockResolvedValue(thread([msg('m1', '2026-01-01T00:00:00.000Z')], false));
+    vi.stubGlobal('fetch', fetchMock);
+
+    const { result } = renderHook(() => useThread('c1'));
+    await waitFor(() => expect(result.current.thread?.messages).toHaveLength(1));
+
+    await act(async () => { await result.current.loadOlder(); });
+    expect(result.current.thread?.messages.map((m) => m.id)).toEqual(['m1', 'm5']);
+  });
+
+  it('asks for what is BEFORE the oldest held message', async () => {
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(thread([msg('m5', '2026-01-05T00:00:00.000Z')], true))
+      .mockResolvedValueOnce({ ok: true, status: 200, json: async () => ({}) })
+      .mockResolvedValue(thread([], false));
+    vi.stubGlobal('fetch', fetchMock);
+
+    const { result } = renderHook(() => useThread('c1'));
+    await waitFor(() => expect(result.current.hasMore).toBe(true));
+
+    await act(async () => { await result.current.loadOlder(); });
+    const urls = fetchMock.mock.calls.map((c) => String(c[0]));
+    expect(urls.some((u) => u.includes('before=') && u.includes('2026-01-05'))).toBe(true);
+  });
+
+  it('does NOT move the poll cursor backwards', async () => {
+    // The cursor tracks the NEWEST message. Moving it back would make the very
+    // next poll return the entire conversation as "new".
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(thread([msg('m5', '2026-01-05T00:00:00.000Z')], true))
+      .mockResolvedValueOnce({ ok: true, status: 200, json: async () => ({}) })
+      .mockResolvedValueOnce(thread([msg('m1', '2026-01-01T00:00:00.000Z')], false))
+      .mockResolvedValue(thread([], false));
+    vi.stubGlobal('fetch', fetchMock);
+
+    const { result } = renderHook(() => useThread('c1'));
+    await waitFor(() => expect(result.current.thread?.messages).toHaveLength(1));
+    await act(async () => { await result.current.loadOlder(); });
+    await act(async () => { await result.current.reload(); });
+
+    const pollUrl = String(fetchMock.mock.calls[fetchMock.mock.calls.length - 1]?.[0]);
+    expect(pollUrl).toContain('after=');
+    expect(pollUrl).toContain('2026-01-05');
+  });
+
+  it('a quiet POLL does not clear hasMore', async () => {
+    // Only a full load learns whether history exists above. A poll is at the
+    // bottom by definition; letting it answer would hide the control on the
+    // next quiet tick.
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(thread([msg('m5', '2026-01-05T00:00:00.000Z')], true))
+      .mockResolvedValueOnce({ ok: true, status: 200, json: async () => ({}) })
+      .mockResolvedValue(thread([], false));
+    vi.stubGlobal('fetch', fetchMock);
+
+    const { result } = renderHook(() => useThread('c1'));
+    await waitFor(() => expect(result.current.hasMore).toBe(true));
+    await act(async () => { await result.current.reload(); });
+    expect(result.current.hasMore).toBe(true);
+  });
+
+  it('does not duplicate a message that arrived between the two requests', async () => {
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(thread([msg('m5', '2026-01-05T00:00:00.000Z')], true))
+      .mockResolvedValueOnce({ ok: true, status: 200, json: async () => ({}) })
+      .mockResolvedValue(thread([msg('m1', '2026-01-01T00:00:00.000Z'), msg('m5', '2026-01-05T00:00:00.000Z')], false));
+    vi.stubGlobal('fetch', fetchMock);
+
+    const { result } = renderHook(() => useThread('c1'));
+    await waitFor(() => expect(result.current.thread?.messages).toHaveLength(1));
+    await act(async () => { await result.current.loadOlder(); });
+    expect(result.current.thread?.messages.map((m) => m.id)).toEqual(['m1', 'm5']);
   });
 });

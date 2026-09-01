@@ -38,11 +38,13 @@ function Choice({ label, hint, onClick }: { label: string; hint: string; onClick
   );
 }
 
-export function MessageActions({ mine, deleted, onDelete, onReport, onClose }: {
+export function MessageActions({ mine, deleted, onReply, onDelete, onReport, onClose }: {
   /** Only the sender may clear a message for both sides. */
   mine: boolean;
   /** A tombstone can still be removed from your own copy. */
   deleted: boolean;
+  /** Answer this specific message. Absent on a tombstone — there is nothing to quote. */
+  onReply?: () => void;
   onDelete: (scope: 'me' | 'everyone') => void;
   /** Absent for your own message — reporting yourself is not a thing. */
   onReport?: () => void;
@@ -81,6 +83,14 @@ export function MessageActions({ mine, deleted, onDelete, onReport, onClose }: {
         <div style={{ display: 'grid', placeItems: 'center', padding: '10px 0 6px' }}>
           <span style={{ width: 38, height: 4, borderRadius: 999, background: TEC_COLORS.border }} />
         </div>
+
+        {/* First, and not a destructive action: replying is the thing people
+            open this menu for most, and it should not sit under two deletes. */}
+        {onReply && !deleted && (
+          <div style={{ borderBottom: `1px solid ${TEC_COLORS.border}` }}>
+            <Choice label={a.reply} hint={a.replyHint} onClick={() => { onReply(); onClose(); }} />
+          </div>
+        )}
 
         <Choice
           label={a.deleteForMe} hint={a.deleteForMeHint}

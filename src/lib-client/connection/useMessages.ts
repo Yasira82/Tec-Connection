@@ -28,9 +28,27 @@ export interface Summary {
 }
 
 export interface MsgMedia { type: 'image' | 'audio'; mime?: string | null; durationMs?: number | null }
+
+/**
+ * The message a reply points at.
+ *
+ * `deleted` and `hidden` are NOT the same fact and the UI says so differently:
+ * deleted means retracted for everyone; hidden means this reader removed their
+ * own copy, and the quote withholds the text rather than handing it back.
+ */
+export interface QuotedMsg {
+  id: string;
+  by: string | null;
+  body: string;
+  deleted: boolean;
+  hidden: boolean;
+  media: string | null;
+}
 export interface Msg {
   id: string; body: string; by: string; at: string;
   media?: MsgMedia | null;
+  /** The message this one answers, or null. Resolved server-side at read time. */
+  replyTo?: QuotedMsg | null;
   /** A tombstone: the row survives so the transcript keeps its order. */
   deleted?: boolean;
 }
@@ -43,6 +61,8 @@ export interface Thread {
   role: 'owner' | 'admin' | 'member';
   /** GROUP only — who helps run it. The OWNER is `owner`, and is not in here. */
   admins?: string[];
+  /** Whether older messages exist above the ones in this payload. */
+  hasMore?: boolean;
   peer: string | null;
   members: string[];
   /**
@@ -161,6 +181,10 @@ export function useThread(id: string | null) {
   const [thread, setThread] = useState<Thread | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [loadingOlder, setLoadingOlder] = useState(false);
+  // Whether anything exists ABOVE what is loaded. Starts true so the control
+  // is offered on a full first page; the server corrects it on the first ask.
+  const [hasMore, setHasMore] = useState(false);
   // The newest timestamp already held. Kept in a ref so the poll interval does
   // not have to be re-armed every time a message arrives.
   const cursor = useRef<string | null>(null);
@@ -185,6 +209,10 @@ export function useThread(id: string | null) {
         const seen = new Set(prev.messages.map((m) => m.id));
         return { ...prev, ...t, messages: [...prev.messages, ...t.messages.filter((m) => !seen.has(m.id))] };
       });
+      // Only a FULL load learns whether there is history above. An incremental
+      // poll is at the bottom by definition and always reports false, so
+      // trusting it here would clear the flag on the next quiet tick.
+      if (!after) setHasMore(t.hasMore === true);
       const newest = t.messages[t.messages.length - 1]?.at;
       if (newest) cursor.current = newest;
     } catch {
@@ -206,7 +234,40 @@ export function useThread(id: string | null) {
     return () => clearInterval(t);
   }, [id, poll]);
 
-  const send = useCallback(async (body: string) => {
+  /**
+   * One page further back.
+   *
+   * PREPENDS, and never touches `cursor` — that ref tracks the NEWEST message
+   * for polling. Moving it backwards would make the next poll re-fetch the
+   * whole conversation and treat every message as new.
+   */
+  const loadOlder = useCallback(async () => {
+    if (!id || loadingOlder) return;
+    const oldest = thread?.messages[0]?.at;
+    if (!oldest) return;
+    setLoadingOlder(true);
+    try {
+      const res = await fetch(
+        `/api/bff/connection/conversations/${encodeURIComponent(id)}?before=${encodeURIComponent(oldest)}`,
+        { credentials: 'include', cache: 'no-store' },
+      );
+      if (!res.ok) return;
+      const t = unwrap<Thread>(await res.json().catch(() => ({})), 'conversation');
+      if (!t) return;
+      setHasMore(t.hasMore === true);
+      setThread((prev) => {
+        if (!prev) return t;
+        // Deduped: a message can arrive in a page AND already be held if it was
+        // written between the two requests.
+        const seen = new Set(prev.messages.map((m) => m.id));
+        const older = t.messages.filter((m) => !seen.has(m.id));
+        return { ...prev, messages: [...older, ...prev.messages] };
+      });
+    } catch { /* the button simply stays offered */ }
+    finally { setLoadingOlder(false); }
+  }, [id, loadingOlder, thread?.messages]);
+
+  const send = useCallback(async (body: string, replyTo?: string) => {
     if (!id) return false;
     const text = body.trim();
     if (!text) return false;
@@ -215,7 +276,7 @@ export function useThread(id: string | null) {
       const res = await fetch(`/api/bff/connection/conversations/${encodeURIComponent(id)}/messages`, {
         method: 'POST', credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ body: text }),
+        body: JSON.stringify({ body: text, ...(replyTo && { reply_to: replyTo }) }),
       });
       if (!res.ok) {
         // 403 is the block or the rate limit — both mean "this will not be
@@ -347,5 +408,8 @@ export function useThread(id: string | null) {
     return res.ok;
   }, [id]);
 
-  return { thread, busy, error, send, sendMedia, deleteMessage, hide, clear, addMember, leave, reload: poll };
+  return {
+    thread, busy, error, send, sendMedia, deleteMessage, hide, clear, addMember, leave,
+    loadOlder, loadingOlder, hasMore, reload: poll,
+  };
 }
