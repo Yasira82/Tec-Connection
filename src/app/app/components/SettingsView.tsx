@@ -12,6 +12,7 @@ import { useBlocks } from '@/lib-client/connection/useBlocks';
 import { InviteCard } from '@/components/referral/InviteCard';
 import { ProfileEditor } from './ProfileEditor';
 import { ConnectionPro } from './ConnectionPro';
+import { ModerationQueue } from './ModerationQueue';
 
 const cardStyle = {
   background: TEC_COLORS.surface, border: `1px solid ${TEC_COLORS.border}`, borderRadius: 16,
@@ -198,6 +199,12 @@ export function SettingsView() {
           <div style={{ padding: '0 16px 12px', fontSize: 12, color: TEC_COLORS.error }}>{t.app.blockFailed}</div>
         )}
       </Section>
+
+      {/* Renders nothing at all unless the SERVER says this session may review
+          reports — the queue route answers 404 to everyone else, and this asks
+          it rather than deciding locally. Placed beside Blocked because both
+          are about the same thing: what to do about someone. */}
+      <ModerationQueue />
 
       <Section title={s.about} icon="ℹ️">
         <Row label={s.version} first><span style={{ color: TEC_COLORS.subtext, fontSize: 14 }}>1.0.0</span></Row>

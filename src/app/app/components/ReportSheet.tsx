@@ -16,6 +16,7 @@
 import { useEffect, useState } from 'react';
 import { TEC_COLORS } from '@yasser172/tec-ui';
 import { useTranslation } from '@/lib/i18n';
+import { useBackButton } from '@/lib-client/connection/useBackButton';
 
 export type ReportKind = 'user' | 'message' | 'story';
 
@@ -38,6 +39,7 @@ export function ReportSheet({ kind, target, author, onClose, onBlock }: {
   const [reason, setReason] = useState<Reason | null>(null);
   const [note, setNote] = useState('');
   const [state, setState] = useState<'idle' | 'sending' | 'done' | 'failed'>('idle');
+  useBackButton(true, onClose);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };

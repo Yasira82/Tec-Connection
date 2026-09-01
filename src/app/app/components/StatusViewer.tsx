@@ -15,6 +15,7 @@ import { TEC_COLORS } from '@yasser172/tec-ui';
 import { useTranslation } from '@/lib/i18n';
 import { storyMediaUrl, type StoryAuthor, type StoryItem } from '@/lib-client/connection/useStories';
 import { ReportSheet } from './ReportSheet';
+import { useBackButton } from '@/lib-client/connection/useBackButton';
 
 const relative = (iso: string, a: Record<string, string>) => {
   const ms = Date.now() - new Date(iso).getTime();
@@ -50,6 +51,7 @@ export function StatusViewer({ group, isMine, onSeen, onDelete, onReply, onClose
   const [reporting, setReporting] = useState(false);
   const [reply, setReply] = useState('');
   const [replyState, setReplyState] = useState<'idle' | 'sending' | 'sent' | 'failed'>('idle');
+  useBackButton(true, onClose);
 
   const current = group.stories[i];
 

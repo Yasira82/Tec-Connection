@@ -34,6 +34,7 @@ import { MessageActions } from './MessageActions';
 import { StatusStrip } from './StatusStrip';
 import { ReportSheet } from './ReportSheet';
 import { Avatar as PersonAvatar } from '@/components/public/Avatar';
+import { useBackButton } from '@/lib-client/connection/useBackButton';
 import { VoiceNote } from './VoiceNote';
 import { downscaleImage } from '@/lib-client/connection/downscaleImage';
 
@@ -131,6 +132,9 @@ function Chat({ id, me, onBack }: { id: string; me: string; onBack: () => void }
   const { typing, ping } = useTyping(id, thread?.members ?? []);
   const endRef = useRef<HTMLDivElement | null>(null);
   const meNorm = norm(me);
+  // An open chat is a layer even though it is not an overlay — Back belongs to
+  // it before it belongs to the page.
+  useBackButton(true, onBack);
 
   // `block: 'nearest'` scrolls the transcript, not the page — scrolling the page
   // would push the composer off screen every time a message arrived.
@@ -544,6 +548,7 @@ export function Messages({ me, conversations, loading, openDirect, createGroup, 
   if (composing === 'direct') {
     return <NewChat onPick={pick} onCancel={() => { setComposing(null); setPickError(null); }} error={pickError} />;
   }
+
 
   return (
     <section>

@@ -15,6 +15,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { TEC_COLORS } from '@yasser172/tec-ui';
 import { useTranslation } from '@/lib/i18n';
+import { useBackButton } from '@/lib-client/connection/useBackButton';
 
 interface Person { username: string; headline?: string; verified?: boolean }
 
@@ -48,6 +49,8 @@ export function NewChat({ onPick, onCancel, error }: {
   /** Set by the parent when opening a chat failed, so the reason is visible. */
   error?: string | null;
 }) {
+  // Back returns to the conversation list rather than out of the app.
+  useBackButton(true, onCancel);
   const { t } = useTranslation();
   const a = t.app;
   const [q, setQ] = useState('');

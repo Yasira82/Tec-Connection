@@ -1,5 +1,6 @@
-import { NextRequest } from 'next/server';
-import { forwardConnection } from '@/lib/bff/connectionGateway';
+import { NextRequest, NextResponse } from 'next/server';
+import { callConnection } from '@/lib/bff/connectionGateway';
+import { purgeObjects, takeMediaKeys } from '@/lib/connection/purge';
 
 // DELETE /api/bff/connection/conversations/<id>/messages/<messageId>?scope=me|everyone
 //
@@ -16,8 +17,19 @@ export async function DELETE(req: NextRequest, ctx: { params: Promise<{ id: stri
   // where it takes the safe default rather than becoming a parameter the
   // service has to reject.
   const query = scope === 'me' || scope === 'everyone' ? `?scope=${scope}` : '';
-  return forwardConnection(
+  const { status, data } = await callConnection(
     req, 'DELETE',
     `/api/identity/connection/conversations/${encodeURIComponent(id)}/messages/${encodeURIComponent(messageId)}${query}`,
   );
+
+  if (status < 200 || status >= 300) return NextResponse.json(data, { status });
+
+  // A "delete for everyone" hands back the storage key the message held, so the
+  // photo goes with the words. It is purged here and stripped from the response
+  // — a client has no use for a storage key and should not be given one. A
+  // 'me' delete frees nothing and returns null.
+  const { keys, body } = takeMediaKeys(data);
+  if (keys.length) await purgeObjects(keys);
+
+  return NextResponse.json(body, { status });
 }
