@@ -180,6 +180,11 @@ export const zh: Dictionary = {
     attachTooBig: '文件太大。',
     attachFailed: '附件未能发送。请重试。',
     sending: '发送中…',
+    message: '发消息',
+    blockedList: '已屏蔽',
+    noBlocked: '没有屏蔽任何人。',
+    confirmBlock: '再点一次以屏蔽',
+    blockFailed: '无法更改屏蔽。请重试。',
   },
   public: {
     brand:       'TEC · Connection',

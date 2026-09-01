@@ -180,6 +180,11 @@ export const vi: Dictionary = {
     attachTooBig: 'Tệp quá lớn.',
     attachFailed: 'Không gửi được tệp đính kèm. Vui lòng thử lại.',
     sending: 'Đang gửi…',
+    message: 'Nhắn tin',
+    blockedList: 'Đã chặn',
+    noBlocked: 'Chưa chặn ai.',
+    confirmBlock: 'Chạm lần nữa để chặn',
+    blockFailed: 'Không thay đổi được trạng thái chặn. Vui lòng thử lại.',
   },
   public: {
     brand:       'TEC · Connection',

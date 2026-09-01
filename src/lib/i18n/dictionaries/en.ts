@@ -213,6 +213,11 @@ export const en = {
     attachTooBig: 'That file is too large.',
     attachFailed: 'The attachment did not send. Please retry.',
     sending: 'Sending…',
+    message: 'Message',
+    blockedList: 'Blocked',
+    noBlocked: 'No one blocked.',
+    confirmBlock: 'Tap again to block',
+    blockFailed: 'Could not change the block. Please retry.',
   },
   public: {
     brand:        'TEC · Connection',

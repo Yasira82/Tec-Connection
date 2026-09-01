@@ -180,6 +180,11 @@ export const ko: Dictionary = {
     attachTooBig: '파일이 너무 큽니다.',
     attachFailed: '첨부 파일을 보내지 못했습니다. 다시 시도하세요.',
     sending: '보내는 중…',
+    message: '메시지',
+    blockedList: '차단 목록',
+    noBlocked: '차단한 사람이 없습니다.',
+    confirmBlock: '다시 누르면 차단됩니다',
+    blockFailed: '차단을 변경하지 못했습니다. 다시 시도하세요.',
   },
   public: {
     brand:       'TEC · Connection',

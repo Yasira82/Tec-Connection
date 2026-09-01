@@ -180,6 +180,11 @@ export const hi: Dictionary = {
     attachTooBig: 'यह फ़ाइल बहुत बड़ी है।',
     attachFailed: 'अटैचमेंट नहीं भेजा जा सका। कृपया फिर से कोशिश करें।',
     sending: 'भेजा जा रहा है…',
+    message: 'संदेश भेजें',
+    blockedList: 'अवरुद्ध',
+    noBlocked: 'किसी को ब्लॉक नहीं किया।',
+    confirmBlock: 'ब्लॉक करने के लिए दोबारा टैप करें',
+    blockFailed: 'ब्लॉक नहीं बदला जा सका। कृपया फिर से कोशिश करें।',
   },
   public: {
     brand:       'TEC · Connection',

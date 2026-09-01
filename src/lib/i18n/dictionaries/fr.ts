@@ -180,6 +180,11 @@ export const fr: Dictionary = {
     attachTooBig: 'Ce fichier est trop volumineux.',
     attachFailed: 'La pièce jointe n’a pas été envoyée. Veuillez réessayer.',
     sending: 'Envoi…',
+    message: 'Écrire',
+    blockedList: 'Bloqués',
+    noBlocked: 'Personne de bloqué.',
+    confirmBlock: 'Touchez à nouveau pour bloquer',
+    blockFailed: 'Impossible de modifier le blocage. Veuillez réessayer.',
   },
   public: {
     brand:       'TEC · Connection',

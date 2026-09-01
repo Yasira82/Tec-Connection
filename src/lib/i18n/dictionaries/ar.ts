@@ -193,6 +193,11 @@ export const ar: Dictionary = {
     attachTooBig: 'هذا الملف كبير جداً.',
     attachFailed: 'لم يتم إرسال المرفق. حاول مرة أخرى.',
     sending: 'جارٍ الإرسال…',
+    message: 'راسل',
+    blockedList: 'المحظورون',
+    noBlocked: 'لا أحد محظور.',
+    confirmBlock: 'اضغط مرة أخرى للحظر',
+    blockFailed: 'تعذّر تغيير الحظر. حاول مرة أخرى.',
   },
   public: {
     brand:        'TEC · Connection',

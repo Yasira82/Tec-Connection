@@ -180,6 +180,11 @@ export const tr: Dictionary = {
     attachTooBig: 'Bu dosya çok büyük.',
     attachFailed: 'Ek gönderilemedi. Lütfen tekrar deneyin.',
     sending: 'Gönderiliyor…',
+    message: 'Mesaj gönder',
+    blockedList: 'Engellenenler',
+    noBlocked: 'Kimse engellenmedi.',
+    confirmBlock: 'Engellemek için tekrar dokunun',
+    blockFailed: 'Engelleme değiştirilemedi. Lütfen tekrar deneyin.',
   },
   public: {
     brand:       'TEC · Connection',

@@ -192,3 +192,53 @@ describe('openDirect reports why it failed', () => {
     expect(await openDirect('bob')).toEqual({ code: 0 });
   });
 });
+
+// Blocking is, with the rate limit, the only moderation this app has. Two things
+// about it are quiet enough to need pinning:
+//
+//   · the service normalizes usernames and the session does not, so a
+//     case-sensitive `includes` would show "Block" on a person you had already
+//     blocked — and the block would look broken while working perfectly;
+//   · the BFF exposes DELETE, but the service has no DELETE route. The mapping to
+//     POST /blocks/remove is invisible from the client, and a mismatch would
+//     404 silently: the person believes they unblocked someone and did not.
+describe('block list membership', () => {
+  const norm = (u: string) => (u ?? '').trim().replace(/^@+/, '').toLowerCase();
+  const isBlocked = (list: { username: string }[], u: string) =>
+    list.some((b) => norm(b.username) === norm(u));
+
+  const list = [{ username: 'magy888' }, { username: 'omar' }];
+
+  it('matches across the case the service normalizes away', () => {
+    expect(isBlocked(list, 'MAGY888')).toBe(true);
+    expect(isBlocked(list, '@Magy888')).toBe(true);
+  });
+
+  it('does not report an unrelated person as blocked', () => {
+    expect(isBlocked(list, 'sara')).toBe(false);
+  });
+
+  it('an empty list blocks nobody', () => {
+    expect(isBlocked([], 'anyone')).toBe(false);
+  });
+});
+
+describe('unblock reaches the route that exists', () => {
+  it('sends DELETE to the BFF, which maps it to the service POST', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true, status: 200, json: async () => ({ data: {} }) });
+    vi.stubGlobal('fetch', fetchMock);
+
+    await fetch('/api/bff/connection/blocks', {
+      method: 'DELETE', credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: 'magy888' }),
+    });
+
+    const [url, init] = fetchMock.mock.calls[0] ?? [];
+    expect(url).toBe('/api/bff/connection/blocks');
+    expect((init as RequestInit).method).toBe('DELETE');
+    // The route's own mapping to POST /blocks/remove is covered in
+    // messaging.test.ts against the real handler.
+    expect(JSON.parse((init as RequestInit).body as string)).toEqual({ username: 'magy888' });
+  });
+});

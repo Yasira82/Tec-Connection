@@ -180,6 +180,11 @@ export const ru: Dictionary = {
     attachTooBig: 'Этот файл слишком большой.',
     attachFailed: 'Вложение не отправлено. Попробуйте ещё раз.',
     sending: 'Отправка…',
+    message: 'Написать',
+    blockedList: 'Заблокированные',
+    noBlocked: 'Никто не заблокирован.',
+    confirmBlock: 'Нажмите ещё раз, чтобы заблокировать',
+    blockFailed: 'Не удалось изменить блокировку. Попробуйте ещё раз.',
   },
   public: {
     brand:       'TEC · Connection',

@@ -8,6 +8,7 @@ import { usePiAuth } from '@yasser172/tec-auth';
 import { TEC_COLORS } from '@yasser172/tec-ui';
 import { useTranslation, LOCALES } from '@/lib/i18n';
 import { useMe } from '@/lib-client/hooks/useMe';
+import { useBlocks } from '@/lib-client/connection/useBlocks';
 import { InviteCard } from '@/components/referral/InviteCard';
 import { ProfileEditor } from './ProfileEditor';
 import { ConnectionPro } from './ConnectionPro';
@@ -72,6 +73,7 @@ export function SettingsView() {
   // Prefer the server-resolved Pi username (/api/auth/me) — Pi Browser hides the
   // tec_user cookie from client JS, so usePiAuth alone shows no name / "Not signed in".
   const username = me.username ?? user?.piUsername ?? null;
+  const blocks = useBlocks();
 
   // Reflect the real subscription (same source ConnectionPro reads).
   const [isPro, setIsPro] = useState(false);
@@ -165,6 +167,38 @@ export function SettingsView() {
       </Section>
 
       {/* About */}
+      {/* Blocked — always present, even when empty. A control you can only find
+          after you have already used it is not a control; someone deciding
+          whether to block should be able to see that it is reversible first. */}
+      <Section title={t.app.blockedList} icon="🚫">
+        {blocks.blocked.length === 0 ? (
+          <div style={{ padding: '14px 16px', fontSize: 13, color: TEC_COLORS.subtext }}>
+            {blocks.loading ? t.app.loading : t.app.noBlocked}
+          </div>
+        ) : blocks.blocked.map((b, i) => (
+          <div key={b.username} style={{
+            display: 'flex', alignItems: 'center', gap: 10, padding: '12px 16px',
+            borderTop: i === 0 ? 'none' : `1px solid ${TEC_COLORS.border}`,
+          }}>
+            <span style={{ flex: 1, minWidth: 0, fontSize: 14, color: TEC_COLORS.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              <bdi>@{b.username}</bdi>
+            </span>
+            <button
+              disabled={blocks.busy}
+              onClick={() => { void blocks.unblock(b.username); }}
+              style={{
+                background: 'none', border: `1px solid ${TEC_COLORS.border}`, color: TEC_COLORS.subtext,
+                borderRadius: 999, padding: '6px 14px', fontSize: 12.5,
+                cursor: blocks.busy ? 'not-allowed' : 'pointer', whiteSpace: 'nowrap',
+              }}
+            >{t.app.unblock}</button>
+          </div>
+        ))}
+        {blocks.error && (
+          <div style={{ padding: '0 16px 12px', fontSize: 12, color: TEC_COLORS.error }}>{t.app.blockFailed}</div>
+        )}
+      </Section>
+
       <Section title={s.about} icon="ℹ️">
         <Row label={s.version} first><span style={{ color: TEC_COLORS.subtext, fontSize: 14 }}>1.0.0</span></Row>
         <Row label={s.domain}><span style={{ color: TEC_COLORS.subtext, fontSize: 14 }}>connection.tecosystem.app</span></Row>

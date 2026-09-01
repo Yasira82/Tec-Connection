@@ -180,6 +180,11 @@ export const id: Dictionary = {
     attachTooBig: 'Berkas terlalu besar.',
     attachFailed: 'Lampiran tidak terkirim. Silakan coba lagi.',
     sending: 'Mengirim…',
+    message: 'Kirim pesan',
+    blockedList: 'Diblokir',
+    noBlocked: 'Tidak ada yang diblokir.',
+    confirmBlock: 'Ketuk lagi untuk memblokir',
+    blockFailed: 'Tidak dapat mengubah blokir. Silakan coba lagi.',
   },
   public: {
     brand:       'TEC · Connection',

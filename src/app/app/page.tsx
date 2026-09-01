@@ -41,7 +41,18 @@ export default function ConnectionHome() {
   // badge would only update while you were already looking at Messages — which
   // is the one moment you do not need it.
   const convo = useConversations();
-  const [chatOpen, setChatOpen] = useState(false);
+  // The open thread lives here, not inside <Messages/>, so Discover can open one:
+  // finding a person and writing to them are two tabs apart, and the page is the
+  // only place that sees both.
+  const [openChatId, setOpenChatId] = useState<string | null>(null);
+  const chatOpen = openChatId !== null;
+
+  const messagePerson = async (username: string) => {
+    const res = await convo.openDirect(username);
+    if ('id' in res) { setOpenChatId(res.id); setTab('messages'); }
+    // A failure leaves you on Discover rather than dropping you into an empty
+    // Messages tab with no explanation of why nothing opened.
+  };
 
   const piName = me.username ?? user?.piUsername ?? null;
   const name = piName ? `@${piName}` : '';
@@ -99,14 +110,15 @@ export default function ConnectionHome() {
             loading={convo.loading}
             openDirect={convo.openDirect}
             createGroup={convo.createGroup}
-            onChatOpenChange={setChatOpen}
+            openId={openChatId}
+            setOpenId={setOpenChatId}
           />
         )}
 
         {/* DISCOVER — people. The profile editor lives in Settings. */}
         {tab === 'discover' && (
           <>
-            <Discover />
+            <Discover onMessage={messagePerson} />
             <NetworkInsights />
           </>
         )}

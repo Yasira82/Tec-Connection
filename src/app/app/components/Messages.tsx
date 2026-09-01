@@ -25,6 +25,7 @@ import { TEC_COLORS } from '@yasser172/tec-ui';
 import { useTranslation } from '@/lib/i18n';
 import { useThread, type Summary, type Msg } from '@/lib-client/connection/useMessages';
 import { VoiceRecorder } from './VoiceRecorder';
+import { useBlocks } from '@/lib-client/connection/useBlocks';
 import { NewChat } from './NewChat';
 
 /** The service normalizes every username; the session hook does not. */
@@ -85,6 +86,10 @@ function Chat({ id, me, onBack }: { id: string; me: string; onBack: () => void }
   const [draft, setDraft] = useState('');
   const [invitee, setInvitee] = useState('');
   const [showInfo, setShowInfo] = useState(false);
+  const { isBlocked, block, unblock, busy: blockBusy, error: blockError } = useBlocks();
+  // Blocking is reversible but not trivial, and a mis-tap on a phone is easy.
+  // Two taps rather than a modal: the button states its own confirmation.
+  const [armed, setArmed] = useState(false);
   const endRef = useRef<HTMLDivElement | null>(null);
   const meNorm = norm(me);
 
@@ -101,7 +106,11 @@ function Chat({ id, me, onBack }: { id: string; me: string; onBack: () => void }
   };
 
   const isGroup = thread?.kind === 'GROUP';
-  const title = isGroup ? (thread?.title ?? '') : `@${thread?.peer ?? ''}`;
+  const peerName = thread?.peer ?? '';
+  const title = isGroup ? (thread?.title ?? '') : `@${peerName}`;
+  // A blocked thread stays READABLE — a block ends contact, it does not delete
+  // the history you already have.
+  const peerBlocked = !isGroup && !!peerName && isBlocked(peerName);
   const alone = isGroup && (thread?.members.length ?? 0) <= 1;
 
   // Day separators are computed once per render of the transcript rather than
@@ -140,8 +149,8 @@ function Chat({ id, me, onBack }: { id: string; me: string; onBack: () => void }
         }}>›</button>
         <Avatar name={isGroup ? (thread?.title ?? 'G') : (thread?.peer ?? '?')} size={40} />
         <button
-          onClick={() => isGroup && setShowInfo((v) => !v)}
-          style={{ flex: 1, minWidth: 0, background: 'none', border: 'none', padding: 0, textAlign: 'start', cursor: isGroup ? 'pointer' : 'default' }}
+          onClick={() => { setShowInfo((v) => !v); setArmed(false); }}
+          style={{ flex: 1, minWidth: 0, background: 'none', border: 'none', padding: 0, textAlign: 'start', cursor: 'pointer' }}
         >
           <span style={{ display: 'block', fontSize: 16, fontWeight: 700, color: TEC_COLORS.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             <bdi dir="auto">{title}</bdi>
@@ -150,11 +159,9 @@ function Chat({ id, me, onBack }: { id: string; me: string; onBack: () => void }
             {isGroup ? <bdi>{thread?.members.length} {a.membersLabel}</bdi> : a.directLabel}
           </span>
         </button>
-        {isGroup && (
-          <button onClick={() => setShowInfo((v) => !v)} aria-label={a.groupInfo} style={{
-            background: 'none', border: 'none', color: TEC_COLORS.subtext, cursor: 'pointer', fontSize: 20, padding: '0 4px',
-          }}>⋯</button>
-        )}
+        <button onClick={() => { setShowInfo((v) => !v); setArmed(false); }} aria-label={isGroup ? a.groupInfo : a.block} style={{
+          background: 'none', border: 'none', color: TEC_COLORS.subtext, cursor: 'pointer', fontSize: 20, padding: '0 4px',
+        }}>⋯</button>
       </div>
 
       {/* group management — behind the header, not permanently under the composer */}
@@ -179,6 +186,33 @@ function Chat({ id, me, onBack }: { id: string; me: string; onBack: () => void }
             ))}
           </div>
           <div><button style={quietBtn} onClick={async () => { if (await leave()) onBack(); }}>{a.leaveGroup}</button></div>
+        </div>
+      )}
+
+      {/* A direct thread's panel holds one control, because there is one to
+          hold: ending contact with this person. */}
+      {!isGroup && showInfo && peerName && (
+        <div style={{ padding: '12px 4px', borderBottom: `1px solid ${TEC_COLORS.border}`, display: 'grid', gap: 8 }}>
+          {isBlocked(peerName) ? (
+            <>
+              <p style={{ fontSize: 12.5, color: TEC_COLORS.subtext, margin: 0, lineHeight: 1.5 }}>{a.blockedNotice}</p>
+              <div><button style={quietBtn} disabled={blockBusy} onClick={() => { void unblock(peerName); }}>{a.unblock}</button></div>
+            </>
+          ) : (
+            <div>
+              <button
+                disabled={blockBusy}
+                onClick={() => { if (armed) { void block(peerName).then(() => setArmed(false)); } else setArmed(true); }}
+                style={{
+                  ...quietBtn,
+                  color: TEC_COLORS.error,
+                  borderColor: armed ? TEC_COLORS.error : TEC_COLORS.border,
+                  background: armed ? `${TEC_COLORS.error}14` : 'none',
+                }}
+              >{armed ? a.confirmBlock : a.block}</button>
+            </div>
+          )}
+          {blockError && <p style={{ color: TEC_COLORS.error, fontSize: 12, margin: 0 }}>{a.blockFailed}</p>}
         </div>
       )}
 
@@ -274,7 +308,14 @@ function Chat({ id, me, onBack }: { id: string; me: string; onBack: () => void }
       {error === 'toobig' && <p style={{ color: TEC_COLORS.error, fontSize: 12, margin: '0 0 6px' }}>{a.attachTooBig}</p>}
       {error === 'attach' && <p style={{ color: TEC_COLORS.error, fontSize: 12, margin: '0 0 6px' }}>{a.attachFailed}</p>}
 
-      {/* composer */}
+      {/* composer — replaced by the reason when the thread is blocked, rather
+          than left in place to fail on send. */}
+      {peerBlocked ? (
+        <div style={{ paddingTop: 12, borderTop: `1px solid ${TEC_COLORS.border}`, display: 'flex', alignItems: 'center', gap: 10 }}>
+          <p style={{ flex: 1, fontSize: 12.5, color: TEC_COLORS.subtext, margin: 0, lineHeight: 1.5 }}>{a.blockedNotice}</p>
+          <button style={quietBtn} disabled={blockBusy} onClick={() => { void unblock(peerName); }}>{a.unblock}</button>
+        </div>
+      ) : (
       <div style={{ display: 'flex', gap: 6, alignItems: 'center', paddingTop: 10, borderTop: `1px solid ${TEC_COLORS.border}` }}>
         {/* `capture` is deliberately absent: without it Android offers BOTH the
             camera and the gallery, which is what people expect from a paperclip. */}
@@ -317,6 +358,7 @@ function Chat({ id, me, onBack }: { id: string; me: string; onBack: () => void }
           <span style={{ transform: 'scaleX(1)', display: 'block' }} dir="ltr">➤</span>
         </button>
       </div>
+      )}
     </div>
   );
 }
@@ -373,19 +415,18 @@ interface Props {
   loading: boolean;
   openDirect: (username: string) => Promise<{ id: string } | { code: number }>;
   createGroup: (title: string, members?: string[]) => Promise<string | null>;
-  /** Lets the page hide its own header while a chat owns the screen. */
-  onChatOpenChange?: (open: boolean) => void;
+  /** The open thread, owned by the page so Discover can open one (and so the
+      page knows to hide its header while a chat owns the screen). */
+  openId: string | null;
+  setOpenId: (id: string | null) => void;
 }
 
-export function Messages({ me, conversations, loading, openDirect, createGroup, onChatOpenChange }: Props) {
+export function Messages({ me, conversations, loading, openDirect, createGroup, openId, setOpenId }: Props) {
   const { t } = useTranslation();
   const a = t.app;
-  const [openId, setOpenId] = useState<string | null>(null);
   const [composing, setComposing] = useState<null | 'direct' | 'group'>(null);
   const [groupTitle, setGroupTitle] = useState('');
   const [pickError, setPickError] = useState<string | null>(null);
-
-  useEffect(() => { onChatOpenChange?.(openId !== null); }, [openId, onChatOpenChange]);
 
   // Picking a person is the ONLY path that closes the picker. A failure keeps it
   // open with the reason on screen — closing it on failure is what silently

@@ -46,7 +46,11 @@ const chip = (active: boolean): React.CSSProperties => ({
   borderRadius: 999, padding: '6px 12px', cursor: 'pointer', textTransform: 'capitalize',
 });
 
-export function Discover() {
+export function Discover({ onMessage }: {
+  /** Start a direct chat with this person. Provided by the page, which owns
+      conversations — Discover finds people, it does not open threads. */
+  onMessage?: (username: string) => void;
+} = {}) {
   const { t } = useTranslation();
   const a = t.app;
   const [query, setQuery] = useState('');
@@ -140,9 +144,24 @@ export function Discover() {
                 {p.headline && <div style={{ fontSize: 12, color: TEC_COLORS.subtext, marginTop: 3, lineHeight: 1.4 }}>{p.headline}</div>}
               </a>
               {!isSelf(p.username) && (
-                followed.has(p.username)
-                  ? <span style={{ fontSize: 12, color: TEC_COLORS.success, whiteSpace: 'nowrap' }}>{a.followingNow}</span>
-                  : <button style={goldBtn} onClick={() => follow(p.username)}>{a.follow}</button>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'stretch', gap: 6, flexShrink: 0 }}>
+                  {followed.has(p.username)
+                    ? <span style={{ fontSize: 12, color: TEC_COLORS.success, whiteSpace: 'nowrap', textAlign: 'center' }}>{a.followingNow}</span>
+                    : <button style={goldBtn} onClick={() => follow(p.username)}>{a.follow}</button>}
+                  {/* Finding someone and then having to remember their handle to
+                      write to them was the whole gap: the search that found them
+                      is one tab away from the search that starts the chat. */}
+                  {onMessage && (
+                    <button
+                      onClick={() => onMessage(p.username)}
+                      style={{
+                        background: 'none', border: `1px solid ${TEC_COLORS.gold}66`, color: TEC_COLORS.gold,
+                        borderRadius: 999, padding: '6px 12px', fontSize: 12, fontWeight: 700,
+                        cursor: 'pointer', whiteSpace: 'nowrap',
+                      }}
+                    >✉ {a.message}</button>
+                  )}
+                </div>
               )}
             </div>
           ))}
