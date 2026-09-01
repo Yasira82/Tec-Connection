@@ -30,6 +30,7 @@ import { useTyping } from '@/lib-client/connection/useTyping';
 import { NewChat } from './NewChat';
 import { Lightbox } from './Lightbox';
 import { ChatInfoSheet } from './ChatInfoSheet';
+import { GroupDiscovery } from './GroupDiscovery';
 import { MessageActions } from './MessageActions';
 import { StatusStrip } from './StatusStrip';
 import { ReportSheet } from './ReportSheet';
@@ -122,7 +123,13 @@ function Avatar({ name, size = 44, group = false, convId }: {
 function Chat({ id, me, onBack }: { id: string; me: string; onBack: () => void }) {
   const { t } = useTranslation();
   const a = t.app;
-  const { thread, busy, error, send, sendMedia, deleteMessage, hide, clear, addMember, leave } = useThread(id);
+  const {
+    thread, busy, error, send, sendMedia, deleteMessage, hide, clear, addMember, leave,
+    loadOlder, loadingOlder, hasMore,
+  } = useThread(id);
+  // The message being answered. Held here rather than in the composer so the
+  // bubble it points at can be highlighted while it is being answered.
+  const [replyTo, setReplyTo] = useState<Msg | null>(null);
   const fileRef = useRef<HTMLInputElement | null>(null);
   const [draft, setDraft] = useState('');
   const [showInfo, setShowInfo] = useState(false);
@@ -150,9 +157,17 @@ function Chat({ id, me, onBack }: { id: string; me: string; onBack: () => void }
   const submit = async () => {
     const text = draft.trim();
     if (!text) return;
+    const quoting = replyTo?.id;
     setDraft('');
-    const okSent = await send(text);
-    if (!okSent) setDraft(text);   // put the words back rather than losing them
+    // Cleared BEFORE the round trip so the banner does not linger over a sent
+    // message — and restored with the text if it fails, because losing the
+    // quote silently would send the retry as an unrelated message.
+    setReplyTo(null);
+    const okSent = await send(text, quoting);
+    if (!okSent) {
+      setDraft(text);   // put the words back rather than losing them
+      if (replyTo) setReplyTo(replyTo);
+    }
   };
 
   const isGroup = thread?.kind === 'GROUP';
@@ -227,12 +242,30 @@ function Chat({ id, me, onBack }: { id: string; me: string; onBack: () => void }
 
       {/* transcript */}
       <div style={{ flex: 1, overflowY: 'auto', padding: '14px 2px', display: 'flex', flexDirection: 'column', gap: 4 }}>
+        {/* A button rather than an infinite scroll.
+            Auto-loading at the top fights the reader: on a phone, reaching the
+            top usually means overscrolling, and content appearing there jumps
+            the view away from what they were reading. A tap loads when they
+            actually meant to. */}
+        {hasMore && (
+          <button
+            onClick={() => { void loadOlder(); }}
+            disabled={loadingOlder}
+            style={{
+              alignSelf: 'center', margin: '2px 0 10px', padding: '6px 16px',
+              background: 'none', border: `1px solid ${TEC_COLORS.border}`,
+              borderRadius: 999, color: TEC_COLORS.subtext, fontSize: 12,
+              cursor: loadingOlder ? 'not-allowed' : 'pointer',
+            }}
+          >{loadingOlder ? a.loading : a.loadOlder}</button>
+        )}
         {!thread ? (
           <p style={{ color: TEC_COLORS.subtext, fontSize: 13 }}>{error === 'notfound' ? a.threadUnavailable : a.loading}</p>
         ) : rows.length === 0 ? (
           <p style={{ color: TEC_COLORS.subtext, fontSize: 13, textAlign: 'center', marginTop: 24 }}>{a.noMessagesYet}</p>
         ) : rows.map(({ m, mine, newDay, showSender }) => (
-          <div key={m.id}>
+          // The anchor a quote scrolls back to.
+          <div key={m.id} id={`msg-${m.id}`}>
             {newDay && (
               <div style={{ textAlign: 'center', margin: '14px 0 10px' }}>
                 <span style={{
@@ -281,6 +314,39 @@ function Chat({ id, me, onBack }: { id: string; me: string; onBack: () => void }
                     {a.messageDeleted}
                   </div>
                 ) : (<>
+                {/* What this message answers. Above the body, quieter than it,
+                    and tappable — a quote you cannot follow back is decoration. */}
+                {m.replyTo && (
+                  <button
+                    onClick={() => {
+                      const el = document.getElementById(`msg-${m.replyTo!.id}`);
+                      // Only if it is actually loaded. Scrolling to nothing, or
+                      // silently doing nothing, both read as broken — so the
+                      // control simply does not move when the original is above
+                      // what has been fetched.
+                      el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }}
+                    style={{
+                      display: 'block', width: '100%', textAlign: 'start', cursor: 'pointer',
+                      background: 'rgba(255,255,255,0.05)', border: 'none',
+                      borderInlineStart: `3px solid ${TEC_COLORS.gold}`,
+                      borderRadius: 8, padding: '6px 10px', marginBottom: 6,
+                    }}
+                  >
+                    <span style={{ display: 'block', fontSize: 11.5, fontWeight: 700, color: TEC_COLORS.gold }}>
+                      {m.replyTo.by ? <bdi>@{m.replyTo.by}</bdi> : a.messageDeleted}
+                    </span>
+                    <span style={{
+                      display: 'block', fontSize: 12.5, color: TEC_COLORS.subtext, marginTop: 1,
+                      overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                      fontStyle: m.replyTo.deleted || m.replyTo.hidden ? 'italic' : 'normal',
+                    }} dir="auto">
+                      {m.replyTo.deleted ? a.messageDeleted
+                        : m.replyTo.hidden ? a.quoteHidden
+                        : m.replyTo.body || (m.replyTo.media === 'audio' ? a.voiceNote : a.photo)}
+                    </span>
+                  </button>
+                )}
                 {m.media?.type === 'image' && (
                   // Opens the in-app viewer, NOT the URL. A new tab hands the
                   // browser's own viewer a full-size file, which it renders at
@@ -362,7 +428,40 @@ function Chat({ id, me, onBack }: { id: string; me: string; onBack: () => void }
           <p style={{ flex: 1, fontSize: 12.5, color: TEC_COLORS.subtext, margin: 0, lineHeight: 1.5 }}>{a.blockedNotice}</p>
           <button style={quietBtn} disabled={blockBusy} onClick={() => { void unblock(peerName); }}>{a.unblock}</button>
         </div>
-      ) : (
+      ) : (<>
+      {/* What is being answered, above the composer.
+          Shown while typing rather than only after sending, because a reply
+          you cannot see you are writing is a reply you attach to the wrong
+          message. The ✕ is deliberately large enough to hit — dropping the
+          quote is the correction someone reaches for most. */}
+      {replyTo && (
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 10, marginTop: 10,
+          padding: '8px 12px', borderRadius: 10,
+          background: 'rgba(255,255,255,0.05)',
+          borderInlineStart: `3px solid ${TEC_COLORS.gold}`,
+        }}>
+          <span style={{ flex: 1, minWidth: 0 }}>
+            <span style={{ display: 'block', fontSize: 11.5, fontWeight: 700, color: TEC_COLORS.gold }}>
+              {a.replyingTo} <bdi>@{replyTo.by}</bdi>
+            </span>
+            <span style={{
+              display: 'block', fontSize: 12.5, color: TEC_COLORS.subtext, marginTop: 1,
+              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+            }} dir="auto">
+              {replyTo.body || (replyTo.media?.type === 'audio' ? a.voiceNote : a.photo)}
+            </span>
+          </span>
+          <button
+            onClick={() => setReplyTo(null)} aria-label={a.cancel}
+            style={{
+              width: 30, height: 30, borderRadius: 999, flexShrink: 0,
+              background: 'none', border: 'none', color: TEC_COLORS.subtext,
+              fontSize: 15, cursor: 'pointer', display: 'grid', placeItems: 'center',
+            }}
+          >✕</button>
+        </div>
+      )}
       <div style={{ display: 'flex', gap: 6, alignItems: 'center', paddingTop: 10, borderTop: `1px solid ${TEC_COLORS.border}` }}>
         {/* `capture` is deliberately absent: without it Android offers BOTH the
             camera and the gallery, which is what people expect from a paperclip. */}
@@ -416,7 +515,7 @@ function Chat({ id, me, onBack }: { id: string; me: string; onBack: () => void }
           <span style={{ transform: 'scaleX(1)', display: 'block' }} dir="ltr">➤</span>
         </button>
       </div>
-      )}
+      </>)}
 
       {viewing && <Lightbox src={viewing} alt={a.photo} onClose={() => setViewing(null)} />}
 
@@ -436,6 +535,7 @@ function Chat({ id, me, onBack }: { id: string; me: string; onBack: () => void }
         return (
           <MessageActions
             mine={target.mine} deleted={!!target.m.deleted}
+            onReply={() => { setReplyTo(target.m); setMenuFor(null); }}
             onDelete={(scope) => { void deleteMessage(menuFor, scope); }}
             onReport={() => setReporting({ id: target.m.id, by: target.m.by })}
             onClose={() => setMenuFor(null)}
@@ -447,6 +547,10 @@ function Chat({ id, me, onBack }: { id: string; me: string; onBack: () => void }
         <ChatInfoSheet
           isGroup={!!isGroup}
           convId={id}
+          visibility={thread?.visibility}
+          description={thread?.description}
+          admins={thread?.admins ?? []}
+          ownerName={thread?.owner ?? null}
           title={title}
           members={thread.members}
           role={thread.role}
@@ -532,6 +636,7 @@ export function Messages({ me, conversations, loading, openDirect, createGroup, 
   const [composing, setComposing] = useState<null | 'direct' | 'group'>(null);
   const [groupTitle, setGroupTitle] = useState('');
   const [pickError, setPickError] = useState<string | null>(null);
+  const [discovering, setDiscovering] = useState(false);
 
   // Picking a person is the ONLY path that closes the picker. A failure keeps it
   // open with the reason on screen — closing it on failure is what silently
@@ -598,6 +703,25 @@ export function Messages({ me, conversations, loading, openDirect, createGroup, 
           </button>
         </div>
       )}
+
+      {/* Finding a group you were never invited to. Its own quiet row rather
+          than a third button beside the two above: creating and joining are
+          different intentions, and three equal-weight buttons make neither
+          obvious. */}
+      <button
+        onClick={() => setDiscovering(true)}
+        style={{
+          width: '100%', marginBottom: 8, padding: '10px 14px',
+          background: 'none', border: `1px dashed ${TEC_COLORS.border}`,
+          borderRadius: 14, color: TEC_COLORS.subtext, fontSize: 13,
+          cursor: 'pointer', textAlign: 'center',
+        }}
+      >🔎 {a.discoverGroups}</button>
+
+      {/* No reload on close: asking to join is a REQUEST, so nothing has been
+          added to this list. The conversation appears when the owner approves,
+          which the normal poll picks up. */}
+      {discovering && <GroupDiscovery onClose={() => setDiscovering(false)} />}
 
       {pickError && <p style={{ color: TEC_COLORS.error, fontSize: 12.5, margin: '0 0 6px' }}>{pickError}</p>}
 

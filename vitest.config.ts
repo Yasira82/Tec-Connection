@@ -16,6 +16,13 @@ export default defineConfig({
       exclude:   ['**/*.test.*', '**/*.spec.*', 'src/lib/i18n/**', 'e2e/**'],
     },
   },
+  // Compile JSX the way Next does — the AUTOMATIC runtime, which needs no
+  // `import React`. esbuild's default is the classic runtime, so a component
+  // rendered in a test threw "React is not defined" while the identical file
+  // worked in the app. Matching production here is better than adding an import
+  // to every component to satisfy the test runner.
+  esbuild: { jsx: 'automatic' },
+
   resolve: {
     alias: {
       '@': path.resolve(__dirname, 'src'),
