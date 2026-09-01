@@ -130,6 +130,8 @@ export const vi: Dictionary = {
     groupSearchFailed: "Không tải được nhóm. Vui lòng thử lại.",
     groupNoResults: "Không có nhóm nào khớp.",
     groupNoneListed: "Chưa có nhóm nào được đăng.",
+    groupNameTakenOwn: "Bạn đã có nhóm trùng tên. Hãy thử tên khác.",
+    groupNameTakenPublic: "Một nhóm công khai đã dùng tên này. Đổi tên nhóm này rồi hãy công khai.",
     groupJoin: "Tham gia",
     groupPending: "Đã yêu cầu",
     groupJoined: "Thành viên",

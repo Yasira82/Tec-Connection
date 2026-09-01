@@ -143,6 +143,8 @@ export const ar: Dictionary = {
     groupSearchFailed: "مش قادر يحمّل الجروبات. جرّب تاني.",
     groupNoResults: "مفيش جروب بالاسم ده.",
     groupNoneListed: "مفيش جروبات معروضة لسه.",
+    groupNameTakenOwn: "عندك جروب بالاسم ده بالفعل. جرّب اسم تاني.",
+    groupNameTakenPublic: "في جروب معروض بالاسم ده. غيّر اسم الجروب ده الأول، وبعدين اعرضه.",
     groupJoin: "انضم",
     groupPending: "اتبعت طلب",
     groupJoined: "عضو",

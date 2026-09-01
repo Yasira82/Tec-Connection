@@ -160,17 +160,34 @@ export function useConversations() {
     }
   }, [load]);
 
-  const createGroup = useCallback(async (title: string, members: string[] = []): Promise<string | null> => {
+  /**
+   * Create a group, or say WHY it could not be created.
+   *
+   * Returns a reason rather than null. A refusal with no reason becomes "could
+   * not open (—)" on screen, which is what a name collision looked like: the
+   * server explained itself and this threw the explanation away.
+   */
+  const createGroup = useCallback(async (
+    title: string, members: string[] = [],
+  ): Promise<{ id: string } | { code: string }> => {
     const res = await fetch('/api/bff/connection/conversations/group', {
       method: 'POST', credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ title: title.trim(), members: members.map((m) => m.trim().replace(/^@+/, '')).filter(Boolean) }),
     });
     const json = await res.json().catch(() => ({}));
-    if (!res.ok) { setError('failed'); return null; }
+    if (!res.ok) {
+      setError('failed');
+      // Nest puts a BadRequest's message in `message`; it may arrive as an
+      // array when several validators fail at once.
+      const raw = json?.message ?? json?.error ?? '';
+      const code = Array.isArray(raw) ? String(raw[0] ?? '') : String(raw);
+      return { code: code || String(res.status) };
+    }
     setError(null);
     await load();
-    return unwrap<{ id: string }>(json, 'conversation')?.id ?? null;
+    const id = unwrap<{ id: string }>(json, 'conversation')?.id;
+    return id ? { id } : { code: 'no-id' };
   }, [load]);
 
   return { conversations, unreadTotal, loading, error, reload: load, openDirect, createGroup };

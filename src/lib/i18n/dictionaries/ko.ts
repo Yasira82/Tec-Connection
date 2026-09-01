@@ -130,6 +130,8 @@ export const ko: Dictionary = {
     groupSearchFailed: "그룹을 불러오지 못했습니다. 다시 시도하세요.",
     groupNoResults: "일치하는 그룹이 없습니다.",
     groupNoneListed: "아직 공개된 그룹이 없습니다.",
+    groupNameTakenOwn: "같은 이름의 그룹이 이미 있습니다. 다른 이름을 사용하세요.",
+    groupNameTakenPublic: "공개된 그룹이 이미 이 이름을 쓰고 있습니다. 이름을 바꾼 뒤 공개하세요.",
     groupJoin: "가입",
     groupPending: "요청함",
     groupJoined: "멤버",

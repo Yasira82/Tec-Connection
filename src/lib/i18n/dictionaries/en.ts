@@ -162,6 +162,8 @@ export const en = {
     groupSearchFailed: "Could not load groups. Please retry.",
     groupNoResults: "No group matches that.",
     groupNoneListed: "No groups are listed yet.",
+    groupNameTakenOwn: "You already have a group with that name. Try another.",
+    groupNameTakenPublic: "A listed group already uses that name. Rename this one, then list it.",
     groupJoin: "Join",
     groupPending: "Requested",
     groupJoined: "Member",

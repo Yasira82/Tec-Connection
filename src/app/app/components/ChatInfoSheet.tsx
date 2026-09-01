@@ -162,7 +162,15 @@ export function ChatInfoSheet({
           body: JSON.stringify({ visibility: next ? 'PUBLIC' : 'PRIVATE', description: desc.trim() || null }),
         },
       );
-      if (!res.ok) { setListMsg(a.groupRequestFailed); return; }
+      if (!res.ok) {
+        // The name is only checked when a group is PUBLISHED, so this is the
+        // one place the collision can surface — and it is fixable, not fatal.
+        const json = await res.json().catch(() => ({}));
+        const raw = json?.message ?? json?.error ?? '';
+        const code = Array.isArray(raw) ? String(raw[0] ?? '') : String(raw);
+        setListMsg(code === 'GROUP_NAME_TAKEN_PUBLIC' ? a.groupNameTakenPublic : a.groupRequestFailed);
+        return;
+      }
       setListed(next);
     } catch { setListMsg(a.groupRequestFailed); }
     finally { setListBusy(false); }

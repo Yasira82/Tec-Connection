@@ -130,6 +130,8 @@ export const hi: Dictionary = {
     groupSearchFailed: "ग्रुप लोड नहीं हो सके। दोबारा कोशिश करें।",
     groupNoResults: "कोई ग्रुप नहीं मिला।",
     groupNoneListed: "अभी कोई ग्रुप सूचीबद्ध नहीं है।",
+    groupNameTakenOwn: "इस नाम का ग्रुप आपके पास पहले से है। कोई और नाम आज़माएँ।",
+    groupNameTakenPublic: "इस नाम का एक सूचीबद्ध ग्रुप पहले से है। पहले नाम बदलें, फिर सूचीबद्ध करें।",
     groupJoin: "जुड़ें",
     groupPending: "अनुरोध भेजा",
     groupJoined: "सदस्य",

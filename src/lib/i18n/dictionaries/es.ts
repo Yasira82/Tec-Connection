@@ -130,6 +130,8 @@ export const es: Dictionary = {
     groupSearchFailed: "No se pudieron cargar los grupos. Inténtalo de nuevo.",
     groupNoResults: "Ningún grupo coincide.",
     groupNoneListed: "Aún no hay grupos publicados.",
+    groupNameTakenOwn: "Ya tienes un grupo con ese nombre. Prueba otro.",
+    groupNameTakenPublic: "Un grupo publicado ya usa ese nombre. Renombra este y luego publícalo.",
     groupJoin: "Unirse",
     groupPending: "Solicitado",
     groupJoined: "Miembro",

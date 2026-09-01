@@ -130,6 +130,8 @@ export const ru: Dictionary = {
     groupSearchFailed: "Не удалось загрузить группы. Попробуйте ещё раз.",
     groupNoResults: "Совпадений нет.",
     groupNoneListed: "Пока нет опубликованных групп.",
+    groupNameTakenOwn: "У вас уже есть группа с таким названием. Попробуйте другое.",
+    groupNameTakenPublic: "Опубликованная группа уже носит это название. Переименуйте эту, затем опубликуйте.",
     groupJoin: "Вступить",
     groupPending: "Запрошено",
     groupJoined: "Участник",

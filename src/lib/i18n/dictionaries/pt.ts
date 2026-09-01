@@ -130,6 +130,8 @@ export const pt: Dictionary = {
     groupSearchFailed: "Não foi possível carregar os grupos. Tente novamente.",
     groupNoResults: "Nenhum grupo corresponde.",
     groupNoneListed: "Ainda não há grupos publicados.",
+    groupNameTakenOwn: "Você já tem um grupo com esse nome. Tente outro.",
+    groupNameTakenPublic: "Um grupo publicado já usa esse nome. Renomeie este e depois publique.",
     groupJoin: "Entrar",
     groupPending: "Solicitado",
     groupJoined: "Membro",

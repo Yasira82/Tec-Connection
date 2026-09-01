@@ -130,6 +130,8 @@ export const tr: Dictionary = {
     groupSearchFailed: "Gruplar yüklenemedi. Tekrar deneyin.",
     groupNoResults: "Eşleşen grup yok.",
     groupNoneListed: "Henüz yayında grup yok.",
+    groupNameTakenOwn: "Bu adda bir grubunuz zaten var. Başka bir ad deneyin.",
+    groupNameTakenPublic: "Yayındaki bir grup bu adı kullanıyor. Önce adını değiştirin, sonra yayınlayın.",
     groupJoin: "Katıl",
     groupPending: "İstendi",
     groupJoined: "Üye",

@@ -623,7 +623,7 @@ interface Props {
   conversations: Summary[];
   loading: boolean;
   openDirect: (username: string) => Promise<{ id: string } | { code: number }>;
-  createGroup: (title: string, members?: string[]) => Promise<string | null>;
+  createGroup: (title: string, members?: string[]) => Promise<{ id: string } | { code: string }>;
   /** The open thread, owned by the page so Discover can open one (and so the
       page knows to hide its header while a chat owns the screen). */
   openId: string | null;
@@ -651,9 +651,16 @@ export function Messages({ me, conversations, loading, openDirect, createGroup, 
   const startGroup = async () => {
     const v = groupTitle.trim();
     if (!v) return;
-    const id = await createGroup(v);
-    if (id) { setGroupTitle(''); setComposing(null); setOpenId(id); }
-    else setPickError(a.openFailed.replace('{code}', '—'));
+    const res = await createGroup(v);
+    if ('id' in res) { setGroupTitle(''); setComposing(null); setOpenId(res.id); return; }
+    // A name collision is not a failure to explain in hex — it is a thing the
+    // person can fix in two seconds, if they are told which thing it is. The
+    // title is deliberately KEPT so they can edit it rather than retype it.
+    setPickError(
+      res.code === 'GROUP_NAME_TAKEN_OWN' ? a.groupNameTakenOwn
+      : res.code === 'GROUP_NAME_TAKEN_PUBLIC' ? a.groupNameTakenPublic
+      : a.openFailed.replace('{code}', res.code || '—'),
+    );
   };
 
   if (openId) return <Chat id={openId} me={me} onBack={() => setOpenId(null)} />;

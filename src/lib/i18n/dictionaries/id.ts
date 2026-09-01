@@ -130,6 +130,8 @@ export const id: Dictionary = {
     groupSearchFailed: "Gagal memuat grup. Coba lagi.",
     groupNoResults: "Tidak ada grup yang cocok.",
     groupNoneListed: "Belum ada grup yang terdaftar.",
+    groupNameTakenOwn: "Anda sudah punya grup dengan nama itu. Coba nama lain.",
+    groupNameTakenPublic: "Sebuah grup terdaftar sudah memakai nama itu. Ganti nama grup ini, lalu daftarkan.",
     groupJoin: "Gabung",
     groupPending: "Diminta",
     groupJoined: "Anggota",

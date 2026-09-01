@@ -130,6 +130,8 @@ export const zh: Dictionary = {
     groupSearchFailed: "无法加载群组，请重试。",
     groupNoResults: "没有匹配的群组。",
     groupNoneListed: "暂时没有公开的群组。",
+    groupNameTakenOwn: "你已经有同名的群组了，换一个名字。",
+    groupNameTakenPublic: "已有公开群组使用该名称。先改名，再公开。",
     groupJoin: "加入",
     groupPending: "已申请",
     groupJoined: "成员",
