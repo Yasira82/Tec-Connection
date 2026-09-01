@@ -240,11 +240,16 @@ export function useThread(id: string | null) {
   }, [id, poll]);
 
   /** Delete one of your own messages. The service enforces "your own". */
-  const deleteMessage = useCallback(async (messageId: string) => {
+  /**
+   * `me` removes it from your copy; `everyone` clears it for both sides and
+   * leaves a tombstone. The scope is always sent explicitly — a delete should
+   * never depend on which default happens to be in force upstream.
+   */
+  const deleteMessage = useCallback(async (messageId: string, scope: 'me' | 'everyone' = 'everyone') => {
     if (!id) return false;
     try {
       const res = await fetch(
-        `/api/bff/connection/conversations/${encodeURIComponent(id)}/messages/${encodeURIComponent(messageId)}`,
+        `/api/bff/connection/conversations/${encodeURIComponent(id)}/messages/${encodeURIComponent(messageId)}?scope=${scope}`,
         { method: 'DELETE', credentials: 'include' },
       );
       if (!res.ok) { setError('failed'); return false; }
@@ -258,15 +263,41 @@ export function useThread(id: string | null) {
   }, [id, poll]);
 
   /** Remove this conversation from MY list. A new message brings it back. */
-  const hide = useCallback(async () => {
+  /**
+   * Remove this conversation from MY list. `permanent` also erases the
+   * transcript, so it does not come back in full with the next message —
+   * which is what "delete" is taken to mean.
+   *
+   * Neither form stops a NEW message arriving; only a block does that.
+   */
+  const hide = useCallback(async (permanent = false) => {
     if (!id) return false;
     try {
       const res = await fetch(`/api/bff/connection/conversations/${encodeURIComponent(id)}/hide`, {
         method: 'POST', credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ permanent }),
       });
       return res.ok;
     } catch { return false; }
   }, [id]);
+
+  /** Empty the transcript for me. The conversation stays in my list. */
+  const clear = useCallback(async () => {
+    if (!id) return false;
+    try {
+      const res = await fetch(`/api/bff/connection/conversations/${encodeURIComponent(id)}/clear`, {
+        method: 'POST', credentials: 'include',
+      });
+      if (!res.ok) { setError('failed'); return false; }
+      // The transcript shrinks rather than grows, and the poll only fetches
+      // what is new — so the whole thread has to be re-read for the clear to
+      // show at all.
+      cursor.current = null;
+      await poll();
+      return true;
+    } catch { setError('failed'); return false; }
+  }, [id, poll]);
 
   const addMember = useCallback(async (username: string) => {
     if (!id) return false;
@@ -289,5 +320,5 @@ export function useThread(id: string | null) {
     return res.ok;
   }, [id]);
 
-  return { thread, busy, error, send, sendMedia, deleteMessage, hide, addMember, leave, reload: poll };
+  return { thread, busy, error, send, sendMedia, deleteMessage, hide, clear, addMember, leave, reload: poll };
 }

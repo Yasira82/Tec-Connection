@@ -10,6 +10,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { TEC_COLORS } from '@yasser172/tec-ui';
 import { useTranslation } from '@/lib/i18n';
 import { Avatar } from '@/components/public/Avatar';
+import { useBlocks } from '@/lib-client/connection/useBlocks';
+import { ReportSheet } from './ReportSheet';
 
 const CATEGORIES = ['builder', 'merchant', 'creator', 'investor', 'mentor', 'other'] as const;
 type Category = (typeof CATEGORIES)[number];
@@ -58,6 +60,11 @@ export function Discover({ onMessage }: {
   const [list,  setList]  = useState<Card[]>([]);
   const [status, setStatus] = useState<'loading' | 'ready' | 'unavailable'>('loading');
   const [followed, setFollowed] = useState<Set<string>>(new Set());
+  // Blocking used to be reachable only from INSIDE an open conversation — so
+  // the one place you meet a stranger was the one place you could not end it.
+  const { isBlocked, block, unblock, busy: blockBusy } = useBlocks();
+  const [armedBlock, setArmedBlock] = useState<string | null>(null);
+  const [reporting, setReporting] = useState<string | null>(null);
 
   // Only the caller's own username is needed here — to hide the Follow button on
   // their own row. Editing the card is a Settings task (see ProfileEditor).
@@ -151,7 +158,7 @@ export function Discover({ onMessage }: {
                   {/* Finding someone and then having to remember their handle to
                       write to them was the whole gap: the search that found them
                       is one tab away from the search that starts the chat. */}
-                  {onMessage && (
+                  {onMessage && !isBlocked(p.username) && (
                     <button
                       onClick={() => onMessage(p.username)}
                       style={{
@@ -161,11 +168,47 @@ export function Discover({ onMessage }: {
                       }}
                     >✉ {a.message}</button>
                   )}
+                  {/* Two taps, and the button says so between them — a mis-tap
+                      on a phone is easy and this one ends contact. */}
+                  <button
+                    disabled={blockBusy}
+                    onClick={() => {
+                      if (isBlocked(p.username)) { void unblock(p.username); return; }
+                      if (armedBlock === p.username) { void block(p.username); setArmedBlock(null); }
+                      else setArmedBlock(p.username);
+                    }}
+                    style={{
+                      background: armedBlock === p.username ? `${TEC_COLORS.error}14` : 'none',
+                      border: `1px solid ${armedBlock === p.username ? TEC_COLORS.error : TEC_COLORS.border}`,
+                      color: isBlocked(p.username) ? TEC_COLORS.subtext : TEC_COLORS.error,
+                      borderRadius: 999, padding: '6px 12px', fontSize: 12, fontWeight: 700,
+                      cursor: 'pointer', whiteSpace: 'nowrap',
+                    }}
+                  >{isBlocked(p.username) ? a.unblock : armedBlock === p.username ? a.confirmBlock : a.block}</button>
+                  {/* Quiet and last. Most people in a directory are not a
+                      problem, and a loud accusation button on every card
+                      changes how the whole list reads. */}
+                  <button
+                    onClick={() => setReporting(p.username)}
+                    style={{
+                      background: 'none', border: 'none', color: TEC_COLORS.subtext,
+                      padding: '2px 4px', fontSize: 11, cursor: 'pointer',
+                      textDecoration: 'underline', whiteSpace: 'nowrap',
+                    }}
+                  >{a.report}</button>
                 </div>
               )}
             </div>
           ))}
         </div>
+
+        {reporting && (
+          <ReportSheet
+            kind="user" target={reporting} author={reporting}
+            onClose={() => setReporting(null)}
+            onBlock={() => { void block(reporting); }}
+          />
+        )}
 
         {/* One line, once. The same three principles were previously restated
             at the bottom of every card on every tab. */}
