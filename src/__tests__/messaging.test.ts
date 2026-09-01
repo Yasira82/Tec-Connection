@@ -276,3 +276,46 @@ describe('attachment read is private', () => {
     expect((await GET(get('tec_access_token=tok'), params)).status).toBe(404);
   });
 });
+
+describe('deleting a message — the scope is forwarded, never decided here', () => {
+  const params = { params: Promise.resolve({ id: 'c1', messageId: 'm1' }) };
+  const del = (url: string) => makeReq({ cookies: session, method: 'DELETE', url });
+
+  it('passes scope=me through to the service', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(ok({ deleted: true }));
+    vi.stubGlobal('fetch', fetchMock);
+    const { DELETE } = await import('@/app/api/bff/connection/conversations/[id]/messages/[messageId]/route');
+    await DELETE(del('http://localhost/api/bff/connection/conversations/c1/messages/m1?scope=me'), params);
+    expect(String(fetchMock.mock.calls[0]?.[0])).toContain('/messages/m1?scope=me');
+  });
+
+  it('passes scope=everyone through', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(ok({ deleted: true }));
+    vi.stubGlobal('fetch', fetchMock);
+    const { DELETE } = await import('@/app/api/bff/connection/conversations/[id]/messages/[messageId]/route');
+    await DELETE(del('http://localhost/api/bff/connection/conversations/c1/messages/m1?scope=everyone'), params);
+    expect(String(fetchMock.mock.calls[0]?.[0])).toContain('/messages/m1?scope=everyone');
+  });
+
+  it('drops an unknown scope rather than relaying it', async () => {
+    // Upstream then takes its own safe default. Relaying junk would turn a
+    // typo into a 400 on a delete the user did ask for.
+    const fetchMock = vi.fn().mockResolvedValue(ok({ deleted: true }));
+    vi.stubGlobal('fetch', fetchMock);
+    const { DELETE } = await import('@/app/api/bff/connection/conversations/[id]/messages/[messageId]/route');
+    await DELETE(del('http://localhost/api/bff/connection/conversations/c1/messages/m1?scope=all'), params);
+    expect(String(fetchMock.mock.calls[0]?.[0])).not.toContain('scope=');
+  });
+
+  it('refuses without a session and never reaches the gateway', async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+    const { DELETE } = await import('@/app/api/bff/connection/conversations/[id]/messages/[messageId]/route');
+    const res = await DELETE(
+      makeReq({ method: 'DELETE', url: 'http://localhost/api/bff/connection/conversations/c1/messages/m1?scope=me' }),
+      params,
+    );
+    expect(res.status).toBe(401);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+});

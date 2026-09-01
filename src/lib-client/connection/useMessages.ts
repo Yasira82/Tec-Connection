@@ -240,11 +240,16 @@ export function useThread(id: string | null) {
   }, [id, poll]);
 
   /** Delete one of your own messages. The service enforces "your own". */
-  const deleteMessage = useCallback(async (messageId: string) => {
+  /**
+   * `me` removes it from your copy; `everyone` clears it for both sides and
+   * leaves a tombstone. The scope is always sent explicitly — a delete should
+   * never depend on which default happens to be in force upstream.
+   */
+  const deleteMessage = useCallback(async (messageId: string, scope: 'me' | 'everyone' = 'everyone') => {
     if (!id) return false;
     try {
       const res = await fetch(
-        `/api/bff/connection/conversations/${encodeURIComponent(id)}/messages/${encodeURIComponent(messageId)}`,
+        `/api/bff/connection/conversations/${encodeURIComponent(id)}/messages/${encodeURIComponent(messageId)}?scope=${scope}`,
         { method: 'DELETE', credentials: 'include' },
       );
       if (!res.ok) { setError('failed'); return false; }

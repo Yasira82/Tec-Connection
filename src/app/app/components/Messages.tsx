@@ -30,6 +30,7 @@ import { useTyping } from '@/lib-client/connection/useTyping';
 import { NewChat } from './NewChat';
 import { Lightbox } from './Lightbox';
 import { ChatInfoSheet } from './ChatInfoSheet';
+import { MessageActions } from './MessageActions';
 import { VoiceNote } from './VoiceNote';
 import { downscaleImage } from '@/lib-client/connection/downscaleImage';
 
@@ -211,29 +212,22 @@ function Chat({ id, me, onBack }: { id: string; me: string; onBack: () => void }
               </div>
             )}
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, justifyContent: mine ? 'flex-end' : 'flex-start', marginTop: showSender ? 8 : 2 }}>
-              {/* The delete affordance sits OUTSIDE the bubble and only for your
-                  own, un-deleted messages — a hazard on every row would be a
-                  column of them down the side of the transcript. */}
-              {mine && !m.deleted && (
-                menuFor === m.id ? (
-                  <button
-                    onClick={() => { void deleteMessage(m.id); setMenuFor(null); }}
-                    style={{
-                      background: `${TEC_COLORS.error}1F`, border: `1px solid ${TEC_COLORS.error}66`,
-                      color: TEC_COLORS.error, borderRadius: 999, padding: '4px 10px',
-                      fontSize: 11.5, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap',
-                    }}
-                  >{a.deleteMessage}</button>
-                ) : (
-                  <button
-                    onClick={() => setMenuFor(m.id)} aria-label={a.deleteMessage}
-                    style={{
-                      background: 'none', border: 'none', color: TEC_COLORS.subtext,
-                      fontSize: 15, lineHeight: 1, cursor: 'pointer', padding: '0 2px', opacity: 0.5,
-                    }}
-                  >⋯</button>
-                )
-              )}
+              {/* The affordance sits OUTSIDE the bubble, and now on EVERY row:
+                  removing a message from your own copy applies to one you did
+                  not send, so restricting it to your own would have hidden
+                  half of what it is for. It opens a sheet rather than firing —
+                  "delete" has two meanings here and the tap has to say which. */}
+              <button
+                onClick={() => setMenuFor(m.id)} aria-label={a.deleteMessage}
+                style={{
+                  background: 'none', border: 'none', color: TEC_COLORS.subtext,
+                  fontSize: 15, lineHeight: 1, cursor: 'pointer', padding: '0 2px', opacity: 0.45,
+                  flexShrink: 0,
+                  // Always on the side AWAY from the edge the bubble hugs, so
+                  // it never sits between the message and the screen edge.
+                  order: mine ? 0 : 2,
+                }}
+              >⋯</button>
               <div style={{
                 maxWidth: '78%', padding: '8px 12px 6px',
                 background: mine ? `${TEC_COLORS.gold}1F` : TEC_COLORS.surface2,
@@ -391,6 +385,18 @@ function Chat({ id, me, onBack }: { id: string; me: string; onBack: () => void }
       )}
 
       {viewing && <Lightbox src={viewing} alt={a.photo} onClose={() => setViewing(null)} />}
+
+      {menuFor && (() => {
+        const target = rows.find((r) => r.m.id === menuFor);
+        if (!target) return null;
+        return (
+          <MessageActions
+            mine={target.mine} deleted={!!target.m.deleted}
+            onDelete={(scope) => { void deleteMessage(menuFor, scope); }}
+            onClose={() => setMenuFor(null)}
+          />
+        );
+      })()}
 
       {showInfo && thread && (
         <ChatInfoSheet
