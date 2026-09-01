@@ -22,6 +22,13 @@ export interface Summary {
   peer: string | null;
   members: number;
   unread: number;
+  /**
+   * Muted for me. Reported, NOT applied — `unread` still counts, because the
+   * service zeroing it would make "muted" and "read" indistinguishable and the
+   * thread would open with no idea where you had stopped. The screen decides
+   * what a muted count is allowed to do.
+   */
+  muted?: boolean;
   role: 'owner' | 'admin' | 'member';
   last: { body: string; by: string; at: string; media?: string | null } | null;
   last_message_at: string;
@@ -49,6 +56,12 @@ export interface Msg {
   media?: MsgMedia | null;
   /** The message this one answers, or null. Resolved server-side at read time. */
   replyTo?: QuotedMsg | null;
+  /**
+   * Handles named in this message that are actually IN the conversation —
+   * filtered server-side against the member list, so a message naming a
+   * stranger does not get highlighted as if it reached them.
+   */
+  mentions?: string[];
   /** A tombstone: the row survives so the transcript keeps its order. */
   deleted?: boolean;
 }
@@ -74,6 +87,13 @@ export interface Thread {
   visibility?: 'PUBLIC' | 'PRIVATE';
   /** GROUP only — the blurb a stranger reads before asking to join. */
   description?: string | null;
+  /**
+   * Where THIS reader had got to when the thread was opened — captured before
+   * the open marks it read, which is the only moment the answer still exists.
+   */
+  myLastReadAt?: string | null;
+  /** Muted for me. Per-member; nobody else can see it. */
+  muted?: boolean;
   messages: Msg[];
 }
 
@@ -132,7 +152,11 @@ export function useConversations() {
     return () => { clearInterval(id); document.removeEventListener('visibilitychange', onVisible); };
   }, [load]);
 
-  const unreadTotal = conversations.reduce((n, c) => n + c.unread, 0);
+  // The NAV badge skips muted threads — that badge is the thing that pulls
+  // someone back into the app, and pulling them back is precisely what they
+  // said no to. The per-row count stays, so nothing is hidden once they are
+  // already looking at the list.
+  const unreadTotal = conversations.reduce((n, c) => (c.muted ? n : n + c.unread), 0);
 
   // Returns the conversation id, or an object carrying the HTTP status. The
   // previous version returned null for every failure, so the screen closed the
@@ -160,17 +184,34 @@ export function useConversations() {
     }
   }, [load]);
 
-  const createGroup = useCallback(async (title: string, members: string[] = []): Promise<string | null> => {
+  /**
+   * Create a group, or say WHY it could not be created.
+   *
+   * Returns a reason rather than null. A refusal with no reason becomes "could
+   * not open (—)" on screen, which is what a name collision looked like: the
+   * server explained itself and this threw the explanation away.
+   */
+  const createGroup = useCallback(async (
+    title: string, members: string[] = [],
+  ): Promise<{ id: string } | { code: string }> => {
     const res = await fetch('/api/bff/connection/conversations/group', {
       method: 'POST', credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ title: title.trim(), members: members.map((m) => m.trim().replace(/^@+/, '')).filter(Boolean) }),
     });
     const json = await res.json().catch(() => ({}));
-    if (!res.ok) { setError('failed'); return null; }
+    if (!res.ok) {
+      setError('failed');
+      // Nest puts a BadRequest's message in `message`; it may arrive as an
+      // array when several validators fail at once.
+      const raw = json?.message ?? json?.error ?? '';
+      const code = Array.isArray(raw) ? String(raw[0] ?? '') : String(raw);
+      return { code: code || String(res.status) };
+    }
     setError(null);
     await load();
-    return unwrap<{ id: string }>(json, 'conversation')?.id ?? null;
+    const id = unwrap<{ id: string }>(json, 'conversation')?.id;
+    return id ? { id } : { code: 'no-id' };
   }, [load]);
 
   return { conversations, unreadTotal, loading, error, reload: load, openDirect, createGroup };
@@ -188,6 +229,17 @@ export function useThread(id: string | null) {
   // The newest timestamp already held. Kept in a ref so the poll interval does
   // not have to be re-armed every time a message arrives.
   const cursor = useRef<string | null>(null);
+  /**
+   * Where the reader had stopped, frozen at the moment the thread opened.
+   *
+   * It has to be frozen. Opening a thread marks it read, so from the second
+   * poll onward the server's honest answer is "you have read everything" — and
+   * a divider computed from that would appear for a fraction of a second and
+   * then vanish, which is worse than never showing it. This is the one fact in
+   * the thread that is deliberately NOT kept current.
+   */
+  const [readMark, setReadMark] = useState<string | null>(null);
+  const markPinned = useRef(false);
 
   const poll = useCallback(async () => {
     if (!id) return;
@@ -213,6 +265,11 @@ export function useThread(id: string | null) {
       // poll is at the bottom by definition and always reports false, so
       // trusting it here would clear the flag on the next quiet tick.
       if (!after) setHasMore(t.hasMore === true);
+      // First full load only — see `readMark`.
+      if (!after && !markPinned.current) {
+        markPinned.current = true;
+        setReadMark(t.myLastReadAt ?? null);
+      }
       const newest = t.messages[t.messages.length - 1]?.at;
       if (newest) cursor.current = newest;
     } catch {
@@ -222,14 +279,20 @@ export function useThread(id: string | null) {
 
   useEffect(() => {
     cursor.current = null;
+    markPinned.current = false;
+    setReadMark(null);
     setThread(null);
     if (!id) return;
-    poll();
-    // Reading a thread you have open marks it read; the badge should not survive
-    // you looking straight at the message.
-    fetch(`/api/bff/connection/conversations/${encodeURIComponent(id)}/read`, {
-      method: 'POST', credentials: 'include',
-    }).catch(() => {});
+    // Read the thread BEFORE marking it read, and in that order — not merely
+    // "start both". The mark-read write moves the very watermark the first load
+    // reports, so two requests in flight together is a race whose loser is the
+    // "new messages" divider: sometimes there, sometimes not, on the same
+    // thread. Awaiting costs one round trip and makes it deterministic.
+    void poll().then(() => (
+      fetch(`/api/bff/connection/conversations/${encodeURIComponent(id)}/read`, {
+        method: 'POST', credentials: 'include',
+      }).catch(() => {})
+    ));
     const t = setInterval(poll, THREAD_MS);
     return () => clearInterval(t);
   }, [id, poll]);
@@ -400,6 +463,28 @@ export function useThread(id: string | null) {
     return true;
   }, [id, poll]);
 
+  /**
+   * Mute or unmute, for me alone.
+   *
+   * Writes the returned value rather than the requested one — the switch should
+   * move because the server stored something, not because the request came
+   * back. A refusal leaves it exactly where it was.
+   */
+  const setMuted = useCallback(async (muted: boolean) => {
+    if (!id) return false;
+    try {
+      const res = await fetch(`/api/bff/connection/conversations/${encodeURIComponent(id)}/mute`, {
+        method: 'PUT', credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ muted }),
+      });
+      if (!res.ok) { setError('failed'); return false; }
+      const next = unwrap<boolean>(await res.json().catch(() => ({})), 'muted');
+      setThread((prev) => (prev ? { ...prev, muted: next ?? muted } : prev));
+      return true;
+    } catch { setError('failed'); return false; }
+  }, [id]);
+
   const leave = useCallback(async () => {
     if (!id) return false;
     const res = await fetch(`/api/bff/connection/conversations/${encodeURIComponent(id)}/leave`, {
@@ -410,6 +495,6 @@ export function useThread(id: string | null) {
 
   return {
     thread, busy, error, send, sendMedia, deleteMessage, hide, clear, addMember, leave,
-    loadOlder, loadingOlder, hasMore, reload: poll,
+    loadOlder, loadingOlder, hasMore, reload: poll, setMuted, readMark,
   };
 }

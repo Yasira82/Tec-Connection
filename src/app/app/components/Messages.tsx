@@ -20,7 +20,7 @@
 //   · a group with one member says so. Sending into a group you are alone in
 //     looks identical to sending into a real conversation, and the message
 //     "not arriving" is the only symptom.
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { TEC_COLORS } from '@yasser172/tec-ui';
 import { useTranslation } from '@/lib/i18n';
 import { useThread, sendToConversation, type Summary, type Msg } from '@/lib-client/connection/useMessages';
@@ -88,6 +88,66 @@ const dayKey = (iso: string) => {
 };
 
 /**
+ * The same shape the service parses mentions with. Kept in step deliberately:
+ * if this matched more than the service does, the screen would highlight a
+ * handle nobody was ever notified about — a promise the backend never made.
+ */
+const MENTION_RE = /(^|[^\w@])@([a-zA-Z0-9_]{2,40})/g;
+
+/**
+ * A message body with the handles in it marked.
+ *
+ * Only handles the SERVER listed in `mentions` are marked. That list is already
+ * filtered against the member list, so `@someone-not-here` stays plain text —
+ * which is the honest rendering: nothing reached them.
+ *
+ * Everything stays inside one `<bdi dir="auto">` so a mixed Arabic/Latin line
+ * still lays out by its own script; the spans are inline and do not break it.
+ */
+export function mentionSpans(
+  text: string,
+  mentions?: string[],
+): { text: string; handle?: string }[] {
+  const known = new Set((mentions ?? []).map((h) => h.toLowerCase()));
+  if (known.size === 0 || !text) return [{ text }];
+
+  const out: { text: string; handle?: string }[] = [];
+  let last = 0;
+  for (const m of text.matchAll(MENTION_RE)) {
+    const handle = (m[2] ?? '').toLowerCase();
+    if (!known.has(handle)) continue;
+    // `m.index` points at the character BEFORE the @ (the group-1 boundary,
+    // which is empty at the start of the string), so the @ itself is that far
+    // along PLUS the boundary's own length. Forgetting the second term eats the
+    // character in front of every mention.
+    const at = (m.index ?? 0) + (m[1]?.length ?? 0);
+    if (at > last) out.push({ text: text.slice(last, at) });
+    out.push({ text: `@${m[2]}`, handle });
+    last = at + 1 + (m[2]?.length ?? 0);
+  }
+  if (last === 0) return [{ text }];
+  if (last < text.length) out.push({ text: text.slice(last) });
+  return out;
+}
+
+function Body({ text, mentions, me }: { text: string; mentions?: string[]; me: string }) {
+  const parts: ReactNode[] = mentionSpans(text, mentions).map((p, i) => (
+    p.handle
+      ? (
+        <span
+          key={`mn-${i}`}
+          style={{
+            color: TEC_COLORS.gold, fontWeight: 700,
+            ...(p.handle === me && { background: `${TEC_COLORS.gold}22`, borderRadius: 4, padding: '0 3px' }),
+          }}
+        >{p.text}</span>
+      )
+      : p.text
+  ));
+  return <bdi dir="auto">{parts}</bdi>;
+}
+
+/**
  * A person in the chat surfaces.
  *
  * `group` keeps the old letter disc: a group has a title, not a face, and there
@@ -125,7 +185,7 @@ function Chat({ id, me, onBack }: { id: string; me: string; onBack: () => void }
   const a = t.app;
   const {
     thread, busy, error, send, sendMedia, deleteMessage, hide, clear, addMember, leave,
-    loadOlder, loadingOlder, hasMore,
+    loadOlder, loadingOlder, hasMore, setMuted, readMark,
   } = useThread(id);
   // The message being answered. Held here rather than in the composer so the
   // bubble it points at can be highlighted while it is being answered.
@@ -195,6 +255,52 @@ function Chat({ id, me, onBack }: { id: string; me: string; onBack: () => void }
     });
     return out;
   }, [thread?.messages, meNorm, isGroup]);
+
+  /**
+   * The id of the first message the reader had not seen — the line goes ABOVE
+   * it.
+   *
+   * Computed from the frozen watermark, so it stays put while the thread is
+   * open instead of chasing "read" downward. Only messages from SOMEONE ELSE
+   * count: your own message is not news to you, and a thread whose last line is
+   * yours would otherwise open with a "new messages" line under it.
+   *
+   * `null` when nothing qualifies — a thread already caught up, or a first
+   * visit with no watermark at all, where every message would be "new" and the
+   * line would sit at the very top saying nothing.
+   */
+  /**
+   * Who the half-typed `@…` at the END of the draft could mean.
+   *
+   * Only at the end, and only in a group. Tracking the caret mid-text would
+   * mean keeping a selection index in sync with every edit, paste and
+   * autocorrect on a phone keyboard — and getting that slightly wrong replaces
+   * the wrong span of the person's sentence. Typing a handle happens at the end
+   * essentially always; the rare mid-sentence case still works, it just types
+   * the handle out in full.
+   *
+   * A mention only reaches someone in the conversation (the service filters
+   * against the member list), so the picker offers exactly that set — never a
+   * handle the message could not deliver to.
+   */
+  const mentionPick = useMemo(() => {
+    if (!isGroup) return null;
+    const m = /(?:^|\s)@([a-zA-Z0-9_]{0,40})$/.exec(draft);
+    if (!m) return null;
+    const frag = (m[1] ?? '').toLowerCase();
+    const hits = (thread?.members ?? [])
+      .filter((u) => norm(u) !== meNorm && norm(u).startsWith(frag))
+      .slice(0, 6);
+    return hits.length ? { start: draft.length - frag.length, hits } : null;
+  }, [draft, isGroup, thread?.members, meNorm]);
+
+  const firstUnreadId = useMemo(() => {
+    if (!readMark) return null;
+    const mark = new Date(readMark).getTime();
+    if (!Number.isFinite(mark)) return null;
+    const hit = rows.find(({ m, mine }) => !mine && new Date(m.at).getTime() > mark);
+    return hit?.m.id ?? null;
+  }, [rows, readMark]);
 
   return (
     <div style={{
@@ -266,6 +372,18 @@ function Chat({ id, me, onBack }: { id: string; me: string; onBack: () => void }
         ) : rows.map(({ m, mine, newDay, showSender }) => (
           // The anchor a quote scrolls back to.
           <div key={m.id} id={`msg-${m.id}`}>
+            {/* Where you stopped last time. A full-width rule rather than a
+                pill: a day separator says "a date", this says "everything
+                below is new", and the two must not read as the same mark. */}
+            {m.id === firstUnreadId && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '14px 2px 10px' }}>
+                <span style={{ flex: 1, height: 1, background: `${TEC_COLORS.gold}55` }} />
+                <span style={{ fontSize: 11, fontWeight: 700, color: TEC_COLORS.gold, whiteSpace: 'nowrap' }}>
+                  {a.unreadDivider}
+                </span>
+                <span style={{ flex: 1, height: 1, background: `${TEC_COLORS.gold}55` }} />
+              </div>
+            )}
             {newDay && (
               <div style={{ textAlign: 'center', margin: '14px 0 10px' }}>
                 <span style={{
@@ -298,7 +416,15 @@ function Chat({ id, me, onBack }: { id: string; me: string; onBack: () => void }
               <div style={{
                 maxWidth: '78%', padding: '8px 12px 6px',
                 background: mine ? `${TEC_COLORS.gold}1F` : TEC_COLORS.surface2,
-                border: `1px solid ${mine ? `${TEC_COLORS.gold}44` : TEC_COLORS.border}`,
+                // Named YOU, in a group of forty, three hours ago. The whole
+                // bubble is marked rather than only the handle inside it —
+                // scrolling back to find one gold word is exactly the work the
+                // mention was supposed to save. Never on your own message: you
+                // know what you wrote.
+                border: `1px solid ${
+                  !mine && (m.mentions ?? []).includes(meNorm) ? `${TEC_COLORS.gold}88`
+                    : mine ? `${TEC_COLORS.gold}44` : TEC_COLORS.border
+                }`,
                 borderRadius: 16,
                 // The squared corner marks the speaker, the way a tail does.
                 borderEndEndRadius: mine ? 5 : 16,
@@ -388,7 +514,7 @@ function Chat({ id, me, onBack }: { id: string; me: string; onBack: () => void }
                 {/* Written by another person: it lays out by its own script. */}
                 {m.body && (
                   <div style={{ fontSize: 14.5, lineHeight: 1.5, color: TEC_COLORS.text, wordBreak: 'break-word' }}>
-                    <bdi dir="auto">{m.body}</bdi>
+                    <Body text={m.body} mentions={m.mentions} me={meNorm} />
                   </div>
                 )}
                 </>)}
@@ -460,6 +586,26 @@ function Chat({ id, me, onBack }: { id: string; me: string; onBack: () => void }
               fontSize: 15, cursor: 'pointer', display: 'grid', placeItems: 'center',
             }}
           >✕</button>
+        </div>
+      )}
+      {/* The @ picker. Above the composer, so the keyboard does not cover it. */}
+      {mentionPick && (
+        <div style={{
+          display: 'flex', gap: 6, overflowX: 'auto', marginTop: 10,
+          paddingBottom: 2, WebkitOverflowScrolling: 'touch',
+        }}>
+          {mentionPick.hits.map((u) => (
+            <button
+              key={u}
+              onClick={() => setDraft(`${draft.slice(0, mentionPick.start)}${u} `)}
+              style={{
+                flexShrink: 0, background: `${TEC_COLORS.gold}14`,
+                border: `1px solid ${TEC_COLORS.gold}44`, borderRadius: 999,
+                padding: '6px 14px', fontSize: 12.5, fontWeight: 700,
+                color: TEC_COLORS.gold, cursor: 'pointer', whiteSpace: 'nowrap',
+              }}
+            ><bdi>@{u}</bdi></button>
+          ))}
         </div>
       )}
       <div style={{ display: 'flex', gap: 6, alignItems: 'center', paddingTop: 10, borderTop: `1px solid ${TEC_COLORS.border}` }}>
@@ -560,6 +706,8 @@ function Chat({ id, me, onBack }: { id: string; me: string; onBack: () => void }
           onAddMember={(u) => { void addMember(u); }}
           onLeave={async () => { if (await leave()) onBack(); }}
           onClear={() => { void clear(); }}
+          muted={!!thread.muted}
+          onToggleMute={async (next) => { await setMuted(next); }}
           onDelete={async () => { if (await hide(true)) onBack(); }}
           blocked={peerBlocked}
           onBlock={() => { void block(peerName); }}
@@ -598,6 +746,13 @@ function Row({ c, onOpen, a }: { c: Summary; onOpen: () => void; a: Record<strin
           <span style={{ flex: 1, minWidth: 0, fontSize: 15, fontWeight: 700, color: TEC_COLORS.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             <bdi dir="auto">{name}</bdi>
           </span>
+          {/* Muted, and it has to be visible HERE. A muted thread still shows a
+              count, so without this mark the only difference between "quiet
+              because nobody wrote" and "quiet because you silenced it" is
+              memory — and the usual next step is deciding the app is broken. */}
+          {c.muted && (
+            <span title={a.muted} style={{ fontSize: 12, color: TEC_COLORS.subtext, flexShrink: 0 }}>🔕</span>
+          )}
           {c.last && <span style={{ fontSize: 11, color: TEC_COLORS.subtext, flexShrink: 0 }}><bdi>{clock(c.last.at)}</bdi></span>}
         </span>
         <span style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 2 }}>
@@ -606,10 +761,16 @@ function Row({ c, onOpen, a }: { c: Summary; onOpen: () => void; a: Record<strin
                     : isGroup ? <bdi>{c.members} {a.membersLabel}</bdi> : a.directLabel}
           </span>
           {c.unread > 0 && (
+            // A muted thread keeps its count — you still want to know how much
+            // you missed — but loses the amber. The colour is a summons; the
+            // number is information, and muting is a request for the second
+            // without the first.
             <span style={{
               minWidth: 20, height: 20, padding: '0 6px', borderRadius: 999, flexShrink: 0,
               display: 'grid', placeItems: 'center', fontSize: 11, fontWeight: 800,
-              background: TEC_COLORS.gold, color: '#0a0800',
+              background: c.muted ? TEC_COLORS.surface2 : TEC_COLORS.gold,
+              color: c.muted ? TEC_COLORS.subtext : '#0a0800',
+              ...(c.muted && { border: `1px solid ${TEC_COLORS.border}` }),
             }}>{c.unread}</span>
           )}
         </span>
@@ -623,7 +784,7 @@ interface Props {
   conversations: Summary[];
   loading: boolean;
   openDirect: (username: string) => Promise<{ id: string } | { code: number }>;
-  createGroup: (title: string, members?: string[]) => Promise<string | null>;
+  createGroup: (title: string, members?: string[]) => Promise<{ id: string } | { code: string }>;
   /** The open thread, owned by the page so Discover can open one (and so the
       page knows to hide its header while a chat owns the screen). */
   openId: string | null;
@@ -651,9 +812,16 @@ export function Messages({ me, conversations, loading, openDirect, createGroup, 
   const startGroup = async () => {
     const v = groupTitle.trim();
     if (!v) return;
-    const id = await createGroup(v);
-    if (id) { setGroupTitle(''); setComposing(null); setOpenId(id); }
-    else setPickError(a.openFailed.replace('{code}', '—'));
+    const res = await createGroup(v);
+    if ('id' in res) { setGroupTitle(''); setComposing(null); setOpenId(res.id); return; }
+    // A name collision is not a failure to explain in hex — it is a thing the
+    // person can fix in two seconds, if they are told which thing it is. The
+    // title is deliberately KEPT so they can edit it rather than retype it.
+    setPickError(
+      res.code === 'GROUP_NAME_TAKEN_OWN' ? a.groupNameTakenOwn
+      : res.code === 'GROUP_NAME_TAKEN_PUBLIC' ? a.groupNameTakenPublic
+      : a.openFailed.replace('{code}', res.code || '—'),
+    );
   };
 
   if (openId) return <Chat id={openId} me={me} onBack={() => setOpenId(null)} />;

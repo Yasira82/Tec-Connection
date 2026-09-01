@@ -55,6 +55,7 @@ export function ChatInfoSheet({
   isGroup, title, members, role, me, onClose, convId, visibility, description,
   admins = [], ownerName, onRemoved,
   onAddMember, onLeave, onDelete, onClear,
+  muted, onToggleMute,
   blocked, onBlock, onUnblock, blockBusy, blockError, peerName,
 }: {
   isGroup: boolean;
@@ -75,6 +76,10 @@ export function ChatInfoSheet({
   me: string;
   onClose: () => void;
   onAddMember: (username: string) => void;
+  /** Muted for ME. Per-member and private — nobody else can see it. */
+  muted?: boolean;
+  /** Absent for a conversation that cannot be muted; the row is then not shown. */
+  onToggleMute?: (next: boolean) => void | Promise<void>;
   onLeave: () => void;
   /** Removes the conversation AND its history — it does not come back. */
   onDelete: () => void;
@@ -96,6 +101,11 @@ export function ChatInfoSheet({
   const [armedDelete, setArmedDelete] = useState(false);
   const [armedLeave, setArmedLeave] = useState(false);
   const [armedClear, setArmedClear] = useState(false);
+  // Only guards a double tap while the write is in flight. The switch itself is
+  // driven by `muted`, which the parent updates from the SERVER's answer — so
+  // a refused mute leaves the row exactly where it was rather than flipping and
+  // flipping back.
+  const [muteBusy, setMuteBusy] = useState(false);
   const photoRef = useRef<HTMLInputElement>(null);
   const [photoBusy, setPhotoBusy] = useState(false);
   const [photoMsg, setPhotoMsg] = useState('');
@@ -110,6 +120,10 @@ export function ChatInfoSheet({
   const isOwner = isGroup && role === 'owner';
   const isAdmin = isGroup && (role === 'owner' || role === 'admin');
   const [roleBusy, setRoleBusy] = useState<string | null>(null);
+  // Removing someone is irreversible and sits one thumb-width from a button
+  // that is not. Every other destructive action in this sheet already takes two
+  // taps — this one was the exception, and there was no reason for it to be.
+  const [armedRemove, setArmedRemove] = useState<string | null>(null);
   const [roster, setRoster] = useState<string[]>(admins ?? []);
   useEffect(() => { setRoster(admins ?? []); }, [admins]);
 
@@ -147,6 +161,10 @@ export function ChatInfoSheet({
   };
   const { requests, decide } = useJoinRequests(isOwner ? convId : null, isOwner);
   const [listed, setListed] = useState(visibility === 'PUBLIC');
+  // `useState` reads its argument ONCE. Without this the switch keeps whatever
+  // it was told at mount, so a value that changed on the server — or a write
+  // that quietly did not land — is never corrected on screen.
+  useEffect(() => { setListed(visibility === 'PUBLIC'); }, [visibility]);
   const [about, setAbout] = useState(description ?? '');
   const [listBusy, setListBusy] = useState(false);
   const [listMsg, setListMsg] = useState('');
@@ -162,9 +180,27 @@ export function ChatInfoSheet({
           body: JSON.stringify({ visibility: next ? 'PUBLIC' : 'PRIVATE', description: desc.trim() || null }),
         },
       );
-      if (!res.ok) { setListMsg(a.groupRequestFailed); return; }
-      setListed(next);
-    } catch { setListMsg(a.groupRequestFailed); }
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        // The name is only checked when a group is PUBLISHED, so this is the
+        // one place that collision can surface — and it is fixable, not fatal.
+        const raw = json?.message ?? json?.error ?? '';
+        const code = Array.isArray(raw) ? String(raw[0] ?? '') : String(raw);
+        setListMsg(code === 'GROUP_NAME_TAKEN_PUBLIC' ? a.groupNameTakenPublic : a.groupRequestFailed);
+        // The switch stays where it was. Leaving it flipped after a refused
+        // write is what made this look saved when it was not.
+        setListed(!next);
+        return;
+      }
+      // What the SERVER stored, not what was asked for.
+      //
+      // This used to be `setListed(next)` — the switch moved because the
+      // request finished, not because anything was written. A group could read
+      // "Listed publicly" on this screen while the database still had it
+      // private, and the only symptom was that nobody could find it.
+      const stored = json?.data?.visibility;
+      setListed(stored ? stored === 'PUBLIC' : next);
+    } catch { setListMsg(a.groupRequestFailed); setListed(!next); }
     finally { setListBusy(false); }
   };
 
@@ -482,20 +518,52 @@ export function ChatInfoSheet({
                     )}
                     {canRemove && (
                       <button
-                        onClick={() => { void removeFromGroup(u); }}
+                        onClick={() => {
+                          // First tap arms, second removes. The label changes
+                          // to say what the second tap will do — a ✕ that turns
+                          // into a bigger ✕ teaches nobody anything.
+                          if (armedRemove !== u) { setArmedRemove(u); return; }
+                          setArmedRemove(null);
+                          void removeFromGroup(u);
+                        }}
                         disabled={roleBusy === u}
                         aria-label={a.removeMember}
                         style={{
-                          background: 'none', border: 'none', color: TEC_COLORS.error,
-                          fontSize: 15, padding: '2px 6px', flexShrink: 0,
+                          background: armedRemove === u ? `${TEC_COLORS.error}1F` : 'none',
+                          border: armedRemove === u ? `1px solid ${TEC_COLORS.error}` : 'none',
+                          borderRadius: 999, color: TEC_COLORS.error,
+                          fontSize: armedRemove === u ? 12 : 15, fontWeight: 700,
+                          padding: armedRemove === u ? '5px 12px' : '2px 6px',
+                          flexShrink: 0, whiteSpace: 'nowrap',
                           cursor: roleBusy === u ? 'not-allowed' : 'pointer',
                         }}
-                      >✕</button>
+                      >{armedRemove === u ? a.confirmRemoveMember : '✕'}</button>
                     )}
                   </div>
                 );
               })}
             </div>
+          </section>
+        )}
+
+        {/* Muting. Deliberately ABOVE the destructive line and not marked red —
+            it is the reversible, everyday setting, and grouping it with Leave
+            and Delete is how a harmless control ends up untouched. */}
+        {onToggleMute && (
+          <section style={{ borderTop: `1px solid ${TEC_COLORS.border}`, paddingTop: 4 }}>
+            <ActionRow
+              icon={muted ? '🔕' : '🔔'}
+              label={muted ? a.unmuteChat : a.muteChat}
+              disabled={muteBusy}
+              onClick={async () => {
+                setMuteBusy(true);
+                try { await onToggleMute(!muted); } finally { setMuteBusy(false); }
+              }}
+            />
+            <p style={{
+              margin: 0, padding: '0 16px 12px', fontSize: 11.5,
+              color: TEC_COLORS.subtext, lineHeight: 1.5,
+            }}>{a.muteHint}</p>
           </section>
         )}
 
