@@ -181,6 +181,7 @@ export const ru: Dictionary = {
     inviteLinkHint: "Любой со ссылкой войдёт без запроса. Пересоздание отключает старую ссылку.",
     createInviteLink: "Создать ссылку",
     revokeInviteLink: "Отозвать ссылку",
+    inviteLinkFailed: "Не удалось изменить ссылку. Возможно, сервис групп ещё запускается — попробуйте через минуту.",
     linkCopied: "Ссылка скопирована",
     joiningByInvite: "Вход…",
     inviteInvalid: "Эта ссылка больше не действует.",

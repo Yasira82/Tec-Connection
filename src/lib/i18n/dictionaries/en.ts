@@ -213,6 +213,7 @@ export const en = {
     inviteLinkHint: "Anyone with the link joins without asking. Re-creating it makes the old link stop working.",
     createInviteLink: "Create a link",
     revokeInviteLink: "Revoke the link",
+    inviteLinkFailed: "Could not change the link. The group service may still be starting up — try again in a moment.",
     linkCopied: "Link copied",
     joiningByInvite: "Joining…",
     inviteInvalid: "That link is not valid any more.",

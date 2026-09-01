@@ -29,15 +29,27 @@ export function useInvite(conversationId: string | null) {
     ? `/api/bff/connection/conversations/${encodeURIComponent(conversationId)}/invite`
     : null;
 
+  /**
+   * Read the current code, silently.
+   *
+   * A failed READ says nothing. It runs the moment the sheet opens, before the
+   * owner has touched anything, so a message here is an error about an action
+   * nobody took — and "Could not save" for a request that saved nothing is the
+   * wrong sentence twice over. The honest fallback is the state the screen
+   * already shows for "no link yet": the Create button.
+   *
+   * Only a WRITE — something the person actually asked for — is worth
+   * reporting, and `set` reports it.
+   */
   const read = useCallback(async () => {
     if (!path) return;
     setBusy(true); setFailed(false);
     try {
       const res = await fetch(path, { credentials: 'include', cache: 'no-store' });
-      if (!res.ok) { setFailed(true); return; }
+      if (!res.ok) return;
       const json = await res.json().catch(() => ({}));
       setCode(((json?.data ?? json) as { code?: string | null })?.code ?? null);
-    } catch { setFailed(true); }
+    } catch { /* the Create button is the correct fallback */ }
     finally { setBusy(false); }
   }, [path]);
 

@@ -181,6 +181,7 @@ export const ko: Dictionary = {
     inviteLinkHint: "링크가 있으면 승인 없이 들어옵니다. 다시 만들면 이전 링크는 작동하지 않습니다.",
     createInviteLink: "링크 만들기",
     revokeInviteLink: "링크 해지",
+    inviteLinkFailed: "링크를 변경하지 못했습니다. 그룹 서비스가 아직 시작 중일 수 있습니다 — 잠시 후 다시 시도하세요.",
     linkCopied: "링크 복사됨",
     joiningByInvite: "참여 중…",
     inviteInvalid: "이 링크는 더 이상 유효하지 않습니다.",

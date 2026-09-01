@@ -181,6 +181,7 @@ export const hi: Dictionary = {
     inviteLinkHint: "लिंक वाला कोई भी बिना पूछे जुड़ जाता है। दोबारा बनाने पर पुराना लिंक बंद हो जाता है।",
     createInviteLink: "लिंक बनाएँ",
     revokeInviteLink: "लिंक रद्द करें",
+    inviteLinkFailed: "लिंक नहीं बदल सका। समूह सेवा शायद अभी शुरू हो रही है — थोड़ी देर बाद फिर कोशिश करें।",
     linkCopied: "लिंक कॉपी हुआ",
     joiningByInvite: "जुड़ रहे हैं…",
     inviteInvalid: "यह लिंक अब मान्य नहीं है।",

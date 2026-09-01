@@ -181,6 +181,7 @@ export const es: Dictionary = {
     inviteLinkHint: "Quien tenga el enlace entra sin pedirlo. Al crearlo de nuevo, el anterior deja de funcionar.",
     createInviteLink: "Crear un enlace",
     revokeInviteLink: "Revocar el enlace",
+    inviteLinkFailed: "No se pudo cambiar el enlace. Puede que el servicio de grupos aún esté iniciando — inténtalo en un momento.",
     linkCopied: "Enlace copiado",
     joiningByInvite: "Entrando…",
     inviteInvalid: "Ese enlace ya no es válido.",

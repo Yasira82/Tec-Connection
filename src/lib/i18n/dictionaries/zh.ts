@@ -181,6 +181,7 @@ export const zh: Dictionary = {
     inviteLinkHint: "持有链接的人无需申请即可加入。重新生成会使旧链接失效。",
     createInviteLink: "创建链接",
     revokeInviteLink: "撤销链接",
+    inviteLinkFailed: "无法更改链接。群组服务可能仍在启动中，请稍后再试。",
     linkCopied: "链接已复制",
     joiningByInvite: "正在加入…",
     inviteInvalid: "该链接已失效。",
