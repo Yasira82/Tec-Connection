@@ -33,3 +33,20 @@ export async function DELETE(req: NextRequest, ctx: { params: Promise<{ id: stri
 
   return NextResponse.json(body, { status });
 }
+
+// PUT { body } → rewrite one of your own messages, inside the edit window.
+//
+// The window, the ownership and the "attachments cannot be edited" rule are all
+// the service's. This route forwards; it does not pre-judge. A BFF that guessed
+// the window would be a second clock, and the two would disagree the first time
+// one of them moved.
+export async function PUT(req: NextRequest, ctx: { params: Promise<{ id: string; messageId: string }> }) {
+  const { id, messageId } = await ctx.params;
+  const payload = await req.json().catch(() => ({}));
+  const { status, data } = await callConnection(
+    req, 'PUT',
+    `/api/identity/connection/conversations/${encodeURIComponent(id)}/messages/${encodeURIComponent(messageId)}`,
+    { body: payload?.body },
+  );
+  return NextResponse.json(data, { status });
+}

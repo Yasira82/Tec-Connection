@@ -19,6 +19,7 @@ import { useBackButton } from '@/lib-client/connection/useBackButton';
 import { Avatar } from '@/components/public/Avatar';
 import { downscaleImage, AVATAR_MAX_EDGE } from '@/lib-client/connection/downscaleImage';
 import { useJoinRequests } from '@/lib-client/connection/useGroupDiscovery';
+import { useInvite, inviteUrl } from '@/lib-client/connection/useInvite';
 
 /** What a group photo may be. Same three as a profile photo, same 2MB ceiling. */
 const PHOTO_ACCEPT = 'image/jpeg,image/png,image/webp';
@@ -55,7 +56,7 @@ export function ChatInfoSheet({
   isGroup, title, members, role, me, onClose, convId, visibility, description,
   admins = [], ownerName, onRemoved,
   onAddMember, onLeave, onDelete, onClear,
-  muted, onToggleMute,
+  muted, onToggleMute, posting, onSetPosting,
   blocked, onBlock, onUnblock, blockBusy, blockError, peerName,
 }: {
   isGroup: boolean;
@@ -80,6 +81,10 @@ export function ChatInfoSheet({
   muted?: boolean;
   /** Absent for a conversation that cannot be muted; the row is then not shown. */
   onToggleMute?: (next: boolean) => void | Promise<void>;
+  /** GROUP only — who may write here. */
+  posting?: 'EVERYONE' | 'ADMINS';
+  /** Absent unless this is a group the caller owns; the row is then not shown. */
+  onSetPosting?: (next: 'EVERYONE' | 'ADMINS') => void | Promise<void>;
   onLeave: () => void;
   /** Removes the conversation AND its history — it does not come back. */
   onDelete: () => void;
@@ -106,6 +111,15 @@ export function ChatInfoSheet({
   // a refused mute leaves the row exactly where it was rather than flipping and
   // flipping back.
   const [muteBusy, setMuteBusy] = useState(false);
+  const [postBusy, setPostBusy] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const invite = useInvite(convId);
+  // Read once, and only for the owner — it is the only person the endpoint
+  // answers, and a 403 fetched on every member's behalf would be noise in the
+  // logs for no gain.
+  const canInvite = isGroup && role === 'owner';
+  const readInvite = invite.read;
+  useEffect(() => { if (canInvite) void readInvite(); }, [canInvite, readInvite]);
   const photoRef = useRef<HTMLInputElement>(null);
   const [photoBusy, setPhotoBusy] = useState(false);
   const [photoMsg, setPhotoMsg] = useState('');
@@ -349,8 +363,14 @@ export function ChatInfoSheet({
           <section style={{ borderTop: `1px solid ${TEC_COLORS.border}`, padding: '14px 16px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <div style={{ flex: 1, minWidth: 0 }}>
+                {/* The LABEL never changes; only the switch does.
+                    It used to read "Listed publicly" when on and "Private" when
+                    off, which is a description of the state — and next to a
+                    switch that is off, the word "Private" reads as "Private:
+                    no". A switch is named for what turning it ON does, and the
+                    sentence underneath is where the current state belongs. */}
                 <div style={{ fontSize: 14, fontWeight: 700, color: TEC_COLORS.text }}>
-                  {listed ? a.groupListed : a.groupPrivate}
+                  {a.groupListed}
                 </div>
                 <div style={{ fontSize: 11.5, color: TEC_COLORS.subtext, marginTop: 3, lineHeight: 1.5 }}>
                   {listed ? a.groupListedHint : a.groupPrivateHint}
@@ -397,6 +417,108 @@ export function ChatInfoSheet({
             {listMsg && (
               <p style={{ margin: '8px 0 0', fontSize: 12, color: TEC_COLORS.error }}>{listMsg}</p>
             )}
+          </section>
+        )}
+
+        {/* The invite link — owner only, and read on demand.
+            The code is a credential: anyone holding it walks in without the
+            owner's approval. It is not in the conversation payload every member
+            polls, so it is fetched here, once, when the owner asks for it. */}
+        {isOwner && (
+          <section style={{ borderTop: `1px solid ${TEC_COLORS.border}`, padding: '14px 16px' }}>
+            <div style={{ fontSize: 14, fontWeight: 700, color: TEC_COLORS.text }}>{a.inviteLink}</div>
+            <div style={{ fontSize: 11.5, color: TEC_COLORS.subtext, marginTop: 3, lineHeight: 1.5 }}>
+              {a.inviteLinkHint}
+            </div>
+
+            {invite.code ? (
+              <>
+                <div style={{
+                  marginTop: 10, padding: '9px 12px', borderRadius: 10,
+                  background: TEC_COLORS.bg, border: `1px solid ${TEC_COLORS.border}`,
+                  fontSize: 11.5, color: TEC_COLORS.subtext, wordBreak: 'break-all',
+                }} dir="ltr">{inviteUrl(invite.code)}</div>
+                <div style={{ display: 'flex', gap: 8, marginTop: 8, flexWrap: 'wrap' }}>
+                  <button
+                    onClick={async () => {
+                      // A best-effort copy. Pi Browser does not always grant
+                      // clipboard access, and a failed copy must not look like a
+                      // broken link — the URL is on screen above either way.
+                      try {
+                        await navigator.clipboard.writeText(inviteUrl(invite.code!));
+                        setCopied(true);
+                        setTimeout(() => setCopied(false), 1600);
+                      } catch { /* the link is readable above */ }
+                    }}
+                    style={{
+                      background: `${TEC_COLORS.gold}18`, border: `1px solid ${TEC_COLORS.gold}55`,
+                      color: TEC_COLORS.gold, borderRadius: 999, padding: '7px 16px',
+                      fontSize: 12.5, fontWeight: 700, cursor: 'pointer',
+                    }}
+                  >{copied ? a.linkCopied : a.copyLink}</button>
+                  <button
+                    onClick={() => { void invite.set(false); }}
+                    disabled={invite.busy}
+                    style={{
+                      background: 'none', border: `1px solid ${TEC_COLORS.border}`,
+                      color: TEC_COLORS.error, borderRadius: 999, padding: '7px 16px',
+                      fontSize: 12.5, cursor: invite.busy ? 'not-allowed' : 'pointer',
+                    }}
+                  >{a.revokeInviteLink}</button>
+                </div>
+              </>
+            ) : (
+              <button
+                onClick={() => { void invite.set(true); }}
+                disabled={invite.busy}
+                style={{
+                  marginTop: 10, background: 'none', border: `1px solid ${TEC_COLORS.border}`,
+                  color: TEC_COLORS.text, borderRadius: 999, padding: '8px 18px',
+                  fontSize: 13, cursor: invite.busy ? 'not-allowed' : 'pointer',
+                }}
+              >{a.createInviteLink}</button>
+            )}
+            {invite.failed && (
+              <p style={{ margin: '8px 0 0', fontSize: 12, color: TEC_COLORS.error }}>{a.saveFailed}</p>
+            )}
+          </section>
+        )}
+
+        {/* Announcement mode — owner only.
+            Silencing every ordinary member is the same class of act as demoting
+            an admin, which is why an admin cannot reach this switch either here
+            or in the service. */}
+        {isOwner && onSetPosting && (
+          <section style={{ borderTop: `1px solid ${TEC_COLORS.border}`, padding: '14px 16px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 14, fontWeight: 700, color: TEC_COLORS.text }}>{a.announcementMode}</div>
+                <div style={{ fontSize: 11.5, color: TEC_COLORS.subtext, marginTop: 3, lineHeight: 1.5 }}>
+                  {a.announcementModeHint}
+                </div>
+              </div>
+              <button
+                onClick={async () => {
+                  setPostBusy(true);
+                  try { await onSetPosting(posting === 'ADMINS' ? 'EVERYONE' : 'ADMINS'); }
+                  finally { setPostBusy(false); }
+                }}
+                disabled={postBusy}
+                aria-pressed={posting === 'ADMINS'}
+                style={{
+                  width: 46, height: 27, borderRadius: 999, flexShrink: 0, padding: 2,
+                  border: `1px solid ${posting === 'ADMINS' ? TEC_COLORS.gold : TEC_COLORS.border}`,
+                  background: posting === 'ADMINS' ? `${TEC_COLORS.gold}33` : 'transparent',
+                  cursor: postBusy ? 'not-allowed' : 'pointer',
+                  display: 'flex', justifyContent: posting === 'ADMINS' ? 'flex-end' : 'flex-start',
+                }}
+              >
+                <span style={{
+                  width: 21, height: 21, borderRadius: 999, display: 'block',
+                  background: posting === 'ADMINS' ? TEC_COLORS.gold : TEC_COLORS.subtext,
+                }} />
+              </button>
+            </div>
           </section>
         )}
 
