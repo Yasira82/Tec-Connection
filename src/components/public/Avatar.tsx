@@ -83,6 +83,17 @@ export function Avatar({
         height: size,
         fontSize: Math.round(size * 0.42),
         overflow: 'hidden',
+        // The containing block for the photo below.
+        //
+        // `.pub-avatar` is `display: grid` with `place-items: center`, which
+        // sets the item's justify/align-self to `center` — and a centered grid
+        // item sizes to its CONTENT instead of stretching to the cell. A SQUARE
+        // photo hides that completely (its natural aspect already matches the
+        // disc), which is why this went unnoticed: every profile photo tested
+        // was square. A WIDE photo does not, and the region that ends up
+        // visible then changes with the disc size — the same group picture
+        // showed a different crop at 44px than at 66px.
+        position: 'relative',
         // The tinted disc stays underneath a photo, so the frame is never a grey
         // hole while the image loads or if it 404s.
         background: `linear-gradient(140deg, hsl(${hue} 92% 78%), hsl(${hue} 82% 58%))`,
@@ -102,7 +113,16 @@ export function Avatar({
           // No photo is a 404, not an image — falling back here is what makes
           // `tryPhoto` safe to use where `hasAvatar` is unknown.
           onError={() => setFailed(true)}
-          style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+          // Taken OUT of the grid flow entirely, so the fill does not depend on
+          // how a grid item happens to be sized. `inset: 0` + `cover` is a
+          // centre-crop of any aspect ratio into the disc, identically at every
+          // size. The centering above still governs the initial fallback, which
+          // is what it was written for.
+          style={{
+            position: 'absolute', inset: 0,
+            width: '100%', height: '100%',
+            objectFit: 'cover', display: 'block',
+          }}
         />
       ) : (
         username.charAt(0).toUpperCase()
