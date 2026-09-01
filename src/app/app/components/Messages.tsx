@@ -28,6 +28,10 @@ import { VoiceRecorder } from './VoiceRecorder';
 import { useBlocks } from '@/lib-client/connection/useBlocks';
 import { useTyping } from '@/lib-client/connection/useTyping';
 import { NewChat } from './NewChat';
+import { Lightbox } from './Lightbox';
+import { ChatInfoSheet } from './ChatInfoSheet';
+import { VoiceNote } from './VoiceNote';
+import { downscaleImage } from '@/lib-client/connection/downscaleImage';
 
 /** The service normalizes every username; the session hook does not. */
 const norm = (u: string) => (u ?? '').trim().replace(/^@+/, '').toLowerCase();
@@ -72,11 +76,6 @@ const seenBy = (at: string, peerReadAt?: string | null): boolean => {
   return Number.isFinite(sent) && Number.isFinite(read) && read >= sent;
 };
 
-const secs = (ms: number) => {
-  const total = Math.round(ms / 1000);
-  return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, '0')}`;
-};
-
 const dayKey = (iso: string) => {
   const d = new Date(iso);
   return Number.isNaN(d.getTime()) ? '' : d.toDateString();
@@ -99,16 +98,16 @@ function Chat({ id, me, onBack }: { id: string; me: string; onBack: () => void }
   const { thread, busy, error, send, sendMedia, deleteMessage, hide, addMember, leave } = useThread(id);
   const fileRef = useRef<HTMLInputElement | null>(null);
   const [draft, setDraft] = useState('');
-  const [invitee, setInvitee] = useState('');
   const [showInfo, setShowInfo] = useState(false);
   const { isBlocked, block, unblock, busy: blockBusy, error: blockError } = useBlocks();
-  // Blocking is reversible but not trivial, and a mis-tap on a phone is easy.
-  // Two taps rather than a modal: the button states its own confirmation.
-  const [armed, setArmed] = useState(false);
-  const [armedDeleteChat, setArmedDeleteChat] = useState(false);
   // Which message has its Delete showing. One at a time — a delete button on
   // every bubble is a row of hazards down the side of the transcript.
   const [menuFor, setMenuFor] = useState<string | null>(null);
+  const [viewing, setViewing] = useState<string | null>(null);
+  // Which photos have finished decoding. A tile with nothing in it reads as
+  // broken; a tile with a shimmer reads as "coming".
+  const [loaded, setLoaded] = useState<Set<string>>(new Set());
+  const [micIssue, setMicIssue] = useState<'denied' | 'unsupported' | null>(null);
   const { typing, ping } = useTyping(id, thread?.members ?? []);
   const endRef = useRef<HTMLDivElement | null>(null);
   const meNorm = norm(me);
@@ -169,7 +168,7 @@ function Chat({ id, me, onBack }: { id: string; me: string; onBack: () => void }
         }}>›</button>
         <Avatar name={isGroup ? (thread?.title ?? 'G') : (thread?.peer ?? '?')} size={40} />
         <button
-          onClick={() => { setShowInfo((v) => !v); setArmed(false); }}
+          onClick={() => setShowInfo(true)}
           style={{ flex: 1, minWidth: 0, background: 'none', border: 'none', padding: 0, textAlign: 'start', cursor: 'pointer' }}
         >
           <span style={{ display: 'block', fontSize: 16, fontWeight: 700, color: TEC_COLORS.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -181,80 +180,10 @@ function Chat({ id, me, onBack }: { id: string; me: string; onBack: () => void }
               : isGroup ? <bdi>{thread?.members.length} {a.membersLabel}</bdi> : a.directLabel}
           </span>
         </button>
-        <button onClick={() => { setShowInfo((v) => !v); setArmed(false); }} aria-label={isGroup ? a.groupInfo : a.block} style={{
+        <button onClick={() => setShowInfo(true)} aria-label={isGroup ? a.groupInfo : a.contactInfo} style={{
           background: 'none', border: 'none', color: TEC_COLORS.subtext, cursor: 'pointer', fontSize: 20, padding: '0 4px',
         }}>⋯</button>
       </div>
-
-      {/* group management — behind the header, not permanently under the composer */}
-      {isGroup && showInfo && (
-        <div style={{ padding: '12px 4px', borderBottom: `1px solid ${TEC_COLORS.border}`, display: 'grid', gap: 10 }}>
-          {thread?.role === 'owner' && (
-            <div style={{ display: 'flex', gap: 8 }}>
-              <input
-                style={input} value={invitee} onChange={(e) => setInvitee(e.target.value)}
-                onKeyDown={(e) => { if (e.key === 'Enter') { addMember(invitee); setInvitee(''); } }}
-                placeholder={a.addMemberPlaceholder} maxLength={100} autoCapitalize="none" autoCorrect="off"
-              />
-              <button style={goldBtn} onClick={() => { addMember(invitee); setInvitee(''); }}>{a.addMember}</button>
-            </div>
-          )}
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-            {(thread?.members ?? []).map((u) => (
-              <span key={u} style={{
-                fontSize: 12, color: TEC_COLORS.subtext, border: `1px solid ${TEC_COLORS.border}`,
-                borderRadius: 999, padding: '3px 10px',
-              }}><bdi>@{u}</bdi></span>
-            ))}
-          </div>
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            <button style={quietBtn} onClick={async () => { if (await leave()) onBack(); }}>{a.leaveGroup}</button>
-            <button
-              style={{ ...quietBtn, borderColor: armedDeleteChat ? TEC_COLORS.error : TEC_COLORS.border, color: armedDeleteChat ? TEC_COLORS.error : TEC_COLORS.subtext }}
-              onClick={async () => {
-                if (!armedDeleteChat) { setArmedDeleteChat(true); return; }
-                if (await hide()) onBack();
-              }}
-            >{armedDeleteChat ? a.confirmDelete : a.deleteChat}</button>
-          </div>
-        </div>
-      )}
-
-      {/* A direct thread's panel holds one control, because there is one to
-          hold: ending contact with this person. */}
-      {!isGroup && showInfo && peerName && (
-        <div style={{ padding: '12px 4px', borderBottom: `1px solid ${TEC_COLORS.border}`, display: 'grid', gap: 8 }}>
-          {isBlocked(peerName) ? (
-            <>
-              <p style={{ fontSize: 12.5, color: TEC_COLORS.subtext, margin: 0, lineHeight: 1.5 }}>{a.blockedNotice}</p>
-              <div><button style={quietBtn} disabled={blockBusy} onClick={() => { void unblock(peerName); }}>{a.unblock}</button></div>
-            </>
-          ) : (
-            <div>
-              <button
-                disabled={blockBusy}
-                onClick={() => { if (armed) { void block(peerName).then(() => setArmed(false)); } else setArmed(true); }}
-                style={{
-                  ...quietBtn,
-                  color: TEC_COLORS.error,
-                  borderColor: armed ? TEC_COLORS.error : TEC_COLORS.border,
-                  background: armed ? `${TEC_COLORS.error}14` : 'none',
-                }}
-              >{armed ? a.confirmBlock : a.block}</button>
-            </div>
-          )}
-          <div>
-            <button
-              style={{ ...quietBtn, borderColor: armedDeleteChat ? TEC_COLORS.error : TEC_COLORS.border, color: armedDeleteChat ? TEC_COLORS.error : TEC_COLORS.subtext }}
-              onClick={async () => {
-                if (!armedDeleteChat) { setArmedDeleteChat(true); return; }
-                if (await hide()) onBack();
-              }}
-            >{armedDeleteChat ? a.confirmDelete : a.deleteChat}</button>
-          </div>
-          {blockError && <p style={{ color: TEC_COLORS.error, fontSize: 12, margin: 0 }}>{a.blockFailed}</p>}
-        </div>
-      )}
 
       {/* a group of one is the reason a message "never arrives" */}
       {alone && (
@@ -325,32 +254,41 @@ function Chat({ id, me, onBack }: { id: string; me: string; onBack: () => void }
                   </div>
                 ) : (<>
                 {m.media?.type === 'image' && (
-                  // Same-origin, session-gated bytes. `loading="lazy"` matters in
-                  // a long transcript: without it every photo in the history is
-                  // fetched the moment the thread opens.
-                  <a href={mediaUrl(id, m.id)} target="_blank" rel="noopener noreferrer"
-                     style={{ display: 'block', marginBottom: m.body ? 6 : 0 }}>
+                  // Opens the in-app viewer, NOT the URL. A new tab hands the
+                  // browser's own viewer a full-size file, which it renders at
+                  // actual pixels — a corner of the photo, hugely magnified.
+                  <button
+                    onClick={() => setViewing(mediaUrl(id, m.id))}
+                    aria-label={a.photo}
+                    style={{
+                      display: 'block', padding: 0, border: 'none', background: 'none',
+                      cursor: 'pointer', marginBottom: m.body ? 6 : 0,
+                      // The box is reserved BEFORE the bytes arrive, so the
+                      // transcript does not jump as each photo lands.
+                      width: 240, maxWidth: '100%', height: 180,
+                      borderRadius: 10, overflow: 'hidden', position: 'relative',
+                      backgroundColor: TEC_COLORS.surface2,
+                    }}
+                  >
+                    {!loaded.has(m.id) && (
+                      <span style={{
+                        position: 'absolute', inset: 0, display: 'grid', placeItems: 'center',
+                        color: TEC_COLORS.subtext, fontSize: 11,
+                      }}>{a.loading}</span>
+                    )}
                     <img
-                      src={mediaUrl(id, m.id)} alt={a.photo} loading="lazy"
+                      src={mediaUrl(id, m.id)} alt={a.photo} loading="lazy" decoding="async"
+                      onLoad={() => setLoaded((sset) => new Set(sset).add(m.id))}
                       style={{
-                        display: 'block', maxWidth: '100%', width: 240,
-                        // A portrait or panoramic photo would otherwise set its
-                        // own height and take over the transcript. Cropped to a
-                        // tile here; tapping opens the whole image.
-                        maxHeight: 320, objectFit: 'cover',
-                        borderRadius: 10, background: TEC_COLORS.bg,
+                        display: 'block', width: '100%', height: '100%', objectFit: 'cover',
+                        opacity: loaded.has(m.id) ? 1 : 0, transition: 'opacity 0.2s',
                       }}
                     />
-                  </a>
+                  </button>
                 )}
                 {m.media?.type === 'audio' && (
                   <div style={{ marginBottom: m.body ? 6 : 0 }}>
-                    <audio controls preload="none" src={mediaUrl(id, m.id)} style={{ width: 220, maxWidth: '100%' }} />
-                    {typeof m.media.durationMs === 'number' && m.media.durationMs > 0 && (
-                      <div style={{ fontSize: 10.5, color: TEC_COLORS.subtext }}>
-                        <bdi>{a.voiceNote} · {secs(m.media.durationMs)}</bdi>
-                      </div>
-                    )}
+                    <VoiceNote src={mediaUrl(id, m.id)} durationMs={m.media.durationMs} mine={mine} />
                   </div>
                 )}
                 {/* Written by another person: it lays out by its own script. */}
@@ -385,6 +323,9 @@ function Chat({ id, me, onBack }: { id: string; me: string; onBack: () => void }
       {error === 'failed' && <p style={{ color: TEC_COLORS.error, fontSize: 12, margin: '0 0 6px' }}>{a.messageFailed}</p>}
       {error === 'toobig' && <p style={{ color: TEC_COLORS.error, fontSize: 12, margin: '0 0 6px' }}>{a.attachTooBig}</p>}
       {error === 'attach' && <p style={{ color: TEC_COLORS.error, fontSize: 12, margin: '0 0 6px' }}>{a.attachFailed}</p>}
+      {micIssue === 'denied' && (
+        <p style={{ color: TEC_COLORS.subtext, fontSize: 11.5, margin: '0 0 6px', lineHeight: 1.5 }}>{a.micBlockedHere}</p>
+      )}
 
       {/* composer — replaced by the reason when the thread is blocked, rather
           than left in place to fail on send. */}
@@ -402,7 +343,13 @@ function Chat({ id, me, onBack }: { id: string; me: string; onBack: () => void }
           onChange={(e) => {
             const f = e.target.files?.[0];
             e.target.value = '';   // so picking the same file twice still fires
-            if (f) void sendMedia(f, draft, undefined).then((ok) => { if (ok) setDraft(''); });
+            if (!f) return;
+            // Shrink first. A 4MB camera photo was being stored and streamed
+            // back in full to fill a 240px tile — every reader paid for that,
+            // on every load. Falls back to the original if it cannot.
+            void downscaleImage(f)
+              .then((blob) => sendMedia(blob, draft, undefined))
+              .then((ok) => { if (ok) setDraft(''); });
           }}
         />
         <button
@@ -415,7 +362,11 @@ function Chat({ id, me, onBack }: { id: string; me: string; onBack: () => void }
           }}
         >📎</button>
 
-        <VoiceRecorder busy={busy} onRecorded={(blob, ms) => { void sendMedia(blob, '', ms); }} />
+        <VoiceRecorder
+          busy={busy}
+          onRecorded={(blob, ms) => { void sendMedia(blob, '', ms); }}
+          onUnavailable={setMicIssue}
+        />
 
         <input
           style={input} value={draft}
@@ -437,6 +388,28 @@ function Chat({ id, me, onBack }: { id: string; me: string; onBack: () => void }
           <span style={{ transform: 'scaleX(1)', display: 'block' }} dir="ltr">➤</span>
         </button>
       </div>
+      )}
+
+      {viewing && <Lightbox src={viewing} alt={a.photo} onClose={() => setViewing(null)} />}
+
+      {showInfo && thread && (
+        <ChatInfoSheet
+          isGroup={!!isGroup}
+          title={title}
+          members={thread.members}
+          role={thread.role}
+          me={meNorm}
+          peerName={peerName}
+          onClose={() => setShowInfo(false)}
+          onAddMember={(u) => { void addMember(u); }}
+          onLeave={async () => { if (await leave()) onBack(); }}
+          onDelete={async () => { if (await hide()) onBack(); }}
+          blocked={peerBlocked}
+          onBlock={() => { void block(peerName); }}
+          onUnblock={() => { void unblock(peerName); }}
+          blockBusy={blockBusy}
+          blockError={!!blockError}
+        />
       )}
     </div>
   );

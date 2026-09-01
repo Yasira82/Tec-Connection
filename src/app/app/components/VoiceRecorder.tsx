@@ -22,9 +22,15 @@ const CANDIDATE_TYPES = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'a
 /** Longest recording accepted server-side. Past this it is a recording, not a message. */
 const MAX_MS = 5 * 60 * 1000;
 
-export function VoiceRecorder({ busy, onRecorded }: {
+export function VoiceRecorder({ busy, onRecorded, onUnavailable }: {
   busy: boolean;
   onRecorded: (blob: Blob, durationMs: number) => void;
+  /**
+   * Reported UPWARD so the composer can show it on its own line. Rendering the
+   * message inside the button row squeezed the text input down to nothing —
+   * a broken control and a broken layout at the same time.
+   */
+  onUnavailable?: (reason: 'denied' | 'unsupported') => void;
 }) {
   const { t } = useTranslation();
   const a = t.app;
@@ -41,12 +47,12 @@ export function VoiceRecorder({ busy, onRecorded }: {
   // Feature-detect on the client only — `MediaRecorder` does not exist during
   // the server render, and assuming it does would fail hydration.
   useEffect(() => {
-    setSupported(
-      typeof window !== 'undefined'
+    const ok = typeof window !== 'undefined'
       && typeof window.MediaRecorder !== 'undefined'
-      && !!navigator.mediaDevices?.getUserMedia,
-    );
-  }, []);
+      && !!navigator.mediaDevices?.getUserMedia;
+    setSupported(ok);
+    if (!ok) onUnavailable?.('unsupported');
+  }, [onUnavailable]);
 
   const cleanup = () => {
     if (tickRef.current) { clearInterval(tickRef.current); tickRef.current = null; }
@@ -84,17 +90,19 @@ export function VoiceRecorder({ busy, onRecorded }: {
         if (ms >= MAX_MS) rec.stop();   // the server would refuse it anyway
       }, 250);
     } catch {
-      // Denied, or no device. Either way the answer is a sentence, not silence.
+      // Denied, or no device. The button is REMOVED rather than left sitting
+      // there to be pressed again: a permission a webview refuses once will
+      // refuse every time, and a control that cannot work should not remain on
+      // screen inviting the attempt.
       setDenied(true);
+      onUnavailable?.('denied');
       cleanup();
     }
   };
 
-  if (!supported) {
-    // No control at all rather than one that cannot work. The explanation
-    // appears only if someone had already been denied on this device.
-    return denied ? <span style={{ fontSize: 11, color: TEC_COLORS.subtext }}>{a.micUnavailable}</span> : null;
-  }
+  // No control at all rather than one that cannot work. The explanation is the
+  // composer's to render, on its own line.
+  if (!supported || denied) return null;
 
   if (recording) {
     return (
@@ -114,17 +122,14 @@ export function VoiceRecorder({ busy, onRecorded }: {
   }
 
   return (
-    <>
-      <button
-        onClick={() => { void start(); }} disabled={busy} aria-label={a.recordVoice}
-        style={{
-          width: 38, height: 38, borderRadius: 999, flexShrink: 0,
-          background: 'none', border: `1px solid ${TEC_COLORS.border}`,
-          color: TEC_COLORS.subtext, fontSize: 16, cursor: busy ? 'not-allowed' : 'pointer',
-          display: 'grid', placeItems: 'center',
-        }}
-      >🎤</button>
-      {denied && <span style={{ fontSize: 11, color: TEC_COLORS.error }}>{a.micDenied}</span>}
-    </>
+    <button
+      onClick={() => { void start(); }} disabled={busy} aria-label={a.recordVoice}
+      style={{
+        width: 38, height: 38, borderRadius: 999, flexShrink: 0,
+        background: 'none', border: `1px solid ${TEC_COLORS.border}`,
+        color: TEC_COLORS.subtext, fontSize: 16, cursor: busy ? 'not-allowed' : 'pointer',
+        display: 'grid', placeItems: 'center',
+      }}
+    >🎤</button>
   );
 }
