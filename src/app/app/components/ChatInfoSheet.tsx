@@ -12,10 +12,15 @@
 // members as a LIST (not chips — a chip is a tag, and these are people), then
 // the destructive actions last, marked as destructive and separated from
 // everything above them.
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { TEC_COLORS } from '@yasser172/tec-ui';
 import { useTranslation } from '@/lib/i18n';
 import { useBackButton } from '@/lib-client/connection/useBackButton';
+import { Avatar } from '@/components/public/Avatar';
+
+/** What a group photo may be. Same three as a profile photo, same 2MB ceiling. */
+const PHOTO_ACCEPT = 'image/jpeg,image/png,image/webp';
+const PHOTO_MAX_BYTES = 2 * 1024 * 1024;
 
 const sheetInput = {
   flex: 1, minWidth: 0, background: TEC_COLORS.bg, color: TEC_COLORS.text,
@@ -45,11 +50,13 @@ function ActionRow({ label, icon, danger, onClick, disabled }: {
 }
 
 export function ChatInfoSheet({
-  isGroup, title, members, role, me, onClose,
+  isGroup, title, members, role, me, onClose, convId,
   onAddMember, onLeave, onDelete, onClear,
   blocked, onBlock, onUnblock, blockBusy, blockError, peerName,
 }: {
   isGroup: boolean;
+  /** Needed for the group photo, which is keyed by the conversation. */
+  convId: string;
   title: string;
   members: string[];
   role?: string;
@@ -78,7 +85,46 @@ export function ChatInfoSheet({
   const [armedDelete, setArmedDelete] = useState(false);
   const [armedLeave, setArmedLeave] = useState(false);
   const [armedClear, setArmedClear] = useState(false);
+  const photoRef = useRef<HTMLInputElement>(null);
+  const [photoBusy, setPhotoBusy] = useState(false);
+  const [photoMsg, setPhotoMsg] = useState('');
+  // Bumped after a change so the <img> re-requests. Without it the browser keeps
+  // serving the cached bytes of the OLD photo from the same URL, and it looks
+  // like the upload silently failed.
+  const [photoVersion, setPhotoVersion] = useState(0);
   useBackButton(true, onClose);
+
+  const groupPhotoUrl = `/api/bff/connection/conversations/${encodeURIComponent(convId)}/avatar`;
+
+  const uploadPhoto = async (file: File) => {
+    // Checked here as well as in the BFF and in storage. Not redundancy for its
+    // own sake: it turns a failed round-trip into a sentence, and a 5MB photo is
+    // never uploaded at all.
+    if (!PHOTO_ACCEPT.split(',').includes(file.type)) { setPhotoMsg(a.photoWrongType); return; }
+    if (file.size > PHOTO_MAX_BYTES) { setPhotoMsg(a.photoTooBig); return; }
+
+    setPhotoBusy(true); setPhotoMsg('');
+    try {
+      const res = await fetch(groupPhotoUrl, {
+        method: 'POST', credentials: 'include',
+        headers: { 'Content-Type': file.type },
+        body: file,
+      });
+      if (!res.ok) { setPhotoMsg(a.photoFailed); return; }
+      setPhotoVersion((v) => v + 1);
+    } catch { setPhotoMsg(a.photoFailed); }
+    finally { setPhotoBusy(false); }
+  };
+
+  const removePhoto = async () => {
+    setPhotoBusy(true); setPhotoMsg('');
+    try {
+      const res = await fetch(groupPhotoUrl, { method: 'DELETE', credentials: 'include' });
+      if (!res.ok) { setPhotoMsg(a.photoFailed); return; }
+      setPhotoVersion((v) => v + 1);
+    } catch { setPhotoMsg(a.photoFailed); }
+    finally { setPhotoBusy(false); }
+  };
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
@@ -122,17 +168,59 @@ export function ChatInfoSheet({
 
         {/* identity */}
         <div style={{ display: 'grid', placeItems: 'center', gap: 6, padding: '10px 16px 18px' }}>
-          <span style={{
-            width: 66, height: 66, borderRadius: 999, display: 'grid', placeItems: 'center',
-            background: `linear-gradient(135deg, ${TEC_COLORS.gold}, ${TEC_COLORS.goldDark})`,
-            color: '#0a0800', fontSize: 27, fontWeight: 800,
-          }}>{(title || '?').replace(/^@/, '').charAt(0).toUpperCase()}</span>
+          {/* The Avatar component, not a hand-drawn disc. This sheet used to
+              build its own gradient circle with the first letter, so it showed
+              an initial for a person whose photo was already on file. */}
+          <Avatar
+            username={(title || '?').replace(/^@/, '')}
+            size={66}
+            tryPhoto
+            photoSrc={isGroup ? `${groupPhotoUrl}?v=${photoVersion}` : undefined}
+            key={photoVersion}
+          />
           <span style={{ fontSize: 17, fontWeight: 700, color: TEC_COLORS.text, textAlign: 'center' }}>
             <bdi dir="auto">{title}</bdi>
           </span>
           <span style={{ fontSize: 12.5, color: TEC_COLORS.subtext }}>
             {isGroup ? <bdi>{members.length} {a.membersLabel}</bdi> : a.directLabel}
           </span>
+
+          {/* Only the owner, and only for a group. A direct chat shows the other
+              person's own photo — theirs to set, not yours to replace. */}
+          {isGroup && role === 'owner' && (
+            <>
+              <input
+                ref={photoRef} type="file" accept={PHOTO_ACCEPT} hidden
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  // Cleared so picking the SAME file again still fires onChange.
+                  e.target.value = '';
+                  if (f) void uploadPhoto(f);
+                }}
+              />
+              <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
+                <button
+                  onClick={() => photoRef.current?.click()} disabled={photoBusy}
+                  style={{
+                    background: 'none', border: 'none', color: TEC_COLORS.gold,
+                    fontSize: 12.5, fontWeight: 700, padding: '2px 4px',
+                    cursor: photoBusy ? 'not-allowed' : 'pointer',
+                  }}
+                >{photoBusy ? a.sending : a.groupPhotoChange}</button>
+                <button
+                  onClick={() => { void removePhoto(); }} disabled={photoBusy}
+                  style={{
+                    background: 'none', border: 'none', color: TEC_COLORS.subtext,
+                    fontSize: 12.5, padding: '2px 4px',
+                    cursor: photoBusy ? 'not-allowed' : 'pointer',
+                  }}
+                >{a.groupPhotoRemove}</button>
+              </div>
+              {photoMsg && (
+                <span style={{ fontSize: 11.5, color: TEC_COLORS.error }}>{photoMsg}</span>
+              )}
+            </>
+          )}
         </div>
 
         {isGroup && (

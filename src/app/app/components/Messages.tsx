@@ -94,20 +94,27 @@ const dayKey = (iso: string) => {
  * only a handle, so it asks the avatar route and falls back to the initial when
  * that 404s. Without this a profile photo appeared in Settings and nowhere else.
  */
-function Avatar({ name, size = 44, group = false }: { name: string; size?: number; group?: boolean }) {
-  if (!group) {
-    return (
-      <span style={{ flexShrink: 0, display: 'block' }}>
-        <PersonAvatar username={(name || '?').replace(/^@/, '')} size={size} tryPhoto />
-      </span>
-    );
-  }
+function Avatar({ name, size = 44, group = false, convId }: {
+  name: string; size?: number; group?: boolean;
+  /** A group's photo is keyed by the CONVERSATION, not by a handle. */
+  convId?: string;
+}) {
+  // A group used to get a letter disc, always. The stated reason was that a
+  // group has a title rather than a face — but the real one was that a group had
+  // no photo to show and no way to set one, so every group read as a person
+  // whose picture had failed to load. Now it has both, and the same component
+  // renders it: same tinted disc underneath, same initial fallback, same clean
+  // 404 when there is no photo.
+  const src = group && convId ? `/api/bff/connection/conversations/${encodeURIComponent(convId)}/avatar` : undefined;
   return (
-    <span style={{
-      width: size, height: size, borderRadius: 999, display: 'grid', placeItems: 'center', flexShrink: 0,
-      background: `linear-gradient(135deg, ${TEC_COLORS.gold}, ${TEC_COLORS.goldDark})`,
-      color: '#0a0800', fontSize: size * 0.42, fontWeight: 800,
-    }}>{(name || '?').charAt(0).toUpperCase()}</span>
+    <span style={{ flexShrink: 0, display: 'block' }}>
+      <PersonAvatar
+        username={(name || '?').replace(/^@/, '')}
+        size={size}
+        tryPhoto={!group || !!convId}
+        photoSrc={src}
+      />
+    </span>
   );
 }
 
@@ -190,7 +197,7 @@ function Chat({ id, me, onBack }: { id: string; me: string; onBack: () => void }
           background: 'none', border: 'none', color: TEC_COLORS.gold, cursor: 'pointer',
           fontSize: 26, lineHeight: 1, padding: '0 4px',
         }}>›</button>
-        <Avatar name={isGroup ? (thread?.title ?? 'G') : (thread?.peer ?? '?')} size={40} group={!!isGroup} />
+        <Avatar name={isGroup ? (thread?.title ?? 'G') : (thread?.peer ?? '?')} size={40} group={!!isGroup} convId={id} />
         <button
           onClick={() => setShowInfo(true)}
           style={{ flex: 1, minWidth: 0, background: 'none', border: 'none', padding: 0, textAlign: 'start', cursor: 'pointer' }}
@@ -439,6 +446,7 @@ function Chat({ id, me, onBack }: { id: string; me: string; onBack: () => void }
       {showInfo && thread && (
         <ChatInfoSheet
           isGroup={!!isGroup}
+          convId={id}
           title={title}
           members={thread.members}
           role={thread.role}
@@ -480,7 +488,7 @@ function Row({ c, onOpen, a }: { c: Summary; onOpen: () => void; a: Record<strin
       width: '100%', textAlign: 'start', display: 'flex', alignItems: 'center', gap: 12,
       padding: '12px 2px', background: 'none', border: 'none', cursor: 'pointer',
     }}>
-      <Avatar name={isGroup ? (c.title ?? 'G') : (c.peer ?? '?')} group={isGroup} />
+      <Avatar name={isGroup ? (c.title ?? 'G') : (c.peer ?? '?')} group={isGroup} convId={c.id} />
       <span style={{ flex: 1, minWidth: 0 }}>
         <span style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
           <span style={{ flex: 1, minWidth: 0, fontSize: 15, fontWeight: 700, color: TEC_COLORS.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>

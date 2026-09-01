@@ -153,6 +153,9 @@ export const en = {
     photoRemoved: 'Photo removed.',
     photoTooBig:  'That image is over 2MB. Try a smaller one.',
     photoWrongType: 'Use a JPEG, PNG or WebP image.',
+    photoFailed: "The photo did not save. Please retry.",
+    groupPhotoChange: "Change photo",
+    groupPhotoRemove: "Remove",
     uploadFailed: 'The upload did not complete. Please retry.',
 
     inviteTitle: 'Invite & earn',
