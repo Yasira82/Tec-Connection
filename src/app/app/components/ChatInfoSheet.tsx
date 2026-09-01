@@ -55,6 +55,7 @@ export function ChatInfoSheet({
   isGroup, title, members, role, me, onClose, convId, visibility, description,
   admins = [], ownerName, onRemoved,
   onAddMember, onLeave, onDelete, onClear,
+  muted, onToggleMute,
   blocked, onBlock, onUnblock, blockBusy, blockError, peerName,
 }: {
   isGroup: boolean;
@@ -75,6 +76,10 @@ export function ChatInfoSheet({
   me: string;
   onClose: () => void;
   onAddMember: (username: string) => void;
+  /** Muted for ME. Per-member and private — nobody else can see it. */
+  muted?: boolean;
+  /** Absent for a conversation that cannot be muted; the row is then not shown. */
+  onToggleMute?: (next: boolean) => void | Promise<void>;
   onLeave: () => void;
   /** Removes the conversation AND its history — it does not come back. */
   onDelete: () => void;
@@ -96,6 +101,11 @@ export function ChatInfoSheet({
   const [armedDelete, setArmedDelete] = useState(false);
   const [armedLeave, setArmedLeave] = useState(false);
   const [armedClear, setArmedClear] = useState(false);
+  // Only guards a double tap while the write is in flight. The switch itself is
+  // driven by `muted`, which the parent updates from the SERVER's answer — so
+  // a refused mute leaves the row exactly where it was rather than flipping and
+  // flipping back.
+  const [muteBusy, setMuteBusy] = useState(false);
   const photoRef = useRef<HTMLInputElement>(null);
   const [photoBusy, setPhotoBusy] = useState(false);
   const [photoMsg, setPhotoMsg] = useState('');
@@ -533,6 +543,27 @@ export function ChatInfoSheet({
                 );
               })}
             </div>
+          </section>
+        )}
+
+        {/* Muting. Deliberately ABOVE the destructive line and not marked red —
+            it is the reversible, everyday setting, and grouping it with Leave
+            and Delete is how a harmless control ends up untouched. */}
+        {onToggleMute && (
+          <section style={{ borderTop: `1px solid ${TEC_COLORS.border}`, paddingTop: 4 }}>
+            <ActionRow
+              icon={muted ? '🔕' : '🔔'}
+              label={muted ? a.unmuteChat : a.muteChat}
+              disabled={muteBusy}
+              onClick={async () => {
+                setMuteBusy(true);
+                try { await onToggleMute(!muted); } finally { setMuteBusy(false); }
+              }}
+            />
+            <p style={{
+              margin: 0, padding: '0 16px 12px', fontSize: 11.5,
+              color: TEC_COLORS.subtext, lineHeight: 1.5,
+            }}>{a.muteHint}</p>
           </section>
         )}
 
