@@ -113,3 +113,46 @@ export async function resolveChatMedia(
     return { body: await res.arrayBuffer(), contentType };
   } catch { return null; }
 }
+
+/**
+ * The bytes of a GROUP's photo.
+ *
+ * Same two hops as an attachment — identity-service checks membership and hands
+ * back the key, storage returns the bytes — because a group's picture is as
+ * private as the group. It is keyed by the conversation rather than by a
+ * handle, which is the only reason this cannot reuse the avatar route.
+ *
+ * Images only on the way out, whatever the key turns out to point at.
+ */
+export async function resolveGroupAvatar(
+  token: string,
+  conversationId: string,
+): Promise<MediaBytes | null> {
+  if (!GW || !token || !conversationId) return null;
+  try {
+    const keyRes = await fetch(
+      `${GW}/api/identity/connection/conversations/${encodeURIComponent(conversationId)}/avatar`,
+      { method: 'GET', headers: internalHeaders(token), cache: 'no-store' },
+    );
+    if (!keyRes.ok) return null;
+    const key = (await keyRes.json().catch(() => ({})))?.data?.key;
+    if (typeof key !== 'string' || !key) return null;
+
+    const res = await fetch(`${GW}/api/storage/internal/public-object`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-request-id': crypto.randomUUID(),
+        ...(process.env.INTERNAL_SECRET && { 'x-internal-key': process.env.INTERNAL_SECRET }),
+      },
+      body: JSON.stringify({ key }),
+      cache: 'no-store',
+    });
+    if (!res.ok) return null;
+
+    const contentType = res.headers.get('content-type') ?? '';
+    if (kindOf(contentType) !== 'image') return null;
+
+    return { body: await res.arrayBuffer(), contentType };
+  } catch { return null; }
+}

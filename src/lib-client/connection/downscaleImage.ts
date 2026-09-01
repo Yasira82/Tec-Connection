@@ -19,8 +19,24 @@
 /** Long edge, in CSS pixels. Comfortably sharp when opened full-screen. */
 export const MAX_EDGE = 1600;
 
+/**
+ * Long edge for a photo that is only ever a disc — a profile or group picture.
+ *
+ * 512 rather than 1600 because the largest an avatar is ever drawn is 66px, and
+ * even at a 3x device pixel ratio that is 198px. Storing four times the pixels
+ * anyone can see costs the upload, the storage and every download of it.
+ */
+export const AVATAR_MAX_EDGE = 512;
+
 /** Below this, resizing costs more than it saves. */
 const SKIP_UNDER_BYTES = 300 * 1024;
+
+/**
+ * How long to wait for the browser to decode the picture before giving up and
+ * uploading it as it is. Generous — a big photo on a slow phone is genuinely
+ * slow — but finite, which is the point.
+ */
+const DECODE_TIMEOUT_MS = 10_000;
 
 const OUTPUT_TYPE = 'image/jpeg';
 const QUALITY = 0.85;
@@ -40,8 +56,21 @@ async function loadBitmap(file: File): Promise<ImageBitmap | HTMLImageElement> {
   try {
     return await new Promise<HTMLImageElement>((resolve, reject) => {
       const img = new Image();
-      img.onload = () => resolve(img);
-      img.onerror = () => reject(new Error('decode failed'));
+      // A DEADLINE, because the two callbacks are not exhaustive.
+      //
+      // `onload` and `onerror` look like they cover every outcome, and they do
+      // not: an environment that never actually fetches the object URL fires
+      // NEITHER, and this promise then never settles. Nothing downstream has a
+      // timeout either — so the upload would sit forever behind a spinner, with
+      // no error, no log, and no way for the person to tell it had given up.
+      //
+      // Rejecting on the deadline hands control back to the caller's catch,
+      // which returns the ORIGINAL file. A photo that uploads at full size beats
+      // a photo that never uploads.
+      const timer = setTimeout(() => reject(new Error('decode timed out')), DECODE_TIMEOUT_MS);
+      const done = (fn: () => void) => { clearTimeout(timer); fn(); };
+      img.onload = () => done(() => resolve(img));
+      img.onerror = () => done(() => reject(new Error('decode failed')));
       img.src = url;
     });
   } finally {
@@ -54,7 +83,7 @@ async function loadBitmap(file: File): Promise<ImageBitmap | HTMLImageElement> {
  * A smaller JPEG of `file`, or `file` itself when shrinking would not help or
  * could not be done.
  */
-export async function downscaleImage(file: File): Promise<Blob> {
+export async function downscaleImage(file: File, maxEdge: number = MAX_EDGE): Promise<Blob> {
   if (!file.type.startsWith('image/')) return file;
   if (file.size <= SKIP_UNDER_BYTES) return file;
   if (typeof document === 'undefined') return file;
@@ -65,7 +94,7 @@ export async function downscaleImage(file: File): Promise<Blob> {
     const h = 'height' in src ? src.height : 0;
     if (!w || !h) return file;
 
-    const scale = Math.min(1, MAX_EDGE / Math.max(w, h));
+    const scale = Math.min(1, maxEdge / Math.max(w, h));
     // Already small enough in PIXELS: re-encoding would only lose quality.
     if (scale === 1) return file;
 

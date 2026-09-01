@@ -10,6 +10,7 @@ import { useTranslation, LOCALES } from '@/lib/i18n';
 import { useMe } from '@/lib-client/hooks/useMe';
 import { useBlocks } from '@/lib-client/connection/useBlocks';
 import { InviteCard } from '@/components/referral/InviteCard';
+import { Avatar } from '@/components/public/Avatar';
 import { ProfileEditor } from './ProfileEditor';
 import { ConnectionPro } from './ConnectionPro';
 import { ModerationQueue } from './ModerationQueue';
@@ -102,12 +103,15 @@ export function SettingsView() {
       {/* Profile */}
       <Section title={s.profile} icon="👤">
         <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: 16 }}>
-          <div style={{
-            width: 56, height: 56, borderRadius: '50%', flexShrink: 0,
-            background: `linear-gradient(135deg, ${TEC_COLORS.gold}, ${TEC_COLORS.goldDark})`,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 24, fontWeight: 900, color: '#0a0800',
-          }}>{(username ?? 'Y').charAt(0).toUpperCase()}</div>
+          {/* The Avatar component, NOT a hand-drawn disc.
+              This card used to build its own gradient circle with the first
+              letter of the handle — so it showed "Y" while the card directly
+              below it, on the same screen, showed the uploaded photo. Two
+              renderings of the same person, and the one at the top of Settings
+              is the one people read as "my photo did not save". */}
+          <span style={{ flexShrink: 0, display: 'block' }}>
+            <Avatar username={username ?? '?'} size={56} tryPhoto />
+          </span>
           <div style={{ minWidth: 0 }}>
             <div style={{ fontSize: 18, fontWeight: 800, color: TEC_COLORS.text }}>
               {username ? <bdi>@{username}</bdi> : signedIn ? s.member : s.notSignedIn}

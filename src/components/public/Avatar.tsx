@@ -45,9 +45,19 @@ export const avatarSrc = (username: string): string =>
   `/api/avatar/${encodeURIComponent(username)}`;
 
 export function Avatar({
-  username, size = 46, hasPhoto = false, tryPhoto = false,
+  username, size = 46, hasPhoto = false, tryPhoto = false, photoSrc,
 }: {
   username: string; size?: number; hasPhoto?: boolean;
+  /**
+   * Where the photo lives, when it is not a person's.
+   *
+   * A group's picture is keyed by the CONVERSATION, not by a handle, so it
+   * cannot be found from `username` alone. Everything else — the tinted disc
+   * underneath, the initial fallback, the 404 handling — is identical, and
+   * duplicating this component to change one URL is how two avatar
+   * implementations start drifting apart.
+   */
+  photoSrc?: string;
   /**
    * Attempt the photo without being told there is one.
    *
@@ -83,7 +93,7 @@ export function Avatar({
         // the directory list; `decoding="async"` keeps a slow decode off the main
         // thread on a phone.
         <img
-          src={avatarSrc(username)}
+          src={photoSrc ?? avatarSrc(username)}
           alt=""
           width={size}
           height={size}
