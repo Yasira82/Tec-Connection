@@ -23,11 +23,12 @@ export interface Summary {
   members: number;
   unread: number;
   role: 'owner' | 'member';
-  last: { body: string; by: string; at: string } | null;
+  last: { body: string; by: string; at: string; media?: string | null } | null;
   last_message_at: string;
 }
 
-export interface Msg { id: string; body: string; by: string; at: string }
+export interface MsgMedia { type: 'image' | 'audio'; mime?: string | null; durationMs?: number | null }
+export interface Msg { id: string; body: string; by: string; at: string; media?: MsgMedia | null }
 
 export interface Thread {
   id: string;
@@ -196,6 +197,38 @@ export function useThread(id: string | null) {
     }
   }, [id, poll]);
 
+  /**
+   * Upload an attachment and post it as a message. The bytes go to this app's
+   * own origin — a presigned PUT from a browser needs bucket CORS that does not
+   * exist, and a blocked cross-origin request looks exactly like a dead network.
+   * The caption and duration ride as query params because the body is the file.
+   */
+  const sendMedia = useCallback(async (blob: Blob, caption = '', durationMs?: number) => {
+    if (!id) return false;
+    setBusy(true);
+    try {
+      const qs = new URLSearchParams();
+      if (caption.trim()) qs.set('caption', caption.trim());
+      if (durationMs && durationMs > 0) qs.set('ms', String(Math.round(durationMs)));
+      const res = await fetch(
+        `/api/bff/connection/conversations/${encodeURIComponent(id)}/media${qs.toString() ? `?${qs}` : ''}`,
+        { method: 'POST', credentials: 'include', headers: { 'Content-Type': blob.type }, body: blob },
+      );
+      if (!res.ok) { setError(res.status === 400 ? 'toobig' : 'attach'); return false; }
+      setError(null);
+      // A full reload rather than an append: the upload response is one message,
+      // but the cursor has not moved, so the next poll would fetch it again.
+      cursor.current = null;
+      await poll();
+      return true;
+    } catch {
+      setError('attach');
+      return false;
+    } finally {
+      setBusy(false);
+    }
+  }, [id, poll]);
+
   const addMember = useCallback(async (username: string) => {
     if (!id) return false;
     const res = await fetch(`/api/bff/connection/conversations/${encodeURIComponent(id)}/members`, {
@@ -217,5 +250,5 @@ export function useThread(id: string | null) {
     return res.ok;
   }, [id]);
 
-  return { thread, busy, error, send, addMember, leave, reload: poll };
+  return { thread, busy, error, send, sendMedia, addMember, leave, reload: poll };
 }

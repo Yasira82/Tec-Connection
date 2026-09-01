@@ -24,6 +24,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { TEC_COLORS } from '@yasser172/tec-ui';
 import { useTranslation } from '@/lib/i18n';
 import { useThread, type Summary, type Msg } from '@/lib-client/connection/useMessages';
+import { VoiceRecorder } from './VoiceRecorder';
 import { NewChat } from './NewChat';
 
 /** The service normalizes every username; the session hook does not. */
@@ -51,6 +52,15 @@ const clock = (iso: string) => {
   return Number.isNaN(d.getTime()) ? '' : d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 };
 
+/** Same-origin URL for an attachment. The session cookie is what makes it resolve. */
+const mediaUrl = (conversationId: string, messageId: string) =>
+  `/api/bff/connection/conversations/${encodeURIComponent(conversationId)}/media/${encodeURIComponent(messageId)}`;
+
+const secs = (ms: number) => {
+  const total = Math.round(ms / 1000);
+  return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, '0')}`;
+};
+
 const dayKey = (iso: string) => {
   const d = new Date(iso);
   return Number.isNaN(d.getTime()) ? '' : d.toDateString();
@@ -70,7 +80,8 @@ function Avatar({ name, size = 44 }: { name: string; size?: number }) {
 function Chat({ id, me, onBack }: { id: string; me: string; onBack: () => void }) {
   const { t } = useTranslation();
   const a = t.app;
-  const { thread, busy, error, send, addMember, leave } = useThread(id);
+  const { thread, busy, error, send, sendMedia, addMember, leave } = useThread(id);
+  const fileRef = useRef<HTMLInputElement | null>(null);
   const [draft, setDraft] = useState('');
   const [invitee, setInvitee] = useState('');
   const [showInfo, setShowInfo] = useState(false);
@@ -211,10 +222,41 @@ function Chat({ id, me, onBack }: { id: string; me: string; onBack: () => void }
                     <bdi>@{m.by}</bdi>
                   </div>
                 )}
+                {m.media?.type === 'image' && (
+                  // Same-origin, session-gated bytes. `loading="lazy"` matters in
+                  // a long transcript: without it every photo in the history is
+                  // fetched the moment the thread opens.
+                  <a href={mediaUrl(id, m.id)} target="_blank" rel="noopener noreferrer"
+                     style={{ display: 'block', marginBottom: m.body ? 6 : 0 }}>
+                    <img
+                      src={mediaUrl(id, m.id)} alt={a.photo} loading="lazy"
+                      style={{
+                        display: 'block', maxWidth: '100%', width: 240,
+                        // A portrait or panoramic photo would otherwise set its
+                        // own height and take over the transcript. Cropped to a
+                        // tile here; tapping opens the whole image.
+                        maxHeight: 320, objectFit: 'cover',
+                        borderRadius: 10, background: TEC_COLORS.bg,
+                      }}
+                    />
+                  </a>
+                )}
+                {m.media?.type === 'audio' && (
+                  <div style={{ marginBottom: m.body ? 6 : 0 }}>
+                    <audio controls preload="none" src={mediaUrl(id, m.id)} style={{ width: 220, maxWidth: '100%' }} />
+                    {typeof m.media.durationMs === 'number' && m.media.durationMs > 0 && (
+                      <div style={{ fontSize: 10.5, color: TEC_COLORS.subtext }}>
+                        <bdi>{a.voiceNote} · {secs(m.media.durationMs)}</bdi>
+                      </div>
+                    )}
+                  </div>
+                )}
                 {/* Written by another person: it lays out by its own script. */}
-                <div style={{ fontSize: 14.5, lineHeight: 1.5, color: TEC_COLORS.text, wordBreak: 'break-word' }}>
-                  <bdi dir="auto">{m.body}</bdi>
-                </div>
+                {m.body && (
+                  <div style={{ fontSize: 14.5, lineHeight: 1.5, color: TEC_COLORS.text, wordBreak: 'break-word' }}>
+                    <bdi dir="auto">{m.body}</bdi>
+                  </div>
+                )}
                 <div style={{ fontSize: 10, color: TEC_COLORS.subtext, textAlign: 'end', marginTop: 2 }}>
                   {/* "12:52 AM" is mostly bidi-neutral, so an RTL paragraph moves
                       the meridiem to the front: "AM 12:52". */}
@@ -229,9 +271,33 @@ function Chat({ id, me, onBack }: { id: string; me: string; onBack: () => void }
 
       {error === 'refused' && <p style={{ color: TEC_COLORS.error, fontSize: 12, margin: '0 0 6px' }}>{a.messageRefused}</p>}
       {error === 'failed' && <p style={{ color: TEC_COLORS.error, fontSize: 12, margin: '0 0 6px' }}>{a.messageFailed}</p>}
+      {error === 'toobig' && <p style={{ color: TEC_COLORS.error, fontSize: 12, margin: '0 0 6px' }}>{a.attachTooBig}</p>}
+      {error === 'attach' && <p style={{ color: TEC_COLORS.error, fontSize: 12, margin: '0 0 6px' }}>{a.attachFailed}</p>}
 
       {/* composer */}
-      <div style={{ display: 'flex', gap: 8, alignItems: 'center', paddingTop: 10, borderTop: `1px solid ${TEC_COLORS.border}` }}>
+      <div style={{ display: 'flex', gap: 6, alignItems: 'center', paddingTop: 10, borderTop: `1px solid ${TEC_COLORS.border}` }}>
+        {/* `capture` is deliberately absent: without it Android offers BOTH the
+            camera and the gallery, which is what people expect from a paperclip. */}
+        <input
+          ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp" hidden
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            e.target.value = '';   // so picking the same file twice still fires
+            if (f) void sendMedia(f, draft, undefined).then((ok) => { if (ok) setDraft(''); });
+          }}
+        />
+        <button
+          onClick={() => fileRef.current?.click()} disabled={busy} aria-label={a.attachPhoto}
+          style={{
+            width: 38, height: 38, borderRadius: 999, flexShrink: 0,
+            background: 'none', border: `1px solid ${TEC_COLORS.border}`,
+            color: TEC_COLORS.subtext, fontSize: 17, cursor: busy ? 'not-allowed' : 'pointer',
+            display: 'grid', placeItems: 'center',
+          }}
+        >📎</button>
+
+        <VoiceRecorder busy={busy} onRecorded={(blob, ms) => { void sendMedia(blob, '', ms); }} />
+
         <input
           style={input} value={draft} onChange={(e) => setDraft(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter') submit(); }}
