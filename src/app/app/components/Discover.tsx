@@ -11,6 +11,7 @@ import { TEC_COLORS } from '@yasser172/tec-ui';
 import { useTranslation } from '@/lib/i18n';
 import { Avatar } from '@/components/public/Avatar';
 import { useBlocks } from '@/lib-client/connection/useBlocks';
+import { ReportSheet } from './ReportSheet';
 
 const CATEGORIES = ['builder', 'merchant', 'creator', 'investor', 'mentor', 'other'] as const;
 type Category = (typeof CATEGORIES)[number];
@@ -63,6 +64,7 @@ export function Discover({ onMessage }: {
   // the one place you meet a stranger was the one place you could not end it.
   const { isBlocked, block, unblock, busy: blockBusy } = useBlocks();
   const [armedBlock, setArmedBlock] = useState<string | null>(null);
+  const [reporting, setReporting] = useState<string | null>(null);
 
   // Only the caller's own username is needed here — to hide the Follow button on
   // their own row. Editing the card is a Settings task (see ProfileEditor).
@@ -183,11 +185,30 @@ export function Discover({ onMessage }: {
                       cursor: 'pointer', whiteSpace: 'nowrap',
                     }}
                   >{isBlocked(p.username) ? a.unblock : armedBlock === p.username ? a.confirmBlock : a.block}</button>
+                  {/* Quiet and last. Most people in a directory are not a
+                      problem, and a loud accusation button on every card
+                      changes how the whole list reads. */}
+                  <button
+                    onClick={() => setReporting(p.username)}
+                    style={{
+                      background: 'none', border: 'none', color: TEC_COLORS.subtext,
+                      padding: '2px 4px', fontSize: 11, cursor: 'pointer',
+                      textDecoration: 'underline', whiteSpace: 'nowrap',
+                    }}
+                  >{a.report}</button>
                 </div>
               )}
             </div>
           ))}
         </div>
+
+        {reporting && (
+          <ReportSheet
+            kind="user" target={reporting} author={reporting}
+            onClose={() => setReporting(null)}
+            onBlock={() => { void block(reporting); }}
+          />
+        )}
 
         {/* One line, once. The same three principles were previously restated
             at the bottom of every card on every tab. */}

@@ -37,12 +37,14 @@ function Choice({ label, hint, onClick }: { label: string; hint: string; onClick
   );
 }
 
-export function MessageActions({ mine, deleted, onDelete, onClose }: {
+export function MessageActions({ mine, deleted, onDelete, onReport, onClose }: {
   /** Only the sender may clear a message for both sides. */
   mine: boolean;
   /** A tombstone can still be removed from your own copy. */
   deleted: boolean;
   onDelete: (scope: 'me' | 'everyone') => void;
+  /** Absent for your own message — reporting yourself is not a thing. */
+  onReport?: () => void;
   onClose: () => void;
 }) {
   const { t } = useTranslation();
@@ -91,6 +93,28 @@ export function MessageActions({ mine, deleted, onDelete, onClose }: {
               label={a.deleteForEveryone} hint={a.deleteForEveryoneHint}
               onClick={() => { onDelete('everyone'); onClose(); }}
             />
+          </div>
+        )}
+
+        {/* Reporting is not deleting, so it is not red and it is not grouped
+            with the two that are. It only appears on someone else's message —
+            reporting your own is not a thing. */}
+        {!mine && !deleted && onReport && (
+          <div style={{ borderTop: `1px solid ${TEC_COLORS.border}` }}>
+            <button
+              onClick={() => { onReport(); onClose(); }}
+              style={{
+                display: 'block', width: '100%', textAlign: 'start', cursor: 'pointer',
+                padding: '13px 16px', background: 'none', border: 'none',
+              }}
+            >
+              <span style={{ display: 'block', fontSize: 14.5, fontWeight: 600, color: TEC_COLORS.text }}>
+                {a.report}
+              </span>
+              <span style={{ display: 'block', fontSize: 11.5, color: TEC_COLORS.subtext, marginTop: 2, lineHeight: 1.45 }}>
+                {a.reportHint}
+              </span>
+            </button>
           </div>
         )}
 

@@ -459,3 +459,53 @@ describe('a status photo is private', () => {
     expect((await GET(get('tec_access_token=tok'), params)).status).toBe(404);
   });
 });
+
+describe('reports BFF — the reporter is the session, and the queue is not here', () => {
+  const url = 'http://localhost/api/bff/connection/reports';
+  const body = (b: unknown) => makeReq({ cookies: session, method: 'POST', body: b, url });
+
+  it('forwards a valid report and sends no identity of its own', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(ok({ reported: true }));
+    vi.stubGlobal('fetch', fetchMock);
+    const { POST } = await import('@/app/api/bff/connection/reports/route');
+    await POST(body({ kind: 'story', target: 's1', reason: 'sexual' }));
+    const sent = JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body));
+    expect(sent).toEqual({ kind: 'story', target: 's1', reason: 'sexual' });
+    expect(JSON.stringify(sent)).not.toContain('alice');
+  });
+
+  it('rejects a reason outside the fixed set before a round trip', async () => {
+    // A free-text reason makes a queue unsortable and lets a reporter write an
+    // accusation into a field nobody reviews.
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+    const { POST } = await import('@/app/api/bff/connection/reports/route');
+    const res = await POST(body({ kind: 'user', target: 'bob', reason: 'i dont like them' }));
+    expect(res.status).toBe(400);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('rejects an unknown target kind', async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+    const { POST } = await import('@/app/api/bff/connection/reports/route');
+    expect((await POST(body({ kind: 'profile', target: 'x', reason: 'spam' }))).status).toBe(400);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('refuses without a session and never reaches the gateway', async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+    const { POST } = await import('@/app/api/bff/connection/reports/route');
+    const res = await POST(makeReq({ method: 'POST', body: { kind: 'user', target: 'bob', reason: 'spam' }, url }));
+    expect(res.status).toBe(401);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('exposes no GET — the review queue is internal-key only', async () => {
+    // Who reported whom is the most sensitive thing here. A BFF route with a
+    // session in front of it would be one edit away from exposing it.
+    const mod = await import('@/app/api/bff/connection/reports/route');
+    expect('GET' in mod).toBe(false);
+  });
+});

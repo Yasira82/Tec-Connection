@@ -32,6 +32,7 @@ import { Lightbox } from './Lightbox';
 import { ChatInfoSheet } from './ChatInfoSheet';
 import { MessageActions } from './MessageActions';
 import { StatusStrip } from './StatusStrip';
+import { ReportSheet } from './ReportSheet';
 import { VoiceNote } from './VoiceNote';
 import { downscaleImage } from '@/lib-client/connection/downscaleImage';
 
@@ -110,6 +111,7 @@ function Chat({ id, me, onBack }: { id: string; me: string; onBack: () => void }
   // broken; a tile with a shimmer reads as "coming".
   const [loaded, setLoaded] = useState<Set<string>>(new Set());
   const [micIssue, setMicIssue] = useState<'denied' | 'unsupported' | null>(null);
+  const [reporting, setReporting] = useState<{ id: string; by: string } | null>(null);
   const { typing, ping } = useTyping(id, thread?.members ?? []);
   const endRef = useRef<HTMLDivElement | null>(null);
   const meNorm = norm(me);
@@ -387,6 +389,16 @@ function Chat({ id, me, onBack }: { id: string; me: string; onBack: () => void }
 
       {viewing && <Lightbox src={viewing} alt={a.photo} onClose={() => setViewing(null)} />}
 
+      {reporting && (
+        <ReportSheet
+          kind="message" target={reporting.id} author={reporting.by}
+          onClose={() => setReporting(null)}
+          // Offered right there, because a report is reviewed later and a block
+          // takes effect now.
+          onBlock={!isGroup && peerName ? () => { void block(peerName); } : undefined}
+        />
+      )}
+
       {menuFor && (() => {
         const target = rows.find((r) => r.m.id === menuFor);
         if (!target) return null;
@@ -394,6 +406,7 @@ function Chat({ id, me, onBack }: { id: string; me: string; onBack: () => void }
           <MessageActions
             mine={target.mine} deleted={!!target.m.deleted}
             onDelete={(scope) => { void deleteMessage(menuFor, scope); }}
+            onReport={() => setReporting({ id: target.m.id, by: target.m.by })}
             onClose={() => setMenuFor(null)}
           />
         );

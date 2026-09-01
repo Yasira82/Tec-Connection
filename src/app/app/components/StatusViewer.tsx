@@ -14,6 +14,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { TEC_COLORS } from '@yasser172/tec-ui';
 import { useTranslation } from '@/lib/i18n';
 import { storyMediaUrl, type StoryAuthor } from '@/lib-client/connection/useStories';
+import { ReportSheet } from './ReportSheet';
 
 const relative = (iso: string, a: Record<string, string>) => {
   const ms = Date.now() - new Date(iso).getTime();
@@ -39,6 +40,7 @@ export function StatusViewer({ group, isMine, onSeen, onDelete, onClose }: {
   const [i, setI] = useState(firstUnseen >= 0 ? firstUnseen : 0);
   const [armedDelete, setArmedDelete] = useState(false);
   const [loaded, setLoaded] = useState(false);
+  const [reporting, setReporting] = useState(false);
 
   const current = group.stories[i];
 
@@ -169,6 +171,28 @@ export function StatusViewer({ group, isMine, onSeen, onDelete, onClose }: {
           margin: 0, padding: '12px 16px', fontSize: 14.5, lineHeight: 1.5,
           color: TEC_COLORS.text, textAlign: 'center', wordBreak: 'break-word',
         }} dir="auto">{current.caption}</p>
+      )}
+
+      {/* Someone else's status: report it. Quiet and at the edge — most
+          statuses are not a problem, and a prominent accusation button on every
+          one of them changes how the whole feed reads. */}
+      {!isMine && (
+        <div style={{ padding: '6px 16px 14px', textAlign: 'center' }}>
+          <button
+            onClick={() => setReporting(true)}
+            style={{
+              background: 'none', border: 'none', color: TEC_COLORS.subtext,
+              padding: '8px 14px', fontSize: 12, cursor: 'pointer', textDecoration: 'underline',
+            }}
+          >{a.report}</button>
+        </div>
+      )}
+
+      {reporting && (
+        <ReportSheet
+          kind="story" target={current.id} author={group.author}
+          onClose={() => setReporting(false)}
+        />
       )}
 
       {isMine && (
