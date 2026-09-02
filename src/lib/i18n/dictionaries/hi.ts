@@ -167,6 +167,8 @@ export const hi: Dictionary = {
     edited: "संपादित",
     forward: "अग्रेषित करें",
     forwardHint: "यह संदेश किसी और चैट में भेजें।",
+    copyMessage: "कॉपी",
+    copyMessageHint: "इस संदेश का टेक्स्ट कॉपी करें।",
     forwardTo: "इन्हें भेजें",
     forwardSent: "भेज दिया",
     forwardFailed: "अग्रेषित नहीं हो सका।",

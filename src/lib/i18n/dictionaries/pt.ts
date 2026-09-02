@@ -167,6 +167,8 @@ export const pt: Dictionary = {
     edited: "editada",
     forward: "Encaminhar",
     forwardHint: "Envie esta mensagem para outra conversa.",
+    copyMessage: "Copiar",
+    copyMessageHint: "Copiar o texto desta mensagem.",
     forwardTo: "Encaminhar para",
     forwardSent: "Enviado",
     forwardFailed: "Não foi possível encaminhar.",

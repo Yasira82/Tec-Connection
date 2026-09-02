@@ -199,6 +199,8 @@ export const en = {
     edited: "edited",
     forward: "Forward",
     forwardHint: "Send this message to another chat.",
+    copyMessage: "Copy",
+    copyMessageHint: "Copy the text of this message.",
     forwardTo: "Forward to",
     forwardSent: "Sent",
     forwardFailed: "Could not forward.",

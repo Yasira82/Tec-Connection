@@ -50,7 +50,7 @@ const REACTIONS = ['👍', '❤️', '😂', '😮', '😢', '🙏'] as const;
 
 export function MessageActions({
   mine, deleted, onReply, onDelete, onReport, onClose,
-  onReact, myReactions = [], canEdit, onEdit, onForward, canPin, pinned, onPin,
+  onReact, myReactions = [], canEdit, onEdit, onForward, canPin, pinned, onPin, onCopy,
 }: {
   /** Only the sender may clear a message for both sides. */
   mine: boolean;
@@ -78,6 +78,12 @@ export function MessageActions({
   /** Whether THIS message is the pinned one, so the label says pin or unpin. */
   pinned?: boolean;
   onPin?: (next: boolean) => void;
+  /**
+   * Copy the text. Absent on a message with no words — an attachment has
+   * nothing to put on the clipboard, and an option that copies "" is worse than
+   * no option.
+   */
+  onCopy?: () => void;
 }) {
   const { t } = useTranslation();
   const a = t.app;
@@ -156,6 +162,12 @@ export function MessageActions({
         {onEdit && canEdit && !deleted && (
           <div style={{ borderBottom: `1px solid ${TEC_COLORS.border}` }}>
             <Choice danger={false} label={a.editMessage} hint={a.editMessageHint} onClick={() => { onEdit(); onClose(); }} />
+          </div>
+        )}
+
+        {onCopy && !deleted && (
+          <div style={{ borderBottom: `1px solid ${TEC_COLORS.border}` }}>
+            <Choice danger={false} label={a.copyMessage} hint={a.copyMessageHint} onClick={() => { onCopy(); onClose(); }} />
           </div>
         )}
 

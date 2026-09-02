@@ -167,6 +167,8 @@ export const vi: Dictionary = {
     edited: "đã sửa",
     forward: "Chuyển tiếp",
     forwardHint: "Gửi tin nhắn này tới cuộc trò chuyện khác.",
+    copyMessage: "Sao chép",
+    copyMessageHint: "Sao chép nội dung tin nhắn này.",
     forwardTo: "Chuyển tiếp tới",
     forwardSent: "Đã gửi",
     forwardFailed: "Không chuyển tiếp được.",

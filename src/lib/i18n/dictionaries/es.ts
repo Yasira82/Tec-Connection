@@ -167,6 +167,8 @@ export const es: Dictionary = {
     edited: "editado",
     forward: "Reenviar",
     forwardHint: "Envía este mensaje a otro chat.",
+    copyMessage: "Copiar",
+    copyMessageHint: "Copiar el texto de este mensaje.",
     forwardTo: "Reenviar a",
     forwardSent: "Enviado",
     forwardFailed: "No se pudo reenviar.",
