@@ -101,3 +101,53 @@ describe('the public profile page', () => {
     expect(page).toContain('<ShareProfile');
   });
 });
+
+// ── The follower count is its own disclosure (C-107 §14.5) ──────────────────
+//
+// `published` used to be one switch deciding everything a stranger could see.
+// A follower count is a fact about the GRAPH, and §4 of the charter says the
+// graph is sovereign — so it has its own control.
+//
+// What is checked here is the shape of the failure, not the happy path: a
+// withheld count must never render as "0 followers", and an unrelated edit must
+// never carry the setting along with it. Both are silent when wrong.
+
+describe('a withheld follower count', () => {
+  it('is never coerced to zero when it arrives as null', () => {
+    // `Number(o.followers ?? 0)` is exactly the bug this field exists to avoid:
+    // it turns "withheld" into "nobody follows this person".
+    const disc = src('lib/connection/discovery.ts');
+    expect(disc).not.toMatch(/followers:\s*Number\(o\.followers \?\? 0\)/);
+    expect(disc).toMatch(/o\.followers === null \|\| o\.followers === undefined \? null/);
+  });
+
+  it('renders nothing on the directory card — not "0 followers"', () => {
+    expect(src('components/public/DirectoryCard.tsx')).toMatch(/profile\.followers !== null/);
+  });
+
+  it('renders nothing on the public profile page', () => {
+    expect(src('app/u/[username]/page.tsx')).toMatch(/p\.followers !== null && \(/);
+  });
+
+  it('is kept out of the share preview and the OG card', () => {
+    // These travel further than the page: they are what WhatsApp and Telegram
+    // render for anyone the link is forwarded to.
+    expect(src('app/u/[username]/page.tsx')).toMatch(/p\.followers !== null\s*$/m);
+    expect(src('app/u/[username]/opengraph-image.tsx')).toMatch(/p\.followers !== null/);
+  });
+});
+
+describe('saving the setting', () => {
+  it('sends the field ONLY when it is being changed', () => {
+    // The backend treats an absent field as "leave it alone". Sending the
+    // current value on every save would work today and silently overwrite the
+    // stored value the moment the two drift.
+    const editor = src('app/app/components/ProfileEditor.tsx');
+    expect(editor).toMatch(/typeof showFollowers === 'boolean' && \{ show_followers: showFollowers \}/);
+  });
+
+  it('the BFF forwards a boolean and nothing else', () => {
+    const route = src('app/api/bff/connection/profile/me/route.ts');
+    expect(route).toMatch(/typeof body\.show_followers === 'boolean' && \{ show_followers: body\.show_followers \}/);
+  });
+});

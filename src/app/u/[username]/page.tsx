@@ -36,9 +36,14 @@ export async function generateMetadata(
 
   const cat = t.public.cat[p.category as keyof typeof t.public.cat] ?? p.category;
   const title       = `@${p.username} · TEC Connection`;
+  // The count only reaches the share preview when its owner allows it. This
+  // string is what WhatsApp and Telegram render, so a leak here travels further
+  // than the page itself.
   const description = p.headline
     ? p.headline
-    : `@${p.username} — ${cat}. ${p.followers} ${p.followers === 1 ? t.public.follower : t.public.followers}.`;
+    : p.followers !== null
+      ? `@${p.username} — ${cat}. ${p.followers} ${p.followers === 1 ? t.public.follower : t.public.followers}.`
+      : `@${p.username} — ${cat}.`;
 
   return {
     title,
@@ -113,7 +118,11 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
           )}
 
           {/* Followers is the only number this page can state, and it comes from a
-              real count of real edges — so it is stated, and nothing else is. */}
+              real count of real edges — so it is stated, and nothing else is.
+              Unless its owner turned it off (C-107 §14.5), in which case the
+              block is absent rather than showing a zero: a zero is a claim
+              about this person that nobody made. */}
+          {p.followers !== null && (
           <div style={{
             display: 'inline-flex', alignItems: 'baseline', gap: 8,
             margin: '24px 0 0', padding: '12px 22px', borderRadius: 14,
@@ -124,6 +133,7 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
               {p.followers === 1 ? t.follower : t.followers}
             </span>
           </div>
+          )}
 
           {since && (
             <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.34)', marginTop: 12 }}>

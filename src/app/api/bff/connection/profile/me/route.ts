@@ -32,11 +32,17 @@ export async function PUT(req: NextRequest) {
   const tok = token(req);
   if (!tok) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const body = (await req.json().catch(() => ({}))) as { headline?: unknown; category?: unknown; published?: unknown };
+  const body = (await req.json().catch(() => ({}))) as {
+    headline?: unknown; category?: unknown; published?: unknown; show_followers?: unknown;
+  };
   const input = {
     headline:  typeof body.headline === 'string' ? body.headline : undefined,
     category:  typeof body.category === 'string' ? body.category : undefined,
     published: body.published === true,
+    // Forwarded ONLY when it is actually a boolean. Absent means "leave it
+    // alone" upstream, and coercing a missing field here would turn a headline
+    // edit into a silent privacy change (C-107 §14.5).
+    ...(typeof body.show_followers === 'boolean' && { show_followers: body.show_followers }),
   };
   const profile = await saveMyProfile(tok, input);
   if (!profile) return NextResponse.json({ error: 'Could not save your profile.' }, { status: 502 });
