@@ -167,6 +167,8 @@ export const fr: Dictionary = {
     edited: "modifié",
     forward: "Transférer",
     forwardHint: "Envoyer ce message à une autre discussion.",
+    copyMessage: "Copier",
+    copyMessageHint: "Copier le texte de ce message.",
     forwardTo: "Transférer vers",
     forwardSent: "Envoyé",
     forwardFailed: "Transfert impossible.",

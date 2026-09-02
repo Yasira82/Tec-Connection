@@ -167,6 +167,8 @@ export const tr: Dictionary = {
     edited: "düzenlendi",
     forward: "İlet",
     forwardHint: "Bu mesajı başka bir sohbete gönder.",
+    copyMessage: "Kopyala",
+    copyMessageHint: "Bu mesajın metnini kopyala.",
     forwardTo: "Şuraya ilet",
     forwardSent: "Gönderildi",
     forwardFailed: "İletilemedi.",

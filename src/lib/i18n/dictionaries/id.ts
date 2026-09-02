@@ -167,6 +167,8 @@ export const id: Dictionary = {
     edited: "diedit",
     forward: "Teruskan",
     forwardHint: "Kirim pesan ini ke obrolan lain.",
+    copyMessage: "Salin",
+    copyMessageHint: "Salin teks pesan ini.",
     forwardTo: "Teruskan ke",
     forwardSent: "Terkirim",
     forwardFailed: "Gagal meneruskan.",

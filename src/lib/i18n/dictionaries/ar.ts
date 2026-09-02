@@ -180,6 +180,8 @@ export const ar: Dictionary = {
     edited: "معدّلة",
     forward: "تحويل",
     forwardHint: "ابعت الرسالة دي لشات تاني.",
+    copyMessage: "نسخ",
+    copyMessageHint: "انسخ نص الرسالة دي.",
     forwardTo: "تحويل إلى",
     forwardSent: "اتبعت",
     forwardFailed: "التحويل فشل.",

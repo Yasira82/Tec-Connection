@@ -167,6 +167,8 @@ export const ru: Dictionary = {
     edited: "изменено",
     forward: "Переслать",
     forwardHint: "Отправить это сообщение в другой чат.",
+    copyMessage: "Копировать",
+    copyMessageHint: "Скопировать текст этого сообщения.",
     forwardTo: "Переслать в",
     forwardSent: "Отправлено",
     forwardFailed: "Не удалось переслать.",

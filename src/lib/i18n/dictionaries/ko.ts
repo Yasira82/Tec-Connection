@@ -167,6 +167,8 @@ export const ko: Dictionary = {
     edited: "수정됨",
     forward: "전달",
     forwardHint: "이 메시지를 다른 대화로 보냅니다.",
+    copyMessage: "복사",
+    copyMessageHint: "이 메시지의 텍스트를 복사합니다.",
     forwardTo: "전달할 대화",
     forwardSent: "보냄",
     forwardFailed: "전달하지 못했습니다.",

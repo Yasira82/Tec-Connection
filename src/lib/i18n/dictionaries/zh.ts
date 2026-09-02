@@ -167,6 +167,8 @@ export const zh: Dictionary = {
     edited: "已编辑",
     forward: "转发",
     forwardHint: "把这条消息发到另一个聊天。",
+    copyMessage: "复制",
+    copyMessageHint: "复制这条消息的文字。",
     forwardTo: "转发到",
     forwardSent: "已发送",
     forwardFailed: "转发失败。",

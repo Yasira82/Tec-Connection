@@ -40,6 +40,7 @@ import { Avatar as PersonAvatar } from '@/components/public/Avatar';
 import { useBackButton } from '@/lib-client/connection/useBackButton';
 import { VoiceNote } from './VoiceNote';
 import { downscaleImage } from '@/lib-client/connection/downscaleImage';
+import { useLongPress } from '@/lib-client/connection/useLongPress';
 
 /** The service normalizes every username; the session hook does not. */
 const norm = (u: string) => (u ?? '').trim().replace(/^@+/, '').toLowerCase();
@@ -147,6 +148,67 @@ export function mentionSpans(
   if (last === 0) return [{ text }];
   if (last < text.length) out.push({ text: text.slice(last) });
   return out;
+}
+
+/**
+ * One message bubble, with press-and-hold.
+ *
+ * A component rather than props spread inline, because the gesture needs a hook
+ * and a hook needs a component — and the bubble is rendered inside a `.map`.
+ *
+ * The callout suppression is half of a pair. `onContextMenu` (in the hook) stops
+ * the browser raising its own menu; these two CSS rules stop the text selection
+ * that Android starts on the same gesture. Neither works without the other:
+ * with only the handler you get a blue selection under our sheet, and with only
+ * the CSS you get Android's "copy / select all" on top of it.
+ *
+ * Making the text unselectable is the reason the sheet has a Copy row. Selecting
+ * part of a message is the thing this trades away, and copying all of it is what
+ * people actually do.
+ */
+function Bubble({ children, style, onLongPress }: {
+  children: ReactNode;
+  style: React.CSSProperties;
+  onLongPress: () => void;
+}) {
+  const press = useLongPress(onLongPress);
+  return (
+    <div
+      {...press}
+      style={{
+        ...style,
+        WebkitTouchCallout: 'none',
+        WebkitUserSelect: 'none',
+        userSelect: 'none',
+      }}
+    >{children}</div>
+  );
+}
+
+/**
+ * Put a message on the clipboard.
+ *
+ * Best-effort and silent on refusal: Pi Browser does not always grant clipboard
+ * access, and the fallback — a hidden textarea plus `execCommand` — is the only
+ * thing that works in a webview that refuses the modern API. Deprecated, and
+ * still the difference between Copy working and Copy doing nothing.
+ */
+async function copyText(text: string) {
+  try {
+    await navigator.clipboard.writeText(text);
+    return;
+  } catch { /* fall through to the webview path */ }
+  try {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.setAttribute('readonly', '');
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+  } catch { /* nothing more to try */ }
 }
 
 function Body({ text, mentions, me }: { text: string; mentions?: string[]; me: string }) {
@@ -514,7 +576,9 @@ function Chat({ id, me, conversations, onBack }: {
                   order: mine ? 0 : 2,
                 }}
               >⋯</button>
-              <div style={{
+              <Bubble
+                onLongPress={() => setMenuFor(m.id)}
+                style={{
                 maxWidth: '78%', padding: '8px 12px 6px',
                 background: mine ? `${TEC_COLORS.gold}1F` : TEC_COLORS.surface2,
                 // Named YOU, in a group of forty, three hours ago. The whole
@@ -674,7 +738,7 @@ function Chat({ id, me, conversations, onBack }: {
                     >{seenBy(m.at, thread?.peerReadAt) ? '✓✓' : '✓'}</span>
                   )}
                 </div>
-              </div>
+              </Bubble>
             </div>
           </div>
         ))}
@@ -904,6 +968,9 @@ function Chat({ id, me, conversations, onBack }: {
             canPin={!isGroup || thread?.role === 'owner' || thread?.role === 'admin'}
             pinned={thread?.pinned?.id === target.m.id}
             onPin={(next) => { void setPinned(next ? target.m.id : null); }}
+            // Absent on an attachment: there is nothing to put on the clipboard,
+            // and an option that copies "" is worse than no option.
+            onCopy={target.m.body ? () => { void copyText(target.m.body); } : undefined}
           />
         );
       })()}
