@@ -22,6 +22,8 @@ interface MyProfile {
   username: string; headline: string; category: string;
   published: boolean; verified: boolean; featured: boolean;
   hasAvatar?: boolean;
+  /** Whether the public page states this person's follower count (C-107 §14.5). */
+  showFollowers?: boolean;
 }
 
 const card = {
@@ -66,14 +68,25 @@ export function ProfileEditor() {
       .catch(() => {});
   }, []);
 
-  const save = async (publish: boolean) => {
+  /**
+   * `showFollowers` is sent ONLY when it is being changed.
+   *
+   * The backend treats an absent field as "leave it alone", and that is the
+   * point: publishing or editing a headline must not carry a privacy setting
+   * along with it. Sending the current value on every save would work today and
+   * silently overwrite the stored value the moment the two drift.
+   */
+  const save = async (publish: boolean, showFollowers?: boolean) => {
     if (saving) return;
     setSaving(true); setMsg('');
     try {
       const res = await fetch('/api/bff/connection/profile/me', {
         method: 'PUT', credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ headline: headline.trim(), category: cat, published: publish }),
+        body: JSON.stringify({
+          headline: headline.trim(), category: cat, published: publish,
+          ...(typeof showFollowers === 'boolean' && { show_followers: showFollowers }),
+        }),
       });
       const j = (await res.json().catch(() => ({}))) as { profile?: MyProfile; ok?: boolean };
       if (!res.ok || !j.ok || !j.profile) { setMsg(a.saveFailed); return; }
@@ -129,6 +142,43 @@ export function ProfileEditor() {
             </button>
           )}
         </div>
+
+        {/* Who can see the follower count.
+            `published` used to be one switch deciding everything a stranger
+            could see. A follower count is a fact about the GRAPH, and C-107 §4
+            says the graph is sovereign — so it gets its own control (§14.5).
+            Shown only once the profile is public, because until then there is
+            no page for it to appear on. */}
+        {me?.published && (
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 12, marginTop: 16,
+            paddingTop: 14, borderTop: `1px solid ${TEC_COLORS.border}`,
+          }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 13.5, fontWeight: 700, color: TEC_COLORS.text }}>{a.showFollowers}</div>
+              <div style={{ fontSize: 11.5, color: TEC_COLORS.subtext, marginTop: 3, lineHeight: 1.5 }}>
+                {me.showFollowers === false ? a.showFollowersOff : a.showFollowersOn}
+              </div>
+            </div>
+            <button
+              onClick={() => { void save(true, me.showFollowers === false); }}
+              disabled={saving}
+              aria-pressed={me.showFollowers !== false}
+              style={{
+                width: 46, height: 27, borderRadius: 999, flexShrink: 0, padding: 2,
+                border: `1px solid ${me.showFollowers !== false ? TEC_COLORS.gold : TEC_COLORS.border}`,
+                background: me.showFollowers !== false ? `${TEC_COLORS.gold}33` : 'transparent',
+                cursor: saving ? 'not-allowed' : 'pointer',
+                display: 'flex', justifyContent: me.showFollowers !== false ? 'flex-end' : 'flex-start',
+              }}
+            >
+              <span style={{
+                width: 21, height: 21, borderRadius: 999, display: 'block',
+                background: me.showFollowers !== false ? TEC_COLORS.gold : TEC_COLORS.subtext,
+              }} />
+            </button>
+          </div>
+        )}
 
         {msg && (
           <div style={{ marginTop: 10, fontSize: 12.5, color: msg.startsWith('✅') ? TEC_COLORS.gold : TEC_COLORS.error }}>{msg}</div>

@@ -23,7 +23,13 @@ export interface DirectoryProfile {
   category:  string;
   verified:  boolean;
   featured:  boolean;
-  followers: number;
+  /**
+   * NULL when the owner has hidden it (C-107 §14.5) — never 0.
+   *
+   * A zero is a claim: "nobody follows this person". That is not the claim
+   * being made, so the surfaces render nothing instead of something false.
+   */
+  followers: number | null;
   /** Whether a profile photo exists. The KEY is never exposed to a client. */
   hasAvatar: boolean;
 }
@@ -37,6 +43,8 @@ export interface MyProfile {
   verified:  boolean;
   featured:  boolean;
   hasAvatar: boolean;
+  /** Whether the public page states this person's follower count. */
+  showFollowers: boolean;
 }
 
 // A public shareable profile (published only).
@@ -50,7 +58,9 @@ const toCard = (o: Record<string, unknown>): DirectoryProfile => ({
   category:  String(o.category ?? 'builder'),
   verified:  Boolean(o.verified ?? false),
   featured:  Boolean(o.featured ?? false),
-  followers: Number(o.followers ?? 0),
+  // `?? 0` would be exactly the bug this field exists to avoid: it turns
+  // "withheld" into "zero followers". Null passes through as null.
+  followers: o.followers === null || o.followers === undefined ? null : Number(o.followers),
   hasAvatar: Boolean(o.has_avatar ?? false),
 });
 
@@ -96,6 +106,10 @@ export async function resolveMyProfile(token: string | null): Promise<MyProfile 
       verified:  Boolean(p.verified ?? false),
       featured:  Boolean(p.featured ?? false),
       hasAvatar: Boolean(p.has_avatar ?? false),
+      // `?? true` matches the column default, so an older backend that does not
+      // send the field yet leaves the switch where the data actually is —
+      // rather than showing "off" on a profile whose count is still public.
+      showFollowers: Boolean(p.show_followers ?? true),
     };
   } catch { return null; }
 }
@@ -103,7 +117,7 @@ export async function resolveMyProfile(token: string | null): Promise<MyProfile 
 /** Save the caller's OWN profile (authenticated). Returns the saved profile or null. */
 export async function saveMyProfile(
   token: string | null,
-  input: { headline?: string; category?: string; published?: boolean; avatar_key?: string | null },
+  input: { headline?: string; category?: string; published?: boolean; avatar_key?: string | null; show_followers?: boolean },
 ): Promise<MyProfile | null> {
   if (!GW || !token) return null;
   try {
@@ -115,7 +129,7 @@ export async function saveMyProfile(
     return p ? {
       username: String(p.username ?? ''), headline: String(p.headline ?? ''), category: String(p.category ?? 'builder'),
       published: Boolean(p.published ?? false), verified: Boolean(p.verified ?? false), featured: Boolean(p.featured ?? false),
-      hasAvatar: Boolean(p.has_avatar ?? false),
+      hasAvatar: Boolean(p.has_avatar ?? false), showFollowers: Boolean(p.show_followers ?? true),
     } : null;
   } catch { return null; }
 }

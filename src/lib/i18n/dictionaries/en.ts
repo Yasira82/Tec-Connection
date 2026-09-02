@@ -139,6 +139,9 @@ export const en = {
     publish:   'Publish',
     hide:      'Hide',
     viewPublic: 'View your public page →',
+    showFollowers: "Show my follower count",
+    showFollowersOn: "Visible on your public profile and on your Discover card.",
+    showFollowersOff: "Hidden. Your profile shows everything else.",
     savedPublic: '✅ Saved — you are in Discover.',
     savedHidden: '✅ Saved — you are hidden.',
 

@@ -23,7 +23,8 @@ export interface DirectoryCardProfile {
   category:  string;
   verified:  boolean;
   featured:  boolean;
-  followers: number;
+  /** NULL when this person hid it (C-107 §14.5). The card then shows only their category. */
+  followers: number | null;
   hasAvatar?: boolean;
 }
 
@@ -90,7 +91,10 @@ export function DirectoryCard({
         <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 11.5, color: 'rgba(255,255,255,0.38)', marginTop: 5 }}>
           <span>
             <span style={{ textTransform: 'capitalize' }}>{categoryLabel ?? profile.category}</span>
-            {' · '}{profile.followers} {followerWord}
+            {/* Nothing at all when the count is withheld — not "0 followers".
+                A zero is a claim about this person that nobody made. The
+                separator goes with it, or the line ends in a dangling "·". */}
+            {profile.followers !== null && <>{' · '}{profile.followers} {followerWord}</>}
           </span>
           {profile.featured && (
             <span className="pub-badge-featured" style={{ fontSize: 9.5, padding: '1px 6px' }}

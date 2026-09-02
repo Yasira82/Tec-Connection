@@ -104,7 +104,12 @@ export default async function Image({ params }: { params: Promise<{ username: st
         </div>
 
         <div style={{ display: 'flex', fontSize: 26, color: 'rgba(255,255,255,0.4)', marginTop: 26 }}>
-          {p ? `${p.followers} ${p.followers === 1 ? t.follower : t.followers} · ` : ''}connection.tecosystem.app
+          {/* The count only reaches the share card when its owner allows it
+              (C-107 §14.5). This image is what WhatsApp and Telegram render, so
+              a leak here travels further than the page itself. */}
+          {p && p.followers !== null
+            ? `${p.followers} ${p.followers === 1 ? t.follower : t.followers} · `
+            : ''}connection.tecosystem.app
         </div>
       </div>
     ),
