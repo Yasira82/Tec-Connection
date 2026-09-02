@@ -24,6 +24,8 @@ export const ko: Dictionary = {
       profile: '프로필', planFree: '무료', planPro: 'Pro',
       connectedPi: 'Pi에 연결됨', notSignedIn: '로그인하지 않음', member: 'TEC 회원',
       appearance: '화면', language: '언어', languageDesc: '표시 언어',
+      theme: '테마', themeDesc: '밝게, 어둡게, 또는 기기 설정',
+      themeSystem: '시스템', themeLight: '밝게', themeDark: '어둡게',
       about: '정보', version: '버전', domain: '도메인', ecosystem: '생태계',
       builtOn: '기반', builtOnPi: 'Pi Network', logout: '로그아웃',
     },

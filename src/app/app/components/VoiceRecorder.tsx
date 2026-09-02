@@ -14,7 +14,7 @@
 // `audio/mp4`. Both are accepted server-side, so nothing has to transcode — and
 // transcoding audio in a phone webview is not something to attempt.
 import { useEffect, useRef, useState } from 'react';
-import { TEC_COLORS } from '@yasser172/tec-ui';
+import { C, errorA } from '@/lib-client/palette';
 import { useTranslation } from '@/lib/i18n';
 
 const CANDIDATE_TYPES = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'audio/ogg'];
@@ -110,12 +110,12 @@ export function VoiceRecorder({ busy, onRecorded, onUnavailable }: {
         onClick={() => recRef.current?.stop()} aria-label={a.stopRecording}
         style={{
           height: 38, borderRadius: 999, flexShrink: 0, padding: '0 12px',
-          background: `${TEC_COLORS.error}22`, border: `1px solid ${TEC_COLORS.error}66`,
-          color: TEC_COLORS.error, fontSize: 12, fontWeight: 700, cursor: 'pointer',
+          background: errorA(0.133), border: `1px solid ${errorA(0.4)}`,
+          color: C.error, fontSize: 12, fontWeight: 700, cursor: 'pointer',
           display: 'flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap',
         }}
       >
-        <span style={{ width: 8, height: 8, borderRadius: 2, background: TEC_COLORS.error }} />
+        <span style={{ width: 8, height: 8, borderRadius: 2, background: C.error }} />
         <bdi>{Math.floor(elapsed / 60000)}:{String(Math.floor(elapsed / 1000) % 60).padStart(2, '0')}</bdi>
       </button>
     );
@@ -126,8 +126,8 @@ export function VoiceRecorder({ busy, onRecorded, onUnavailable }: {
       onClick={() => { void start(); }} disabled={busy} aria-label={a.recordVoice}
       style={{
         width: 38, height: 38, borderRadius: 999, flexShrink: 0,
-        background: 'none', border: `1px solid ${TEC_COLORS.border}`,
-        color: TEC_COLORS.subtext, fontSize: 16, cursor: busy ? 'not-allowed' : 'pointer',
+        background: 'none', border: `1px solid ${C.border}`,
+        color: C.subtext, fontSize: 16, cursor: busy ? 'not-allowed' : 'pointer',
         display: 'grid', placeItems: 'center',
       }}
     >🎤</button>

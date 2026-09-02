@@ -24,6 +24,8 @@ export const zh: Dictionary = {
       profile: '个人资料', planFree: '免费', planPro: 'Pro',
       connectedPi: '已连接 Pi', notSignedIn: '未登录', member: 'TEC 会员',
       appearance: '外观', language: '语言', languageDesc: '显示语言',
+      theme: '主题', themeDesc: '浅色、深色，或跟随手机',
+      themeSystem: '自动', themeLight: '浅色', themeDark: '深色',
       about: '关于', version: '版本', domain: '域名', ecosystem: '生态',
       builtOn: '构建于', builtOnPi: 'Pi Network', logout: '退出登录',
     },

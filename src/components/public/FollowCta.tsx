@@ -19,6 +19,7 @@
 // Pi Browser is known to be rough with (C-123).
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { usePiAuth, ssoRedirect } from '@yasser172/tec-auth';
+import { C } from '@/lib-client/palette';
 
 const HUB_URL = process.env.NEXT_PUBLIC_HUB_URL ?? 'https://hub.tecosystem.app';
 
@@ -120,7 +121,7 @@ export function FollowCta({ username, labels }: {
         <bdi>{label}</bdi>
       </button>
       {state === 'failed' && (
-        <p style={{ fontSize: 12.5, color: '#EF4444', margin: '10px 0 0' }}>{labels.failed}</p>
+        <p style={{ fontSize: 12.5, color: C.error, margin: '10px 0 0' }}>{labels.failed}</p>
       )}
     </>
   );

@@ -13,7 +13,7 @@
 // the destructive actions last, marked as destructive and separated from
 // everything above them.
 import { useEffect, useRef, useState } from 'react';
-import { TEC_COLORS } from '@yasser172/tec-ui';
+import { C, bgA, errorA, goldA } from '@/lib-client/palette';
 import { useTranslation } from '@/lib/i18n';
 import { useBackButton } from '@/lib-client/connection/useBackButton';
 import { Avatar } from '@/components/public/Avatar';
@@ -26,8 +26,8 @@ const PHOTO_ACCEPT = 'image/jpeg,image/png,image/webp';
 const PHOTO_MAX_BYTES = 2 * 1024 * 1024;
 
 const sheetInput = {
-  flex: 1, minWidth: 0, background: TEC_COLORS.bg, color: TEC_COLORS.text,
-  border: `1px solid ${TEC_COLORS.border}`, borderRadius: 999,
+  flex: 1, minWidth: 0, background: C.bg, color: C.text,
+  border: `1px solid ${C.border}`, borderRadius: 999,
   padding: '10px 14px', fontSize: 13.5, outline: 'none',
 } as const;
 
@@ -42,7 +42,7 @@ function ActionRow({ label, icon, danger, onClick, disabled }: {
         display: 'flex', alignItems: 'center', gap: 12, width: '100%',
         padding: '13px 14px', textAlign: 'start',
         background: 'none', border: 'none', cursor: disabled ? 'not-allowed' : 'pointer',
-        color: danger ? TEC_COLORS.error : TEC_COLORS.text,
+        color: danger ? C.error : C.text,
         fontSize: 14, fontWeight: 600, opacity: disabled ? 0.5 : 1,
       }}
     >
@@ -278,7 +278,7 @@ export function ChatInfoSheet({
       role="dialog" aria-modal="true" aria-label={isGroup ? a.groupInfo : a.contactInfo}
       style={{
         position: 'fixed', inset: 0, zIndex: 900,
-        background: 'rgba(3,5,12,0.72)',
+        background: bgA(0.72),
         display: 'flex', alignItems: 'flex-end',
       }}
     >
@@ -286,15 +286,15 @@ export function ChatInfoSheet({
         onClick={(e) => e.stopPropagation()}
         style={{
           width: '100%', maxHeight: '82vh', overflowY: 'auto',
-          background: TEC_COLORS.surface,
+          background: C.surface,
           borderStartStartRadius: 20, borderStartEndRadius: 20,
-          border: `1px solid ${TEC_COLORS.border}`, borderBottom: 'none',
+          border: `1px solid ${C.border}`, borderBottom: 'none',
           paddingBottom: 'calc(env(safe-area-inset-bottom) + 12px)',
         }}
       >
         {/* the grab handle: says "this pulls down" without a word */}
         <div style={{ display: 'grid', placeItems: 'center', padding: '10px 0 4px' }}>
-          <span style={{ width: 38, height: 4, borderRadius: 999, background: TEC_COLORS.border }} />
+          <span style={{ width: 38, height: 4, borderRadius: 999, background: C.border }} />
         </div>
 
         {/* identity */}
@@ -309,10 +309,10 @@ export function ChatInfoSheet({
             photoSrc={isGroup ? `${groupPhotoUrl}?v=${photoVersion}` : undefined}
             key={photoVersion}
           />
-          <span style={{ fontSize: 17, fontWeight: 700, color: TEC_COLORS.text, textAlign: 'center' }}>
+          <span style={{ fontSize: 17, fontWeight: 700, color: C.text, textAlign: 'center' }}>
             <bdi dir="auto">{title}</bdi>
           </span>
-          <span style={{ fontSize: 12.5, color: TEC_COLORS.subtext }}>
+          <span style={{ fontSize: 12.5, color: C.subtext }}>
             {isGroup ? <bdi>{members.length} {a.membersLabel}</bdi> : a.directLabel}
           </span>
 
@@ -333,7 +333,7 @@ export function ChatInfoSheet({
                 <button
                   onClick={() => photoRef.current?.click()} disabled={photoBusy}
                   style={{
-                    background: 'none', border: 'none', color: TEC_COLORS.gold,
+                    background: 'none', border: 'none', color: C.gold,
                     fontSize: 12.5, fontWeight: 700, padding: '2px 4px',
                     cursor: photoBusy ? 'not-allowed' : 'pointer',
                   }}
@@ -341,14 +341,14 @@ export function ChatInfoSheet({
                 <button
                   onClick={() => { void removePhoto(); }} disabled={photoBusy}
                   style={{
-                    background: 'none', border: 'none', color: TEC_COLORS.subtext,
+                    background: 'none', border: 'none', color: C.subtext,
                     fontSize: 12.5, padding: '2px 4px',
                     cursor: photoBusy ? 'not-allowed' : 'pointer',
                   }}
                 >{a.groupPhotoRemove}</button>
               </div>
               {photoMsg && (
-                <span style={{ fontSize: 11.5, color: TEC_COLORS.error }}>{photoMsg}</span>
+                <span style={{ fontSize: 11.5, color: C.error }}>{photoMsg}</span>
               )}
             </>
           )}
@@ -360,7 +360,7 @@ export function ChatInfoSheet({
             it under the roster is how a privacy switch gets flipped by
             accident. */}
         {isOwner && (
-          <section style={{ borderTop: `1px solid ${TEC_COLORS.border}`, padding: '14px 16px' }}>
+          <section style={{ borderTop: `1px solid ${C.border}`, padding: '14px 16px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <div style={{ flex: 1, minWidth: 0 }}>
                 {/* The LABEL never changes; only the switch does.
@@ -369,10 +369,10 @@ export function ChatInfoSheet({
                     switch that is off, the word "Private" reads as "Private:
                     no". A switch is named for what turning it ON does, and the
                     sentence underneath is where the current state belongs. */}
-                <div style={{ fontSize: 14, fontWeight: 700, color: TEC_COLORS.text }}>
+                <div style={{ fontSize: 14, fontWeight: 700, color: C.text }}>
                   {a.groupListed}
                 </div>
-                <div style={{ fontSize: 11.5, color: TEC_COLORS.subtext, marginTop: 3, lineHeight: 1.5 }}>
+                <div style={{ fontSize: 11.5, color: C.subtext, marginTop: 3, lineHeight: 1.5 }}>
                   {listed ? a.groupListedHint : a.groupPrivateHint}
                 </div>
               </div>
@@ -382,15 +382,15 @@ export function ChatInfoSheet({
                 aria-pressed={listed}
                 style={{
                   width: 46, height: 27, borderRadius: 999, flexShrink: 0, padding: 2,
-                  border: `1px solid ${listed ? TEC_COLORS.gold : TEC_COLORS.border}`,
-                  background: listed ? `${TEC_COLORS.gold}33` : 'transparent',
+                  border: `1px solid ${listed ? C.gold : C.border}`,
+                  background: listed ? goldA(0.2) : 'transparent',
                   cursor: listBusy ? 'not-allowed' : 'pointer',
                   display: 'flex', justifyContent: listed ? 'flex-end' : 'flex-start',
                 }}
               >
                 <span style={{
                   width: 21, height: 21, borderRadius: 999, display: 'block',
-                  background: listed ? TEC_COLORS.gold : TEC_COLORS.subtext,
+                  background: listed ? C.gold : C.subtext,
                 }} />
               </button>
             </div>
@@ -407,15 +407,15 @@ export function ChatInfoSheet({
                   onClick={() => { void saveVisibility(true, about); }}
                   disabled={listBusy}
                   style={{
-                    background: 'none', border: `1px solid ${TEC_COLORS.border}`,
-                    color: TEC_COLORS.text, borderRadius: 999, padding: '0 16px',
+                    background: 'none', border: `1px solid ${C.border}`,
+                    color: C.text, borderRadius: 999, padding: '0 16px',
                     fontSize: 13, cursor: listBusy ? 'not-allowed' : 'pointer', whiteSpace: 'nowrap',
                   }}
                 >{a.save}</button>
               </div>
             )}
             {listMsg && (
-              <p style={{ margin: '8px 0 0', fontSize: 12, color: TEC_COLORS.error }}>{listMsg}</p>
+              <p style={{ margin: '8px 0 0', fontSize: 12, color: C.error }}>{listMsg}</p>
             )}
           </section>
         )}
@@ -425,9 +425,9 @@ export function ChatInfoSheet({
             owner's approval. It is not in the conversation payload every member
             polls, so it is fetched here, once, when the owner asks for it. */}
         {isOwner && (
-          <section style={{ borderTop: `1px solid ${TEC_COLORS.border}`, padding: '14px 16px' }}>
-            <div style={{ fontSize: 14, fontWeight: 700, color: TEC_COLORS.text }}>{a.inviteLink}</div>
-            <div style={{ fontSize: 11.5, color: TEC_COLORS.subtext, marginTop: 3, lineHeight: 1.5 }}>
+          <section style={{ borderTop: `1px solid ${C.border}`, padding: '14px 16px' }}>
+            <div style={{ fontSize: 14, fontWeight: 700, color: C.text }}>{a.inviteLink}</div>
+            <div style={{ fontSize: 11.5, color: C.subtext, marginTop: 3, lineHeight: 1.5 }}>
               {a.inviteLinkHint}
             </div>
 
@@ -435,8 +435,8 @@ export function ChatInfoSheet({
               <>
                 <div style={{
                   marginTop: 10, padding: '9px 12px', borderRadius: 10,
-                  background: TEC_COLORS.bg, border: `1px solid ${TEC_COLORS.border}`,
-                  fontSize: 11.5, color: TEC_COLORS.subtext, wordBreak: 'break-all',
+                  background: C.bg, border: `1px solid ${C.border}`,
+                  fontSize: 11.5, color: C.subtext, wordBreak: 'break-all',
                 }} dir="ltr">{inviteUrl(invite.code)}</div>
                 <div style={{ display: 'flex', gap: 8, marginTop: 8, flexWrap: 'wrap' }}>
                   <button
@@ -451,8 +451,8 @@ export function ChatInfoSheet({
                       } catch { /* the link is readable above */ }
                     }}
                     style={{
-                      background: `${TEC_COLORS.gold}18`, border: `1px solid ${TEC_COLORS.gold}55`,
-                      color: TEC_COLORS.gold, borderRadius: 999, padding: '7px 16px',
+                      background: goldA(0.094), border: `1px solid ${goldA(0.333)}`,
+                      color: C.gold, borderRadius: 999, padding: '7px 16px',
                       fontSize: 12.5, fontWeight: 700, cursor: 'pointer',
                     }}
                   >{copied ? a.linkCopied : a.copyLink}</button>
@@ -460,8 +460,8 @@ export function ChatInfoSheet({
                     onClick={() => { void invite.set(false); }}
                     disabled={invite.busy}
                     style={{
-                      background: 'none', border: `1px solid ${TEC_COLORS.border}`,
-                      color: TEC_COLORS.error, borderRadius: 999, padding: '7px 16px',
+                      background: 'none', border: `1px solid ${C.border}`,
+                      color: C.error, borderRadius: 999, padding: '7px 16px',
                       fontSize: 12.5, cursor: invite.busy ? 'not-allowed' : 'pointer',
                     }}
                   >{a.revokeInviteLink}</button>
@@ -472,8 +472,8 @@ export function ChatInfoSheet({
                 onClick={() => { void invite.set(true); }}
                 disabled={invite.busy}
                 style={{
-                  marginTop: 10, background: 'none', border: `1px solid ${TEC_COLORS.border}`,
-                  color: TEC_COLORS.text, borderRadius: 999, padding: '8px 18px',
+                  marginTop: 10, background: 'none', border: `1px solid ${C.border}`,
+                  color: C.text, borderRadius: 999, padding: '8px 18px',
                   fontSize: 13, cursor: invite.busy ? 'not-allowed' : 'pointer',
                 }}
               >{a.createInviteLink}</button>
@@ -482,7 +482,7 @@ export function ChatInfoSheet({
                 this — an error on open is an error about an action nobody
                 took. */}
             {invite.failed && (
-              <p style={{ margin: '8px 0 0', fontSize: 12, color: TEC_COLORS.error }}>{a.inviteLinkFailed}</p>
+              <p style={{ margin: '8px 0 0', fontSize: 12, color: C.error }}>{a.inviteLinkFailed}</p>
             )}
           </section>
         )}
@@ -492,11 +492,11 @@ export function ChatInfoSheet({
             an admin, which is why an admin cannot reach this switch either here
             or in the service. */}
         {isOwner && onSetPosting && (
-          <section style={{ borderTop: `1px solid ${TEC_COLORS.border}`, padding: '14px 16px' }}>
+          <section style={{ borderTop: `1px solid ${C.border}`, padding: '14px 16px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 14, fontWeight: 700, color: TEC_COLORS.text }}>{a.announcementMode}</div>
-                <div style={{ fontSize: 11.5, color: TEC_COLORS.subtext, marginTop: 3, lineHeight: 1.5 }}>
+                <div style={{ fontSize: 14, fontWeight: 700, color: C.text }}>{a.announcementMode}</div>
+                <div style={{ fontSize: 11.5, color: C.subtext, marginTop: 3, lineHeight: 1.5 }}>
                   {a.announcementModeHint}
                 </div>
               </div>
@@ -510,15 +510,15 @@ export function ChatInfoSheet({
                 aria-pressed={posting === 'ADMINS'}
                 style={{
                   width: 46, height: 27, borderRadius: 999, flexShrink: 0, padding: 2,
-                  border: `1px solid ${posting === 'ADMINS' ? TEC_COLORS.gold : TEC_COLORS.border}`,
-                  background: posting === 'ADMINS' ? `${TEC_COLORS.gold}33` : 'transparent',
+                  border: `1px solid ${posting === 'ADMINS' ? C.gold : C.border}`,
+                  background: posting === 'ADMINS' ? goldA(0.2) : 'transparent',
                   cursor: postBusy ? 'not-allowed' : 'pointer',
                   display: 'flex', justifyContent: posting === 'ADMINS' ? 'flex-end' : 'flex-start',
                 }}
               >
                 <span style={{
                   width: 21, height: 21, borderRadius: 999, display: 'block',
-                  background: posting === 'ADMINS' ? TEC_COLORS.gold : TEC_COLORS.subtext,
+                  background: posting === 'ADMINS' ? C.gold : C.subtext,
                 }} />
               </button>
             </div>
@@ -530,10 +530,10 @@ export function ChatInfoSheet({
             requests already made, and leaving them undecidable would strand
             whoever sent them. */}
         {isOwner && requests.length > 0 && (
-          <section style={{ borderTop: `1px solid ${TEC_COLORS.border}`, padding: '14px 16px' }}>
+          <section style={{ borderTop: `1px solid ${C.border}`, padding: '14px 16px' }}>
             <h4 style={{
               margin: '0 0 10px', fontSize: 11, fontWeight: 700, letterSpacing: 0.6,
-              textTransform: 'uppercase', color: TEC_COLORS.subtext,
+              textTransform: 'uppercase', color: C.subtext,
             }}>{a.groupRequests} · {requests.length}</h4>
 
             {requests.map((r) => (
@@ -542,7 +542,7 @@ export function ChatInfoSheet({
               }}>
                 <Avatar username={r.username} size={32} tryPhoto />
                 <span style={{
-                  flex: 1, minWidth: 0, fontSize: 13.5, color: TEC_COLORS.text,
+                  flex: 1, minWidth: 0, fontSize: 13.5, color: C.text,
                   overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                 }}>
                   <bdi>@{r.username}</bdi>
@@ -550,16 +550,16 @@ export function ChatInfoSheet({
                 <button
                   onClick={() => { void decide(r.username, true); }}
                   style={{
-                    background: `linear-gradient(135deg, ${TEC_COLORS.gold}, ${TEC_COLORS.goldDark})`,
-                    color: '#0a0800', border: 'none', borderRadius: 999,
+                    background: `linear-gradient(135deg, ${C.gold}, ${C.goldDark})`,
+                    color: C.onGold, border: 'none', borderRadius: 999,
                     padding: '6px 14px', fontSize: 12.5, fontWeight: 700, cursor: 'pointer',
                   }}
                 >{a.groupApprove}</button>
                 <button
                   onClick={() => { void decide(r.username, false); }}
                   style={{
-                    background: 'none', border: `1px solid ${TEC_COLORS.border}`,
-                    color: TEC_COLORS.subtext, borderRadius: 999,
+                    background: 'none', border: `1px solid ${C.border}`,
+                    color: C.subtext, borderRadius: 999,
                     padding: '6px 12px', fontSize: 12.5, cursor: 'pointer',
                   }}
                 >{a.groupReject}</button>
@@ -569,10 +569,10 @@ export function ChatInfoSheet({
         )}
 
         {isGroup && (
-          <section style={{ borderTop: `1px solid ${TEC_COLORS.border}`, padding: '14px 16px' }}>
+          <section style={{ borderTop: `1px solid ${C.border}`, padding: '14px 16px' }}>
             <h4 style={{
               margin: '0 0 10px', fontSize: 11, fontWeight: 700, letterSpacing: 0.6,
-              textTransform: 'uppercase', color: TEC_COLORS.subtext,
+              textTransform: 'uppercase', color: C.subtext,
             }}>{a.members}</h4>
 
             {role === 'owner' && (
@@ -586,8 +586,8 @@ export function ChatInfoSheet({
                 <button
                   onClick={add}
                   style={{
-                    background: `linear-gradient(135deg, ${TEC_COLORS.gold}, ${TEC_COLORS.goldDark})`,
-                    color: '#0a0800', border: 'none', borderRadius: 999, padding: '0 18px',
+                    background: `linear-gradient(135deg, ${C.gold}, ${C.goldDark})`,
+                    color: C.onGold, border: 'none', borderRadius: 999, padding: '0 18px',
                     fontSize: 13.5, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap',
                   }}
                 >{a.addMember}</button>
@@ -609,7 +609,7 @@ export function ChatInfoSheet({
                   <div key={u} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0' }}>
                     <Avatar username={u} size={32} tryPhoto />
                     <span style={{
-                      flex: 1, minWidth: 0, fontSize: 13.5, color: TEC_COLORS.text,
+                      flex: 1, minWidth: 0, fontSize: 13.5, color: C.text,
                       overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                     }}><bdi>@{u}</bdi></span>
 
@@ -620,13 +620,13 @@ export function ChatInfoSheet({
                       <span style={{
                         fontSize: 10.5, fontWeight: 800, letterSpacing: 0.3, flexShrink: 0,
                         textTransform: 'uppercase', borderRadius: 999, padding: '2px 8px',
-                        color: isTheOwner ? TEC_COLORS.gold : TEC_COLORS.subtext,
-                        background: isTheOwner ? `${TEC_COLORS.gold}14` : 'transparent',
-                        border: `1px solid ${isTheOwner ? `${TEC_COLORS.gold}44` : TEC_COLORS.border}`,
+                        color: isTheOwner ? C.gold : C.subtext,
+                        background: isTheOwner ? goldA(0.078) : 'transparent',
+                        border: `1px solid ${isTheOwner ? goldA(0.267) : C.border}`,
                       }}>{isTheOwner ? a.roleOwner : a.roleAdmin}</span>
                     )}
                     {mine && (
-                      <span style={{ fontSize: 11, color: TEC_COLORS.subtext, flexShrink: 0 }}>{a.you}</span>
+                      <span style={{ fontSize: 11, color: C.subtext, flexShrink: 0 }}>{a.you}</span>
                     )}
 
                     {canPromote && (
@@ -634,8 +634,8 @@ export function ChatInfoSheet({
                         onClick={() => { void setRole(u, !isAnAdmin); }}
                         disabled={roleBusy === u}
                         style={{
-                          background: 'none', border: `1px solid ${TEC_COLORS.border}`,
-                          color: TEC_COLORS.text, borderRadius: 999, padding: '4px 10px',
+                          background: 'none', border: `1px solid ${C.border}`,
+                          color: C.text, borderRadius: 999, padding: '4px 10px',
                           fontSize: 11.5, cursor: roleBusy === u ? 'not-allowed' : 'pointer',
                           flexShrink: 0, whiteSpace: 'nowrap',
                         }}
@@ -654,9 +654,9 @@ export function ChatInfoSheet({
                         disabled={roleBusy === u}
                         aria-label={a.removeMember}
                         style={{
-                          background: armedRemove === u ? `${TEC_COLORS.error}1F` : 'none',
-                          border: armedRemove === u ? `1px solid ${TEC_COLORS.error}` : 'none',
-                          borderRadius: 999, color: TEC_COLORS.error,
+                          background: armedRemove === u ? errorA(0.122) : 'none',
+                          border: armedRemove === u ? `1px solid ${C.error}` : 'none',
+                          borderRadius: 999, color: C.error,
                           fontSize: armedRemove === u ? 12 : 15, fontWeight: 700,
                           padding: armedRemove === u ? '5px 12px' : '2px 6px',
                           flexShrink: 0, whiteSpace: 'nowrap',
@@ -675,7 +675,7 @@ export function ChatInfoSheet({
             it is the reversible, everyday setting, and grouping it with Leave
             and Delete is how a harmless control ends up untouched. */}
         {onToggleMute && (
-          <section style={{ borderTop: `1px solid ${TEC_COLORS.border}`, paddingTop: 4 }}>
+          <section style={{ borderTop: `1px solid ${C.border}`, paddingTop: 4 }}>
             <ActionRow
               icon={muted ? '🔕' : '🔔'}
               label={muted ? a.unmuteChat : a.muteChat}
@@ -687,18 +687,18 @@ export function ChatInfoSheet({
             />
             <p style={{
               margin: 0, padding: '0 16px 12px', fontSize: 11.5,
-              color: TEC_COLORS.subtext, lineHeight: 1.5,
+              color: C.subtext, lineHeight: 1.5,
             }}>{a.muteHint}</p>
           </section>
         )}
 
         {/* Destructive actions, last and apart. Nothing above this line can
             cost you a conversation. */}
-        <section style={{ borderTop: `1px solid ${TEC_COLORS.border}`, paddingTop: 4 }}>
+        <section style={{ borderTop: `1px solid ${C.border}`, paddingTop: 4 }}>
           {!isGroup && peerName && (
             blocked ? (
               <>
-                <p style={{ fontSize: 12.5, color: TEC_COLORS.subtext, margin: 0, padding: '10px 16px 0', lineHeight: 1.5 }}>
+                <p style={{ fontSize: 12.5, color: C.subtext, margin: 0, padding: '10px 16px 0', lineHeight: 1.5 }}>
                   {a.blockedNotice}
                 </p>
                 <ActionRow icon="↩" label={a.unblock} disabled={blockBusy} onClick={onUnblock} />
@@ -739,11 +739,11 @@ export function ChatInfoSheet({
               again the conversation returns, empty. */}
           <p style={{
             margin: 0, padding: '2px 16px 12px', fontSize: 11.5,
-            color: TEC_COLORS.subtext, lineHeight: 1.5,
+            color: C.subtext, lineHeight: 1.5,
           }}>{a.deleteChatHint}</p>
 
           {blockError && (
-            <p style={{ color: TEC_COLORS.error, fontSize: 12, margin: 0, padding: '0 16px 10px' }}>{a.blockFailed}</p>
+            <p style={{ color: C.error, fontSize: 12, margin: 0, padding: '0 16px 10px' }}>{a.blockFailed}</p>
           )}
         </section>
       </div>

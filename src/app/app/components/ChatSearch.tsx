@@ -9,7 +9,7 @@
 // Tapping a result closes the panel and scrolls to that message — but only when
 // it is actually loaded. A result whose message is above what has been fetched
 // does nothing rather than jumping to the wrong place, and it says why.
-import { TEC_COLORS } from '@yasser172/tec-ui';
+import { C } from '@/lib-client/palette';
 import { useTranslation } from '@/lib/i18n';
 import { useBackButton } from '@/lib-client/connection/useBackButton';
 import { useChatSearch, MIN_QUERY, type Hit } from '@/lib-client/connection/useChatSearch';
@@ -34,7 +34,7 @@ function Marked({ text, q }: { text: string; q: string }) {
   return (
     <>
       {text.slice(0, i)}
-      <span style={{ color: TEC_COLORS.gold, fontWeight: 700 }}>{text.slice(i, i + q.length)}</span>
+      <span style={{ color: C.gold, fontWeight: 700 }}>{text.slice(i, i + q.length)}</span>
       {text.slice(i + q.length)}
     </>
   );
@@ -54,19 +54,19 @@ export function ChatSearch({ conversationId, onOpen, onClose }: {
   return (
     <div style={{
       position: 'fixed', inset: 0, zIndex: 945,
-      background: TEC_COLORS.bg, display: 'flex', flexDirection: 'column',
+      background: C.bg, display: 'flex', flexDirection: 'column',
       paddingTop: 'env(safe-area-inset-top)',
     }}>
       <div style={{
         display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px',
-        borderBottom: `1px solid ${TEC_COLORS.border}`,
+        borderBottom: `1px solid ${C.border}`,
       }}>
         <button
           onClick={onClose} aria-label={a.closeLabel}
           style={{
             width: 34, height: 34, borderRadius: 999, flexShrink: 0,
-            background: 'none', border: `1px solid ${TEC_COLORS.border}`,
-            color: TEC_COLORS.text, fontSize: 15, cursor: 'pointer',
+            background: 'none', border: `1px solid ${C.border}`,
+            color: C.text, fontSize: 15, cursor: 'pointer',
             display: 'grid', placeItems: 'center',
           }}
         >✕</button>
@@ -80,8 +80,8 @@ export function ChatSearch({ conversationId, onOpen, onClose }: {
             // border-box, so width:100% plus padding overflows — and in RTL the
             // overflow eats the FIRST character of what was typed.
             boxSizing: 'border-box',
-            flex: 1, minWidth: 0, background: TEC_COLORS.surface, color: TEC_COLORS.text,
-            border: `1px solid ${TEC_COLORS.border}`, borderRadius: 999,
+            flex: 1, minWidth: 0, background: C.surface, color: C.text,
+            border: `1px solid ${C.border}`, borderRadius: 999,
             padding: '10px 14px', fontSize: 14, outline: 'none',
           }}
         />
@@ -89,13 +89,13 @@ export function ChatSearch({ conversationId, onOpen, onClose }: {
 
       <div style={{ flex: 1, overflowY: 'auto', paddingBottom: 'calc(env(safe-area-inset-bottom) + 20px)' }}>
         {q.trim().length < MIN_QUERY ? (
-          <p style={{ padding: 16, fontSize: 13, color: TEC_COLORS.subtext, lineHeight: 1.6 }}>{a.searchMessagesHint}</p>
+          <p style={{ padding: 16, fontSize: 13, color: C.subtext, lineHeight: 1.6 }}>{a.searchMessagesHint}</p>
         ) : searching ? (
-          <p style={{ padding: 16, fontSize: 13, color: TEC_COLORS.subtext }}>{a.loading}</p>
+          <p style={{ padding: 16, fontSize: 13, color: C.subtext }}>{a.loading}</p>
         ) : failed ? (
-          <p style={{ padding: 16, fontSize: 13, color: TEC_COLORS.error }}>{a.searchMessagesFailed}</p>
+          <p style={{ padding: 16, fontSize: 13, color: C.error }}>{a.searchMessagesFailed}</p>
         ) : hits.length === 0 ? (
-          <p style={{ padding: 16, fontSize: 13, color: TEC_COLORS.subtext }}>{a.searchMessagesNone}</p>
+          <p style={{ padding: 16, fontSize: 13, color: C.subtext }}>{a.searchMessagesNone}</p>
         ) : hits.map((h) => (
           <button
             key={h.id}
@@ -103,18 +103,18 @@ export function ChatSearch({ conversationId, onOpen, onClose }: {
             style={{
               display: 'block', width: '100%', textAlign: 'start', cursor: 'pointer',
               padding: '12px 16px', background: 'none', border: 'none',
-              borderTop: `1px solid ${TEC_COLORS.border}`,
+              borderTop: `1px solid ${C.border}`,
             }}
           >
             <span style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-              <span style={{ fontSize: 12, fontWeight: 700, color: TEC_COLORS.gold, flexShrink: 0 }}>
+              <span style={{ fontSize: 12, fontWeight: 700, color: C.gold, flexShrink: 0 }}>
                 <bdi>@{h.by}</bdi>
               </span>
               <span style={{ flex: 1 }} />
-              <span style={{ fontSize: 11, color: TEC_COLORS.subtext, flexShrink: 0 }}><bdi>{clock(h.at)}</bdi></span>
+              <span style={{ fontSize: 11, color: C.subtext, flexShrink: 0 }}><bdi>{clock(h.at)}</bdi></span>
             </span>
             <span style={{
-              display: 'block', fontSize: 13.5, color: TEC_COLORS.text, marginTop: 3, lineHeight: 1.45,
+              display: 'block', fontSize: 13.5, color: C.text, marginTop: 3, lineHeight: 1.45,
               overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
             }} dir="auto">
               <Marked text={h.body} q={q.trim()} />

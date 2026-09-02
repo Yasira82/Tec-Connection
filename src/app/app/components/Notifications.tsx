@@ -3,7 +3,7 @@
 // TEC Connection (C-107) — relationship notifications ("X followed you"). A
 // collapsible banner with an unread badge; durable + own-scope, polled (near-live).
 import { useState } from 'react';
-import { TEC_COLORS } from '@yasser172/tec-ui';
+import { C, goldA } from '@/lib-client/palette';
 import { useTranslation } from '@/lib/i18n';
 import { useNotifications } from '@/lib-client/connection/useNotifications';
 
@@ -34,34 +34,34 @@ export function Notifications() {
 
   return (
     <div style={{
-      marginTop: 20, background: TEC_COLORS.surface, border: `1px solid ${unread > 0 ? `${TEC_COLORS.gold}66` : TEC_COLORS.border}`,
+      marginTop: 20, background: C.surface, border: `1px solid ${unread > 0 ? goldA(0.4) : C.border}`,
       borderRadius: 14, overflow: 'hidden',
     }}>
       <button onClick={toggle} style={{
         width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '12px 16px',
-        background: 'none', border: 'none', cursor: 'pointer', color: TEC_COLORS.text, textAlign: 'start',
+        background: 'none', border: 'none', cursor: 'pointer', color: C.text, textAlign: 'start',
       }}>
         <span style={{ fontSize: 18 }}>🔔</span>
         <span style={{ fontSize: 14, fontWeight: 700, flex: 1 }}>{a.notifications}</span>
         {unread > 0 && (
           <span style={{
-            fontSize: 12, fontWeight: 800, color: '#0a0800', background: TEC_COLORS.gold,
+            fontSize: 12, fontWeight: 800, color: C.onGold, background: C.gold,
             borderRadius: 999, minWidth: 20, height: 20, display: 'grid', placeItems: 'center', padding: '0 6px',
           }}>{unread}</span>
         )}
-        <span style={{ fontSize: 12, color: TEC_COLORS.subtext }}>{open ? '▲' : '▼'}</span>
+        <span style={{ fontSize: 12, color: C.subtext }}>{open ? '▲' : '▼'}</span>
       </button>
 
       {open && (
         <div style={{ padding: '0 16px 12px' }}>
           {items.slice(0, 15).map((n, i) => (
             <div key={n.id}
-              style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 0', borderTop: i === 0 ? `1px solid ${TEC_COLORS.border}` : `1px solid ${TEC_COLORS.border}` }}>
-              <span style={{ width: 7, height: 7, borderRadius: 999, background: n.read ? 'transparent' : TEC_COLORS.gold, flexShrink: 0 }} />
-              <span style={{ flex: 1, minWidth: 0, fontSize: 13, color: TEC_COLORS.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 0', borderTop: i === 0 ? `1px solid ${C.border}` : `1px solid ${C.border}` }}>
+              <span style={{ width: 7, height: 7, borderRadius: 999, background: n.read ? 'transparent' : C.gold, flexShrink: 0 }} />
+              <span style={{ flex: 1, minWidth: 0, fontSize: 13, color: C.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 <bdi>{label(n.type, n.actor, a.followedYou, a.newMessageFrom)}</bdi>
               </span>
-              <span style={{ fontSize: 11, color: TEC_COLORS.subtext, flexShrink: 0 }}>{fmt(n.at)}</span>
+              <span style={{ fontSize: 11, color: C.subtext, flexShrink: 0 }}>{fmt(n.at)}</span>
             </div>
           ))}
         </div>

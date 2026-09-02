@@ -14,7 +14,7 @@
 //     because the thing that actually helps someone in the moment is not the
 //     report.
 import { useEffect, useState } from 'react';
-import { TEC_COLORS } from '@yasser172/tec-ui';
+import { C, bgA, errorA, goldA } from '@/lib-client/palette';
 import { useTranslation } from '@/lib/i18n';
 import { useBackButton } from '@/lib-client/connection/useBackButton';
 
@@ -68,29 +68,29 @@ export function ReportSheet({ kind, target, author, onClose, onBlock }: {
       role="dialog" aria-modal="true" aria-label={a.report}
       style={{
         position: 'fixed', inset: 0, zIndex: 960,
-        background: 'rgba(3,5,12,0.72)', display: 'flex', alignItems: 'flex-end',
+        background: bgA(0.72), display: 'flex', alignItems: 'flex-end',
       }}
     >
       <div
         onClick={(e) => e.stopPropagation()}
         style={{
           width: '100%', maxHeight: '86vh', overflowY: 'auto',
-          background: TEC_COLORS.surface,
+          background: C.surface,
           borderStartStartRadius: 20, borderStartEndRadius: 20,
-          border: `1px solid ${TEC_COLORS.border}`, borderBottom: 'none',
+          border: `1px solid ${C.border}`, borderBottom: 'none',
           paddingBottom: 'calc(env(safe-area-inset-bottom) + 14px)',
         }}
       >
         <div style={{ display: 'grid', placeItems: 'center', padding: '10px 0 6px' }}>
-          <span style={{ width: 38, height: 4, borderRadius: 999, background: TEC_COLORS.border }} />
+          <span style={{ width: 38, height: 4, borderRadius: 999, background: C.border }} />
         </div>
 
         {state === 'done' ? (
           // Not "removed", not "we will act". What actually happened, and what
           // the person can still do themselves.
           <div style={{ padding: '18px 18px 6px', display: 'grid', gap: 12 }}>
-            <p style={{ margin: 0, fontSize: 15, fontWeight: 700, color: TEC_COLORS.text }}>{a.reportSent}</p>
-            <p style={{ margin: 0, fontSize: 12.5, color: TEC_COLORS.subtext, lineHeight: 1.6 }}>
+            <p style={{ margin: 0, fontSize: 15, fontWeight: 700, color: C.text }}>{a.reportSent}</p>
+            <p style={{ margin: 0, fontSize: 12.5, color: C.subtext, lineHeight: 1.6 }}>
               {a.reportSentHint}
             </p>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
@@ -98,8 +98,8 @@ export function ReportSheet({ kind, target, author, onClose, onBlock }: {
                 <button
                   onClick={() => { onBlock(); onClose(); }}
                   style={{
-                    background: `${TEC_COLORS.error}14`, border: `1px solid ${TEC_COLORS.error}66`,
-                    color: TEC_COLORS.error, borderRadius: 999, padding: '9px 18px',
+                    background: errorA(0.078), border: `1px solid ${errorA(0.4)}`,
+                    color: C.error, borderRadius: 999, padding: '9px 18px',
                     fontSize: 13, fontWeight: 700, cursor: 'pointer',
                   }}
                 >{a.block}</button>
@@ -107,7 +107,7 @@ export function ReportSheet({ kind, target, author, onClose, onBlock }: {
               <button
                 onClick={onClose}
                 style={{
-                  background: 'none', border: `1px solid ${TEC_COLORS.border}`, color: TEC_COLORS.text,
+                  background: 'none', border: `1px solid ${C.border}`, color: C.text,
                   borderRadius: 999, padding: '9px 18px', fontSize: 13, cursor: 'pointer',
                 }}
               >{a.closeLabel}</button>
@@ -116,9 +116,9 @@ export function ReportSheet({ kind, target, author, onClose, onBlock }: {
         ) : (
           <div style={{ padding: '8px 18px 6px', display: 'grid', gap: 12 }}>
             <div>
-              <h4 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: TEC_COLORS.text }}>{a.report}</h4>
+              <h4 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: C.text }}>{a.report}</h4>
               {author && (
-                <p style={{ margin: '4px 0 0', fontSize: 12.5, color: TEC_COLORS.subtext }}>
+                <p style={{ margin: '4px 0 0', fontSize: 12.5, color: C.subtext }}>
                   <bdi>@{author}</bdi>
                 </p>
               )}
@@ -127,8 +127,8 @@ export function ReportSheet({ kind, target, author, onClose, onBlock }: {
             {/* Said BEFORE the report is filed, not after. */}
             <p style={{
               margin: 0, padding: '9px 12px', borderRadius: 10, lineHeight: 1.6,
-              background: `${TEC_COLORS.gold}12`, border: `1px solid ${TEC_COLORS.gold}33`,
-              fontSize: 11.5, color: TEC_COLORS.text,
+              background: goldA(0.071), border: `1px solid ${goldA(0.2)}`,
+              fontSize: 11.5, color: C.text,
             }}>{a.reportNotice}</p>
 
             <div style={{ display: 'grid', gap: 6 }}>
@@ -139,15 +139,15 @@ export function ReportSheet({ kind, target, author, onClose, onBlock }: {
                     display: 'flex', alignItems: 'center', gap: 10, width: '100%',
                     textAlign: 'start', cursor: 'pointer',
                     padding: '11px 14px', borderRadius: 12, fontSize: 13.5,
-                    background: reason === r ? `${TEC_COLORS.gold}14` : 'none',
-                    border: `1px solid ${reason === r ? TEC_COLORS.gold : TEC_COLORS.border}`,
-                    color: TEC_COLORS.text, fontWeight: reason === r ? 700 : 500,
+                    background: reason === r ? goldA(0.078) : 'none',
+                    border: `1px solid ${reason === r ? C.gold : C.border}`,
+                    color: C.text, fontWeight: reason === r ? 700 : 500,
                   }}
                 >
                   <span aria-hidden style={{
                     width: 16, height: 16, borderRadius: 999, flexShrink: 0,
-                    border: `2px solid ${reason === r ? TEC_COLORS.gold : TEC_COLORS.border}`,
-                    background: reason === r ? TEC_COLORS.gold : 'transparent',
+                    border: `2px solid ${reason === r ? C.gold : C.border}`,
+                    background: reason === r ? C.gold : 'transparent',
                   }} />
                   <span>{a[`reason_${r}` as keyof typeof a] as string}</span>
                 </button>
@@ -158,14 +158,14 @@ export function ReportSheet({ kind, target, author, onClose, onBlock }: {
               value={note} onChange={(e) => setNote(e.target.value)}
               placeholder={a.reportNotePlaceholder} maxLength={500} dir="auto"
               style={{
-                background: TEC_COLORS.bg, color: TEC_COLORS.text, fontSize: 13.5,
-                border: `1px solid ${TEC_COLORS.border}`, borderRadius: 12,
+                background: C.bg, color: C.text, fontSize: 13.5,
+                border: `1px solid ${C.border}`, borderRadius: 12,
                 padding: '10px 14px', outline: 'none',
               }}
             />
 
             {state === 'failed' && (
-              <p style={{ margin: 0, color: TEC_COLORS.error, fontSize: 12 }}>{a.reportFailed}</p>
+              <p style={{ margin: 0, color: C.error, fontSize: 12 }}>{a.reportFailed}</p>
             )}
 
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
@@ -173,9 +173,9 @@ export function ReportSheet({ kind, target, author, onClose, onBlock }: {
                 onClick={submit} disabled={!reason || state === 'sending'}
                 style={{
                   background: reason
-                    ? `linear-gradient(135deg, ${TEC_COLORS.gold}, ${TEC_COLORS.goldDark})`
-                    : TEC_COLORS.surface2,
-                  color: reason ? '#0a0800' : TEC_COLORS.subtext,
+                    ? `linear-gradient(135deg, ${C.gold}, ${C.goldDark})`
+                    : C.surface2,
+                  color: reason ? C.onGold : C.subtext,
                   border: 'none', borderRadius: 999, padding: '10px 22px',
                   fontSize: 13.5, fontWeight: 700, cursor: reason ? 'pointer' : 'not-allowed',
                 }}
@@ -183,7 +183,7 @@ export function ReportSheet({ kind, target, author, onClose, onBlock }: {
               <button
                 onClick={onClose}
                 style={{
-                  background: 'none', border: 'none', color: TEC_COLORS.subtext,
+                  background: 'none', border: 'none', color: C.subtext,
                   padding: '10px 14px', fontSize: 13.5, cursor: 'pointer',
                 }}
               >{a.cancel}</button>

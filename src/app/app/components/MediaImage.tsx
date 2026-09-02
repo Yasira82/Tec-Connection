@@ -19,7 +19,7 @@
 // So the state is read from the ELEMENT (`complete` + `naturalWidth`) as well as
 // from the events, and a failure is a state of its own rather than an absence.
 import { useEffect, useRef, useState } from 'react';
-import { TEC_COLORS } from '@yasser172/tec-ui';
+import { C } from '@/lib-client/palette';
 
 type State = 'loading' | 'ready' | 'failed';
 
@@ -60,7 +60,7 @@ export function MediaImage({
       {state !== 'ready' && (
         <span style={{
           position: 'absolute', inset: 0, display: 'grid', placeItems: 'center',
-          color: TEC_COLORS.subtext, fontSize: 11, textAlign: 'center', padding: 8,
+          color: C.subtext, fontSize: 11, textAlign: 'center', padding: 8,
         }}>{state === 'failed' ? failedLabel : loadingLabel}</span>
       )}
       <img

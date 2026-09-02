@@ -11,7 +11,7 @@
 // photo, and it gives someone reading a second language no way to keep up. The
 // progress bar shows position, not a countdown.
 import { useCallback, useEffect, useState } from 'react';
-import { TEC_COLORS } from '@yasser172/tec-ui';
+import { C, errorA, inkA } from '@/lib-client/palette';
 import { useTranslation } from '@/lib/i18n';
 import { storyMediaUrl, type StoryAuthor, type StoryItem } from '@/lib-client/connection/useStories';
 import { ReportSheet } from './ReportSheet';
@@ -94,7 +94,7 @@ export function StatusViewer({ group, isMine, onSeen, onDelete, onReply, onClose
         // OPAQUE, not a scrim. At 98% the gold chat list behind still read
         // through clearly, and a status is meant to be the only thing on the
         // screen — a half-visible page underneath makes it look like a bug.
-        background: TEC_COLORS.bg,
+        background: C.bg,
         display: 'flex', flexDirection: 'column',
         paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)',
       }}
@@ -104,7 +104,7 @@ export function StatusViewer({ group, isMine, onSeen, onDelete, onReply, onClose
         {group.stories.map((s, n) => (
           <span key={s.id} style={{
             flex: 1, height: 3, borderRadius: 999,
-            background: n <= i ? TEC_COLORS.gold : `${TEC_COLORS.border}`,
+            background: n <= i ? C.gold : C.border,
           }} />
         ))}
       </div>
@@ -112,14 +112,14 @@ export function StatusViewer({ group, isMine, onSeen, onDelete, onReply, onClose
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '4px 12px 10px' }}>
         <span style={{
           width: 32, height: 32, borderRadius: 999, display: 'grid', placeItems: 'center', flexShrink: 0,
-          background: `linear-gradient(135deg, ${TEC_COLORS.gold}, ${TEC_COLORS.goldDark})`,
-          color: '#0a0800', fontSize: 13, fontWeight: 800,
+          background: `linear-gradient(135deg, ${C.gold}, ${C.goldDark})`,
+          color: C.onGold, fontSize: 13, fontWeight: 800,
         }}>{(group.author || '?').charAt(0).toUpperCase()}</span>
         <span style={{ flex: 1, minWidth: 0 }}>
-          <span style={{ display: 'block', fontSize: 13.5, fontWeight: 700, color: TEC_COLORS.text }}>
+          <span style={{ display: 'block', fontSize: 13.5, fontWeight: 700, color: C.text }}>
             <bdi>@{group.author}</bdi>
           </span>
-          <span style={{ fontSize: 11, color: TEC_COLORS.subtext }}>
+          <span style={{ fontSize: 11, color: C.subtext }}>
             <bdi>{relative(current.at, a)}</bdi>
             {/* Your own view count, and nobody else's. */}
             {isMine && typeof current.views === 'number' && (
@@ -131,8 +131,8 @@ export function StatusViewer({ group, isMine, onSeen, onDelete, onReply, onClose
           onClick={onClose} aria-label={a.closeLabel}
           style={{
             width: 34, height: 34, borderRadius: 999, flexShrink: 0,
-            background: 'rgba(255,255,255,0.10)', border: `1px solid ${TEC_COLORS.border}`,
-            color: TEC_COLORS.text, fontSize: 15, cursor: 'pointer',
+            background: inkA(0.1), border: `1px solid ${C.border}`,
+            color: C.text, fontSize: 15, cursor: 'pointer',
             display: 'grid', placeItems: 'center',
           }}
         >✕</button>
@@ -155,7 +155,7 @@ export function StatusViewer({ group, isMine, onSeen, onDelete, onReply, onClose
           // Text-only: the words ARE the status, so they get the whole screen.
           <p style={{
             margin: 0, fontSize: 22, lineHeight: 1.5, fontWeight: 600,
-            color: TEC_COLORS.text, textAlign: 'center', wordBreak: 'break-word',
+            color: C.text, textAlign: 'center', wordBreak: 'break-word',
           }} dir="auto">{current.caption}</p>
         )}
 
@@ -177,7 +177,7 @@ export function StatusViewer({ group, isMine, onSeen, onDelete, onReply, onClose
       {current.hasMedia && current.caption && (
         <p style={{
           margin: 0, padding: '12px 16px', fontSize: 14.5, lineHeight: 1.5,
-          color: TEC_COLORS.text, textAlign: 'center', wordBreak: 'break-word',
+          color: C.text, textAlign: 'center', wordBreak: 'break-word',
         }} dir="auto">{current.caption}</p>
       )}
 
@@ -187,7 +187,7 @@ export function StatusViewer({ group, isMine, onSeen, onDelete, onReply, onClose
         <div style={{ padding: '8px 12px 6px' }}>
           {replyState === 'sent' ? (
             <p style={{
-              margin: 0, textAlign: 'center', fontSize: 12.5, color: TEC_COLORS.success,
+              margin: 0, textAlign: 'center', fontSize: 12.5, color: C.success,
               padding: '10px 0',
             }}>{a.statusReplySent}</p>
           ) : (
@@ -204,8 +204,8 @@ export function StatusViewer({ group, isMine, onSeen, onDelete, onReply, onClose
                 }}
                 placeholder={a.statusReplyPlaceholder} maxLength={2000} dir="auto"
                 style={{
-                  flex: 1, minWidth: 0, background: 'rgba(255,255,255,0.06)', color: TEC_COLORS.text,
-                  border: `1px solid ${TEC_COLORS.border}`, borderRadius: 999,
+                  flex: 1, minWidth: 0, background: inkA(0.06), color: C.text,
+                  border: `1px solid ${C.border}`, borderRadius: 999,
                   padding: '11px 16px', fontSize: 14, outline: 'none',
                 }}
               />
@@ -223,9 +223,9 @@ export function StatusViewer({ group, isMine, onSeen, onDelete, onReply, onClose
                 style={{
                   width: 42, height: 42, borderRadius: 999, flexShrink: 0, border: 'none',
                   background: reply.trim()
-                    ? `linear-gradient(135deg, ${TEC_COLORS.gold}, ${TEC_COLORS.goldDark})`
-                    : 'rgba(255,255,255,0.08)',
-                  color: reply.trim() ? '#0a0800' : TEC_COLORS.subtext,
+                    ? `linear-gradient(135deg, ${C.gold}, ${C.goldDark})`
+                    : inkA(0.08),
+                  color: reply.trim() ? C.onGold : C.subtext,
                   fontSize: 17, cursor: reply.trim() ? 'pointer' : 'not-allowed',
                   display: 'grid', placeItems: 'center',
                 }}
@@ -233,7 +233,7 @@ export function StatusViewer({ group, isMine, onSeen, onDelete, onReply, onClose
             </div>
           )}
           {replyState === 'failed' && (
-            <p style={{ margin: '6px 0 0', color: TEC_COLORS.error, fontSize: 12 }}>{a.messageFailed}</p>
+            <p style={{ margin: '6px 0 0', color: C.error, fontSize: 12 }}>{a.messageFailed}</p>
           )}
         </div>
       )}
@@ -245,7 +245,7 @@ export function StatusViewer({ group, isMine, onSeen, onDelete, onReply, onClose
           <button
             onClick={() => setReporting(true)}
             style={{
-              background: 'none', border: 'none', color: TEC_COLORS.subtext,
+              background: 'none', border: 'none', color: C.subtext,
               padding: '6px 14px', fontSize: 12, cursor: 'pointer', textDecoration: 'underline',
             }}
           >{a.report}</button>
@@ -267,9 +267,9 @@ export function StatusViewer({ group, isMine, onSeen, onDelete, onReply, onClose
               if (await onDelete(current.id)) onClose();
             }}
             style={{
-              background: armedDelete ? `${TEC_COLORS.error}1F` : 'none',
-              border: `1px solid ${armedDelete ? TEC_COLORS.error : TEC_COLORS.border}`,
-              color: TEC_COLORS.error, borderRadius: 999, padding: '8px 18px',
+              background: armedDelete ? errorA(0.122) : 'none',
+              border: `1px solid ${armedDelete ? C.error : C.border}`,
+              color: C.error, borderRadius: 999, padding: '8px 18px',
               fontSize: 13, fontWeight: 600, cursor: 'pointer',
             }}
           >{armedDelete ? a.confirmDelete : a.statusDelete}</button>

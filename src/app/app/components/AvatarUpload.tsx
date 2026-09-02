@@ -14,7 +14,7 @@
 // local file makes it feel instant while still being honest, because a failure
 // clears it and says so.
 import { useRef, useState, useEffect } from 'react';
-import { TEC_COLORS } from '@yasser172/tec-ui';
+import { C, goldA } from '@/lib-client/palette';
 import { useTranslation } from '@/lib/i18n';
 import { downscaleImage, AVATAR_MAX_EDGE } from '@/lib-client/connection/downscaleImage';
 
@@ -128,9 +128,9 @@ export function AvatarUpload({
         style={{
           width: 62, height: 62, borderRadius: 999, flexShrink: 0, padding: 0,
           overflow: 'hidden', position: 'relative', cursor: busy ? 'wait' : 'pointer',
-          background: TEC_COLORS.surface2,
-          border: `1px dashed ${TEC_COLORS.gold}66`,
-          color: TEC_COLORS.gold, fontSize: 20, fontWeight: 900,
+          background: C.surface2,
+          border: `1px dashed ${goldA(0.4)}`,
+          color: C.gold, fontSize: 20, fontWeight: 900,
           display: 'grid', placeItems: 'center',
         }}>
         {/* A local object URL during upload, a same-origin dynamic route after —
@@ -141,26 +141,26 @@ export function AvatarUpload({
       </button>
 
       <div style={{ minWidth: 0 }}>
-        <div style={{ fontSize: 13, fontWeight: 750, color: TEC_COLORS.text }}>
+        <div style={{ fontSize: 13, fontWeight: 750, color: C.text }}>
           {hasPhoto ? a.photoTitle : a.addPhoto}
         </div>
-        <div style={{ fontSize: 11.5, color: TEC_COLORS.subtext, marginTop: 2, lineHeight: 1.45 }}>
+        <div style={{ fontSize: 11.5, color: C.subtext, marginTop: 2, lineHeight: 1.45 }}>
           {a.photoHint}
         </div>
         <div style={{ display: 'flex', gap: 12, marginTop: 6 }}>
           <button type="button" onClick={pick} disabled={busy}
-            style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: 12, fontWeight: 700, color: TEC_COLORS.gold }}>
+            style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: 12, fontWeight: 700, color: C.gold }}>
             {busy ? a.working : hasPhoto ? a.change : a.choosePhoto}
           </button>
           {hasPhoto && !busy && (
             <button type="button" onClick={remove}
-              style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: 12, fontWeight: 700, color: TEC_COLORS.subtext }}>
+              style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: 12, fontWeight: 700, color: C.subtext }}>
               {a.remove}
             </button>
           )}
         </div>
         {msg && (
-          <div style={{ fontSize: 11.5, marginTop: 6, color: msg.startsWith('✅') ? TEC_COLORS.gold : TEC_COLORS.error }}>
+          <div style={{ fontSize: 11.5, marginTop: 6, color: msg.startsWith('✅') ? C.gold : C.error }}>
             {msg}
           </div>
         )}

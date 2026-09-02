@@ -1,6 +1,7 @@
 import { RefCapture } from '@/components/referral/RefCapture';
 import { RefApply } from '@/components/referral/RefApply';
 import { LocaleProvider } from '@/lib/i18n';
+import { THEME_BOOT_SCRIPT } from '@/lib-client/theme';
 import { getI18n } from '@/lib/i18n/server';
 import type { Metadata } from 'next';
 import '@/styles/tec-design-tokens.css';
@@ -26,13 +27,32 @@ export default async function RootLayout({
   const { locale, dir } = await getI18n();
 
   return (
-    <html lang={locale} dir={dir}>
+    // `suppressHydrationWarning` because the boot script STAMPS `data-theme`
+    // and `style.color-scheme` on this element before React hydrates. That is
+    // the point of the script — the alternative is a flash of the wrong theme
+    // on every load — so the mismatch it causes is expected and only here.
+    <html lang={locale} dir={dir} suppressHydrationWarning>
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
-        {/* Full-bleed dark shell — kill every source of the "white frame" around the
-            dark app in Pi Browser. */}
-        <meta name="theme-color" content="#050816" />
-        <meta name="color-scheme" content="dark" />
+        {/* One theme-color per scheme, so the browser chrome above the page
+            matches the page. A single dark value leaves a black bar sitting on
+            top of a light app.
+
+            These stay HEX LITERALS by necessity: a `theme-color` meta is read
+            by the browser's own chrome, outside the document's style
+            resolution, so `var(--tec-bg)` there is simply ignored. Same class
+            of constraint as the SSO landing HTML and `next/og`. */}
+        <meta name="theme-color" media="(prefers-color-scheme: dark)"  content="#050816" />
+        <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f4f3f1" />
+        {/* `color-scheme` is NOT declared here any more. It has to follow the
+            reader's stored choice, which only the boot script knows — a static
+            `dark` meta made light mode paint dark scrollbars and dark form
+            controls, which is how a theme ends up looking half-finished. */}
+        {/* Applies the stored theme BEFORE first paint. Inline and synchronous
+            on purpose: anything deferred means the page renders dark and then
+            snaps to light on every load — a flash worse than not offering the
+            choice at all. */}
+        <script dangerouslySetInnerHTML={{ __html: THEME_BOOT_SCRIPT }} />
         <script
           src="https://sdk.minepi.com/pi-sdk.js"
           async

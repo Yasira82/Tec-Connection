@@ -11,7 +11,7 @@
 // not a guess. A row that offers "Join" to someone who asked yesterday gets
 // asked again, and it is the owner who deals with that.
 import { useState } from 'react';
-import { TEC_COLORS } from '@yasser172/tec-ui';
+import { C, goldA, successA } from '@/lib-client/palette';
 import { useTranslation } from '@/lib/i18n';
 import { Avatar } from '@/components/public/Avatar';
 import { useGroupDiscovery, type PublicGroup } from '@/lib-client/connection/useGroupDiscovery';
@@ -29,7 +29,7 @@ function Row({ g, busy, onJoin, onWithdraw }: {
   return (
     <div style={{
       display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px',
-      borderTop: `1px solid ${TEC_COLORS.border}`,
+      borderTop: `1px solid ${C.border}`,
     }}>
       <Avatar
         username={(g.title || '?').replace(/^@/, '')}
@@ -39,19 +39,19 @@ function Row({ g, busy, onJoin, onWithdraw }: {
       />
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{
-          fontSize: 14.5, fontWeight: 700, color: TEC_COLORS.text,
+          fontSize: 14.5, fontWeight: 700, color: C.text,
           overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
         }}>
           <bdi dir="auto">{g.title}</bdi>
         </div>
         {g.description && (
           <div style={{
-            fontSize: 12.5, color: TEC_COLORS.subtext, marginTop: 2, lineHeight: 1.4,
+            fontSize: 12.5, color: C.subtext, marginTop: 2, lineHeight: 1.4,
             display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
           }} dir="auto">{g.description}</div>
         )}
         {/* A COUNT, never who. */}
-        <div style={{ fontSize: 11.5, color: TEC_COLORS.subtext, marginTop: 3 }}>
+        <div style={{ fontSize: 11.5, color: C.subtext, marginTop: 3 }}>
           <bdi>{g.members} {a.membersLabel}</bdi>
         </div>
       </div>
@@ -59,8 +59,8 @@ function Row({ g, busy, onJoin, onWithdraw }: {
       <div style={{ flexShrink: 0 }}>
         {g.joined ? (
           <span style={{
-            fontSize: 12, fontWeight: 700, color: TEC_COLORS.success,
-            background: 'rgba(34,197,94,0.10)', border: '1px solid rgba(34,197,94,0.25)',
+            fontSize: 12, fontWeight: 700, color: C.success,
+            background: successA(0.1), border: `1px solid ${successA(0.25)}`,
             borderRadius: 999, padding: '5px 12px', whiteSpace: 'nowrap',
           }}>{a.groupJoined}</span>
         ) : g.request === 'PENDING' ? (
@@ -69,8 +69,8 @@ function Row({ g, busy, onJoin, onWithdraw }: {
           <button
             onClick={onWithdraw} disabled={busy}
             style={{
-              fontSize: 12, fontWeight: 700, color: TEC_COLORS.gold,
-              background: `${TEC_COLORS.gold}14`, border: `1px solid ${TEC_COLORS.gold}44`,
+              fontSize: 12, fontWeight: 700, color: C.gold,
+              background: goldA(0.078), border: `1px solid ${goldA(0.267)}`,
               borderRadius: 999, padding: '5px 12px', whiteSpace: 'nowrap',
               cursor: busy ? 'not-allowed' : 'pointer',
             }}
@@ -79,8 +79,8 @@ function Row({ g, busy, onJoin, onWithdraw }: {
           <button
             onClick={onJoin} disabled={busy}
             style={{
-              fontSize: 12.5, fontWeight: 700, color: '#0a0800',
-              background: `linear-gradient(135deg, ${TEC_COLORS.gold}, ${TEC_COLORS.goldDark})`,
+              fontSize: 12.5, fontWeight: 700, color: C.onGold,
+              background: `linear-gradient(135deg, ${C.gold}, ${C.goldDark})`,
               border: 'none', borderRadius: 999, padding: '7px 16px', whiteSpace: 'nowrap',
               cursor: busy ? 'not-allowed' : 'pointer', opacity: busy ? 0.6 : 1,
             }}
@@ -108,23 +108,23 @@ export function GroupDiscovery({ onClose }: { onClose: () => void }) {
   return (
     <div style={{
       position: 'fixed', inset: 0, zIndex: 940,
-      background: TEC_COLORS.bg, display: 'flex', flexDirection: 'column',
+      background: C.bg, display: 'flex', flexDirection: 'column',
       paddingTop: 'env(safe-area-inset-top)',
     }}>
       <div style={{
         display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px',
-        borderBottom: `1px solid ${TEC_COLORS.border}`,
+        borderBottom: `1px solid ${C.border}`,
       }}>
         <button
           onClick={onClose} aria-label={a.closeLabel}
           style={{
             width: 34, height: 34, borderRadius: 999, flexShrink: 0,
-            background: 'none', border: `1px solid ${TEC_COLORS.border}`,
-            color: TEC_COLORS.text, fontSize: 15, cursor: 'pointer',
+            background: 'none', border: `1px solid ${C.border}`,
+            color: C.text, fontSize: 15, cursor: 'pointer',
             display: 'grid', placeItems: 'center',
           }}
         >✕</button>
-        <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: TEC_COLORS.text, flex: 1 }}>
+        <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: C.text, flex: 1 }}>
           {a.discoverGroups}
         </h3>
       </div>
@@ -144,28 +144,28 @@ export function GroupDiscovery({ onClose }: { onClose: () => void }) {
             // right-to-left layout the overflow is on the LEADING edge: the
             // first character of what you typed is cut in half.
             boxSizing: 'border-box',
-            width: '100%', background: TEC_COLORS.surface, color: TEC_COLORS.text,
-            border: `1px solid ${TEC_COLORS.border}`, borderRadius: 999,
+            width: '100%', background: C.surface, color: C.text,
+            border: `1px solid ${C.border}`, borderRadius: 999,
             padding: '11px 16px', fontSize: 14, outline: 'none',
           }}
         />
-        <p style={{ margin: '8px 4px 0', fontSize: 11.5, color: TEC_COLORS.subtext, lineHeight: 1.5 }}>
+        <p style={{ margin: '8px 4px 0', fontSize: 11.5, color: C.subtext, lineHeight: 1.5 }}>
           {a.groupJoinNotice}
         </p>
         {notice && (
-          <p style={{ margin: '6px 4px 0', fontSize: 12, color: TEC_COLORS.gold }}>{notice}</p>
+          <p style={{ margin: '6px 4px 0', fontSize: 12, color: C.gold }}>{notice}</p>
         )}
       </div>
 
       <div style={{ flex: 1, overflowY: 'auto', paddingBottom: 'calc(env(safe-area-inset-bottom) + 20px)' }}>
         {loading ? (
-          <p style={{ padding: '16px', fontSize: 13, color: TEC_COLORS.subtext }}>{a.loading}</p>
+          <p style={{ padding: '16px', fontSize: 13, color: C.subtext }}>{a.loading}</p>
         ) : failed ? (
-          <p style={{ padding: '16px', fontSize: 13, color: TEC_COLORS.error }}>{a.groupSearchFailed}</p>
+          <p style={{ padding: '16px', fontSize: 13, color: C.error }}>{a.groupSearchFailed}</p>
         ) : groups.length === 0 ? (
           // Two different situations, two different sentences. "No results" for
           // a search nobody matched is not the same as "nothing is listed yet".
-          <p style={{ padding: '16px', fontSize: 13, color: TEC_COLORS.subtext, lineHeight: 1.6 }}>
+          <p style={{ padding: '16px', fontSize: 13, color: C.subtext, lineHeight: 1.6 }}>
             {q ? a.groupNoResults : a.groupNoneListed}
           </p>
         ) : groups.map((g) => (

@@ -24,6 +24,8 @@ export const tr: Dictionary = {
       profile: 'Profil', planFree: 'Ücretsiz', planPro: 'Pro',
       connectedPi: 'Pi’ye bağlı', notSignedIn: 'Giriş yapılmadı', member: 'TEC Üyesi',
       appearance: 'Görünüm', language: 'Dil', languageDesc: 'Görüntüleme dili',
+      theme: 'Tema', themeDesc: 'Açık, koyu veya telefona göre',
+      themeSystem: 'Sistem', themeLight: 'Açık', themeDark: 'Koyu',
       about: 'Hakkında', version: 'Sürüm', domain: 'Alan adı', ecosystem: 'Ekosistem',
       builtOn: 'Şunun üzerine kurulu', builtOnPi: 'Pi Network', logout: 'Çıkış yap',
     },

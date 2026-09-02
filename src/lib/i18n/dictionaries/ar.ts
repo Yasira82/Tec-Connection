@@ -37,6 +37,8 @@ export const ar: Dictionary = {
       profile: 'الملف الشخصي', planFree: 'مجاني', planPro: 'Pro',
       connectedPi: 'متصل بـ Pi', notSignedIn: 'غير مسجّل الدخول', member: 'عضو TEC',
       appearance: 'المظهر', language: 'اللغة', languageDesc: 'لغة العرض',
+      theme: 'المظهر', themeDesc: 'فاتح أو غامق أو حسب الهاتف',
+      themeSystem: 'تلقائي', themeLight: 'فاتح', themeDark: 'غامق',
       about: 'حول', version: 'الإصدار', domain: 'النطاق', ecosystem: 'المنظومة',
       builtOn: 'مبني على', builtOnPi: 'شبكة Pi', logout: 'تسجيل الخروج',
     },

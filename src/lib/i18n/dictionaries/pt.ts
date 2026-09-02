@@ -24,6 +24,8 @@ export const pt: Dictionary = {
       profile: 'Perfil', planFree: 'Grátis', planPro: 'Pro',
       connectedPi: 'Conectado ao Pi', notSignedIn: 'Não conectado', member: 'Membro TEC',
       appearance: 'Aparência', language: 'Idioma', languageDesc: 'Idioma de exibição',
+      theme: 'Tema', themeDesc: 'Claro, escuro ou seguir o telemóvel',
+      themeSystem: 'Sistema', themeLight: 'Claro', themeDark: 'Escuro',
       about: 'Sobre', version: 'Versão', domain: 'Domínio', ecosystem: 'Ecossistema',
       builtOn: 'Construído sobre', builtOnPi: 'Pi Network', logout: 'Sair',
     },

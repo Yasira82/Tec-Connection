@@ -17,7 +17,7 @@
 //                    messages only; the option is simply absent otherwise,
 //                    rather than shown and refused.
 import { useEffect } from 'react';
-import { TEC_COLORS } from '@yasser172/tec-ui';
+import { C, bgA, goldA } from '@/lib-client/palette';
 import { useTranslation } from '@/lib/i18n';
 import { useBackButton } from '@/lib-client/connection/useBackButton';
 
@@ -36,9 +36,9 @@ function Choice({ label, hint, onClick, danger = true }: {
     >
       <span style={{
         display: 'block', fontSize: 14.5, fontWeight: 600,
-        color: danger ? TEC_COLORS.error : TEC_COLORS.text,
+        color: danger ? C.error : C.text,
       }}>{label}</span>
-      <span style={{ display: 'block', fontSize: 11.5, color: TEC_COLORS.subtext, marginTop: 2, lineHeight: 1.45 }}>
+      <span style={{ display: 'block', fontSize: 11.5, color: C.subtext, marginTop: 2, lineHeight: 1.45 }}>
         {hint}
       </span>
     </button>
@@ -103,20 +103,20 @@ export function MessageActions({
       role="dialog" aria-modal="true" aria-label={a.deleteMessage}
       style={{
         position: 'fixed', inset: 0, zIndex: 950,
-        background: 'rgba(3,5,12,0.72)', display: 'flex', alignItems: 'flex-end',
+        background: bgA(0.72), display: 'flex', alignItems: 'flex-end',
       }}
     >
       <div
         onClick={(e) => e.stopPropagation()}
         style={{
-          width: '100%', background: TEC_COLORS.surface,
+          width: '100%', background: C.surface,
           borderStartStartRadius: 20, borderStartEndRadius: 20,
-          border: `1px solid ${TEC_COLORS.border}`, borderBottom: 'none',
+          border: `1px solid ${C.border}`, borderBottom: 'none',
           paddingBottom: 'calc(env(safe-area-inset-bottom) + 10px)',
         }}
       >
         <div style={{ display: 'grid', placeItems: 'center', padding: '10px 0 6px' }}>
-          <span style={{ width: 38, height: 4, borderRadius: 999, background: TEC_COLORS.border }} />
+          <span style={{ width: 38, height: 4, borderRadius: 999, background: C.border }} />
         </div>
 
         {/* The reactions, at the very top and as one tap.
@@ -127,7 +127,7 @@ export function MessageActions({
         {onReact && !deleted && (
           <div style={{
             display: 'flex', gap: 4, padding: '4px 10px 12px',
-            justifyContent: 'space-between', borderBottom: `1px solid ${TEC_COLORS.border}`,
+            justifyContent: 'space-between', borderBottom: `1px solid ${C.border}`,
           }}>
             {REACTIONS.map((e) => {
               const on = myReactions.includes(e);
@@ -139,8 +139,8 @@ export function MessageActions({
                   style={{
                     flex: 1, minWidth: 0, padding: '8px 0', fontSize: 22, lineHeight: 1,
                     cursor: 'pointer', borderRadius: 12,
-                    background: on ? `${TEC_COLORS.gold}22` : 'none',
-                    border: `1px solid ${on ? `${TEC_COLORS.gold}66` : 'transparent'}`,
+                    background: on ? goldA(0.133) : 'none',
+                    border: `1px solid ${on ? goldA(0.4) : 'transparent'}`,
                   }}
                 >{e}</button>
               );
@@ -151,7 +151,7 @@ export function MessageActions({
         {/* First, and not a destructive action: replying is the thing people
             open this menu for most, and it should not sit under two deletes. */}
         {onReply && !deleted && (
-          <div style={{ borderBottom: `1px solid ${TEC_COLORS.border}` }}>
+          <div style={{ borderBottom: `1px solid ${C.border}` }}>
             <Choice danger={false} label={a.reply} hint={a.replyHint} onClick={() => { onReply(); onClose(); }} />
           </div>
         )}
@@ -160,25 +160,25 @@ export function MessageActions({
             always shown and sometimes refused teaches people to distrust the
             menu. */}
         {onEdit && canEdit && !deleted && (
-          <div style={{ borderBottom: `1px solid ${TEC_COLORS.border}` }}>
+          <div style={{ borderBottom: `1px solid ${C.border}` }}>
             <Choice danger={false} label={a.editMessage} hint={a.editMessageHint} onClick={() => { onEdit(); onClose(); }} />
           </div>
         )}
 
         {onCopy && !deleted && (
-          <div style={{ borderBottom: `1px solid ${TEC_COLORS.border}` }}>
+          <div style={{ borderBottom: `1px solid ${C.border}` }}>
             <Choice danger={false} label={a.copyMessage} hint={a.copyMessageHint} onClick={() => { onCopy(); onClose(); }} />
           </div>
         )}
 
         {onForward && !deleted && (
-          <div style={{ borderBottom: `1px solid ${TEC_COLORS.border}` }}>
+          <div style={{ borderBottom: `1px solid ${C.border}` }}>
             <Choice danger={false} label={a.forward} hint={a.forwardHint} onClick={() => { onForward(); onClose(); }} />
           </div>
         )}
 
         {onPin && canPin && !deleted && (
-          <div style={{ borderBottom: `1px solid ${TEC_COLORS.border}` }}>
+          <div style={{ borderBottom: `1px solid ${C.border}` }}>
             <Choice
               danger={false}
               label={pinned ? a.unpinMessage : a.pinMessage}
@@ -196,7 +196,7 @@ export function MessageActions({
         {/* Absent, not disabled: an option you can never take should not be on
             the menu explaining why. */}
         {mine && !deleted && (
-          <div style={{ borderTop: `1px solid ${TEC_COLORS.border}` }}>
+          <div style={{ borderTop: `1px solid ${C.border}` }}>
             <Choice
               label={a.deleteForEveryone} hint={a.deleteForEveryoneHint}
               onClick={() => { onDelete('everyone'); onClose(); }}
@@ -208,7 +208,7 @@ export function MessageActions({
             with the two that are. It only appears on someone else's message —
             reporting your own is not a thing. */}
         {!mine && !deleted && onReport && (
-          <div style={{ borderTop: `1px solid ${TEC_COLORS.border}` }}>
+          <div style={{ borderTop: `1px solid ${C.border}` }}>
             <button
               onClick={() => { onReport(); onClose(); }}
               style={{
@@ -216,23 +216,23 @@ export function MessageActions({
                 padding: '13px 16px', background: 'none', border: 'none',
               }}
             >
-              <span style={{ display: 'block', fontSize: 14.5, fontWeight: 600, color: TEC_COLORS.text }}>
+              <span style={{ display: 'block', fontSize: 14.5, fontWeight: 600, color: C.text }}>
                 {a.report}
               </span>
-              <span style={{ display: 'block', fontSize: 11.5, color: TEC_COLORS.subtext, marginTop: 2, lineHeight: 1.45 }}>
+              <span style={{ display: 'block', fontSize: 11.5, color: C.subtext, marginTop: 2, lineHeight: 1.45 }}>
                 {a.reportHint}
               </span>
             </button>
           </div>
         )}
 
-        <div style={{ borderTop: `1px solid ${TEC_COLORS.border}` }}>
+        <div style={{ borderTop: `1px solid ${C.border}` }}>
           <button
             onClick={onClose}
             style={{
               display: 'block', width: '100%', padding: '13px 16px', textAlign: 'center',
               background: 'none', border: 'none', cursor: 'pointer',
-              fontSize: 14.5, fontWeight: 600, color: TEC_COLORS.text,
+              fontSize: 14.5, fontWeight: 600, color: C.text,
             }}
           >{a.cancel}</button>
         </div>

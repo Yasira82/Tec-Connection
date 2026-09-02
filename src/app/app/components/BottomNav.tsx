@@ -4,6 +4,7 @@
 // (not emoji), glass backdrop, active scale + underline, light haptic.
 import { Icon, type ConnIconName } from './Icon';
 import { useTranslation } from '@/lib/i18n';
+import { C, bgA, inkA } from '@/lib-client/palette';
 
 export type ConnTab = 'home' | 'messages' | 'discover' | 'trust' | 'settings';
 
@@ -24,8 +25,8 @@ export function BottomNav({ active, onSelect, badges }: {
   return (
     <nav style={{
       position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 200,
-      background: 'rgba(5,8,22,0.92)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
-      borderTop: '1px solid rgba(255,255,255,0.06)',
+      background: bgA(0.92), backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
+      borderTop: `1px solid ${inkA(0.06)}`,
       display: 'flex', paddingBottom: 'env(safe-area-inset-bottom)',
     }}>
       {ITEMS.map((item) => {
@@ -44,21 +45,21 @@ export function BottomNav({ active, onSelect, badges }: {
             }}
           >
             <div style={{ position: 'relative', transform: isActive ? 'scale(1.08)' : 'scale(1)', transition: 'transform 0.2s' }}>
-              <Icon name={item.icon} size={21} color={isActive ? '#FBB44A' : '#3a3a4a'} strokeWidth={isActive ? 2.2 : 1.9} />
+              <Icon name={item.icon} size={21} color={isActive ? C.gold : C.subtext} strokeWidth={isActive ? 2.2 : 1.9} />
               {(badges?.[item.key] ?? 0) > 0 && (
                 <span style={{
                   position: 'absolute', top: -5, insetInlineEnd: -8,
                   minWidth: 16, height: 16, padding: '0 4px', borderRadius: 999,
                   display: 'grid', placeItems: 'center',
-                  fontSize: 9.5, fontWeight: 800, background: '#FBB44A', color: '#0a0800',
+                  fontSize: 9.5, fontWeight: 800, background: C.gold, color: C.onGold,
                 }}>{Math.min(badges?.[item.key] ?? 0, 99)}</span>
               )}
             </div>
-            <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: 0.5, color: isActive ? '#FBB44A' : '#3a3a4a', transition: 'color 0.2s' }}>
+            <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: 0.5, color: isActive ? C.gold : C.subtext, transition: 'color 0.2s' }}>
               {item.label}
             </div>
             {isActive && (
-              <div style={{ position: 'absolute', bottom: 0, width: 20, height: 2, borderRadius: 1, background: '#FBB44A' }} />
+              <div style={{ position: 'absolute', bottom: 0, width: 20, height: 2, borderRadius: 1, background: C.gold }} />
             )}
           </button>
         );

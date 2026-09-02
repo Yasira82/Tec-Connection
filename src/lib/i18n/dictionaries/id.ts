@@ -24,6 +24,8 @@ export const id: Dictionary = {
       profile: 'Profil', planFree: 'Gratis', planPro: 'Pro',
       connectedPi: 'Terhubung ke Pi', notSignedIn: 'Belum masuk', member: 'Anggota TEC',
       appearance: 'Tampilan', language: 'Bahasa', languageDesc: 'Bahasa tampilan',
+      theme: 'Tema', themeDesc: 'Terang, gelap, atau ikuti ponsel',
+      themeSystem: 'Sistem', themeLight: 'Terang', themeDark: 'Gelap',
       about: 'Tentang', version: 'Versi', domain: 'Domain', ecosystem: 'Ekosistem',
       builtOn: 'Dibangun di atas', builtOnPi: 'Pi Network', logout: 'Keluar',
     },

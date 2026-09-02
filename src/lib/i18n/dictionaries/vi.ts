@@ -24,6 +24,8 @@ export const vi: Dictionary = {
       profile: 'Hồ sơ', planFree: 'Miễn phí', planPro: 'Pro',
       connectedPi: 'Đã kết nối Pi', notSignedIn: 'Chưa đăng nhập', member: 'Thành viên TEC',
       appearance: 'Giao diện', language: 'Ngôn ngữ', languageDesc: 'Ngôn ngữ hiển thị',
+      theme: 'Giao diện', themeDesc: 'Sáng, tối, hoặc theo điện thoại',
+      themeSystem: 'Tự động', themeLight: 'Sáng', themeDark: 'Tối',
       about: 'Giới thiệu', version: 'Phiên bản', domain: 'Tên miền', ecosystem: 'Hệ sinh thái',
       builtOn: 'Xây dựng trên', builtOnPi: 'Pi Network', logout: 'Đăng xuất',
     },

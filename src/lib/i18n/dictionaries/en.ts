@@ -43,6 +43,8 @@ export const en = {
       profile: 'Profile', planFree: 'Free', planPro: 'Pro',
       connectedPi: 'Connected to Pi', notSignedIn: 'Not signed in', member: 'TEC Member',
       appearance: 'Appearance', language: 'Language', languageDesc: 'Display language',
+      theme: 'Theme', themeDesc: 'Light, dark, or follow your phone',
+      themeSystem: 'System', themeLight: 'Light', themeDark: 'Dark',
       about: 'About', version: 'Version', domain: 'Domain', ecosystem: 'Ecosystem',
       builtOn: 'Built on', builtOnPi: 'Pi Network', logout: 'Logout',
     },

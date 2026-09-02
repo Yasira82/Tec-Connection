@@ -5,7 +5,7 @@
 // step. ADR-007 dual-mode: Hub navigation → Mode 1 (Hub modal); standalone in Pi
 // Browser → Mode 2 (direct createU2APayment). Approves under PI_API_KEY_CONNECTION.
 import { useEffect, useState } from 'react';
-import { TEC_COLORS } from '@yasser172/tec-ui';
+import { C, goldA, successA } from '@/lib-client/palette';
 import { useTranslation } from '@/lib/i18n';
 import {
   isHubNavigation,
@@ -124,8 +124,8 @@ export function ConnectionPro() {
   };
 
   const card: React.CSSProperties = {
-    background:   TEC_COLORS.surface,
-    border:       `1px solid ${TEC_COLORS.gold}55`,
+    background:   C.surface,
+    border:       `1px solid ${goldA(0.333)}`,
     borderRadius: 16,
     padding:      20,
     marginTop:    24,
@@ -133,13 +133,13 @@ export function ConnectionPro() {
 
   if (isSubscribed) {
     return (
-      <div style={{ background: TEC_COLORS.surface, border: `1px solid ${TEC_COLORS.gold}55`, borderRadius: 16, padding: 20, marginTop: 24 }}>
-        <div style={{ fontSize: 15, fontWeight: 800, color: TEC_COLORS.gold }}>{a.proActive}</div>
-        <div style={{ fontSize: 12, color: TEC_COLORS.subtext, marginTop: 6 }}>
+      <div style={{ background: C.surface, border: `1px solid ${goldA(0.333)}`, borderRadius: 16, padding: 20, marginTop: 24 }}>
+        <div style={{ fontSize: 15, fontWeight: 800, color: C.gold }}>{a.proActive}</div>
+        <div style={{ fontSize: 12, color: C.subtext, marginTop: 6 }}>
           {a.proSubActive}
         </div>
         {typeof daysRemaining === 'number' && (
-          <div style={{ fontSize: 12, fontWeight: daysRemaining <= 7 ? 700 : 600, color: daysRemaining <= 7 ? TEC_COLORS.gold : TEC_COLORS.subtext, marginTop: 8 }}>
+          <div style={{ fontSize: 12, fontWeight: daysRemaining <= 7 ? 700 : 600, color: daysRemaining <= 7 ? C.gold : C.subtext, marginTop: 8 }}>
             {daysRemaining <= 7 ? '⏳ ' : ''}
             {a.proExpires.replace('{days}', String(daysRemaining))}
             {daysRemaining <= 7 ? ` — ${a.proRenewNote}` : '.'}
@@ -151,9 +151,9 @@ export function ConnectionPro() {
 
   if (status === 'success') {
     return (
-      <div style={{ ...card, borderColor: `${TEC_COLORS.success}66` }}>
-        <div style={{ fontSize: 15, fontWeight: 800, color: TEC_COLORS.success }}>{a.proPaid}</div>
-        <div style={{ fontSize: 12, color: TEC_COLORS.subtext, marginTop: 6 }}>
+      <div style={{ ...card, borderColor: successA(0.4) }}>
+        <div style={{ fontSize: 15, fontWeight: 800, color: C.success }}>{a.proPaid}</div>
+        <div style={{ fontSize: 12, color: C.subtext, marginTop: 6 }}>
           {a.proPaidBody}
         </div>
       </div>
@@ -165,9 +165,9 @@ export function ConnectionPro() {
   return (
     <div style={card}>
       <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 12 }}>
-        <div style={{ fontSize: 15, fontWeight: 800, color: TEC_COLORS.gold }}>🔗 {a.proTitle}</div>
-        <div style={{ fontSize: 20, fontWeight: 900, color: TEC_COLORS.text }}>
-          {PRICE}π<span style={{ fontSize: 12, color: TEC_COLORS.subtext, fontWeight: 600 }}> {a.perMonth}</span>
+        <div style={{ fontSize: 15, fontWeight: 800, color: C.gold }}>🔗 {a.proTitle}</div>
+        <div style={{ fontSize: 20, fontWeight: 900, color: C.text }}>
+          {PRICE}π<span style={{ fontSize: 12, color: C.subtext, fontWeight: 600 }}> {a.perMonth}</span>
         </div>
       </div>
       {/* Two lines, not a paragraph. The previous copy ran seven lines and ended
@@ -175,16 +175,16 @@ export function ConnectionPro() {
           on a payment card. The rule it protects still holds and is still stated,
           in four words, at the bottom. */}
       <ul style={{ margin: '10px 0 0', padding: 0, listStyle: 'none', display: 'grid', gap: 7 }}>
-        <li style={{ fontSize: 13, color: TEC_COLORS.text, display: 'flex', gap: 8 }}>
+        <li style={{ fontSize: 13, color: C.text, display: 'flex', gap: 8 }}>
           <span aria-hidden="true">👥</span>
           <span>{a.proBenefit1}</span>
         </li>
-        <li style={{ fontSize: 13, color: TEC_COLORS.text, display: 'flex', gap: 8 }}>
+        <li style={{ fontSize: 13, color: C.text, display: 'flex', gap: 8 }}>
           <span aria-hidden="true">⭐</span>
           <span>{a.proBenefit2}</span>
         </li>
       </ul>
-      <div style={{ fontSize: 11.5, color: TEC_COLORS.subtext, marginTop: 10 }}>
+      <div style={{ fontSize: 11.5, color: C.subtext, marginTop: 10 }}>
         {a.proReachOnly}
       </div>
 
@@ -193,8 +193,8 @@ export function ConnectionPro() {
         disabled={busy}
         style={{
           marginTop: 14, width: '100%', padding: '12px 16px', borderRadius: 12,
-          background: busy ? '#333' : `linear-gradient(135deg, ${TEC_COLORS.gold}, ${TEC_COLORS.goldDark})`,
-          color: busy ? '#888' : '#0a0800',
+          background: busy ? '#333' : `linear-gradient(135deg, ${C.gold}, ${C.goldDark})`,
+          color: busy ? '#888' : C.onGold,
           border: 'none', fontSize: 14, fontWeight: 800,
           cursor: busy ? 'not-allowed' : 'pointer',
         }}
@@ -205,7 +205,7 @@ export function ConnectionPro() {
       </button>
 
       {status === 'error' && (
-        <div style={{ fontSize: 12, color: TEC_COLORS.error, marginTop: 10 }}>{message || a.proNotCompleted}</div>
+        <div style={{ fontSize: 12, color: C.error, marginTop: 10 }}>{message || a.proNotCompleted}</div>
       )}
     </div>
   );

@@ -25,6 +25,7 @@ import { DirectoryCard, type DirectoryCardProfile } from '@/components/public/Di
 import { LanguagePicker } from '@/components/public/LanguagePicker';
 import type { Dictionary } from '@/lib/i18n/dictionaries';
 import type { Locale } from '@/lib/i18n/locales';
+import { C, goldA, inkA } from '@/lib-client/palette';
 
 const HUB_URL  = process.env.NEXT_PUBLIC_HUB_URL  ?? 'https://hub.tecosystem.app';
 const APP_URL  = process.env.NEXT_PUBLIC_APP_URL  ?? 'https://connection.tecosystem.app';
@@ -81,7 +82,7 @@ export function Landing({
               <div className="pub-stack">
                 {profiles.slice(0, 5).map(p => <Avatar key={p.username} username={p.username} size={34} hasPhoto={p.hasAvatar} />)}
               </div>
-              <span style={{ fontSize: 13, fontWeight: 650, color: 'rgba(255,255,255,0.55)' }}>
+              <span style={{ fontSize: 13, fontWeight: 650, color: inkA(0.55) }}>
                 {t.alreadyOn}
               </span>
             </div>
@@ -106,7 +107,7 @@ export function Landing({
         {profiles.length > 0 && (
           <section style={{ marginTop: 52 }}>
             <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 12, marginBottom: 14 }}>
-              <h2 style={{ fontSize: 12, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.45)', margin: 0 }}>
+              <h2 style={{ fontSize: 12, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: inkA(0.45), margin: 0 }}>
                 {t.peopleOnTec}
               </h2>
               <Link href="/discover" style={{ fontSize: 13.5, fontWeight: 750, color: 'var(--tec-gold)', textDecoration: 'none' }}>
@@ -129,7 +130,7 @@ export function Landing({
 
         {/* ── The differentiator, stated plainly ─────────────────────── */}
         <section className="pub-panel" style={{ marginTop: 44, padding: '26px 22px' }}>
-          <h2 style={{ fontSize: 12, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.45)', margin: '0 0 18px' }}>
+          <h2 style={{ fontSize: 12, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: inkA(0.45), margin: '0 0 18px' }}>
             {t.howTrust}
           </h2>
           <div style={{ display: 'grid', gap: 18 }}>
@@ -138,11 +139,11 @@ export function Landing({
                 <div style={{
                   width: 26, height: 26, flexShrink: 0, borderRadius: 999, display: 'grid', placeItems: 'center',
                   fontSize: 12, fontWeight: 900, color: 'var(--tec-gold)',
-                  background: 'rgba(251,180,74,0.12)', border: '1px solid var(--tec-border-gold)',
+                  background: goldA(0.12), border: '1px solid var(--tec-border-gold)',
                 }}>{s.n}</div>
                 <div>
                   <div style={{ fontSize: 14.5, fontWeight: 800, color: '#fff' }}>{s.title}</div>
-                  <p style={{ fontSize: 13.5, lineHeight: 1.55, color: 'rgba(255,255,255,0.58)', margin: '4px 0 0' }}>{s.body}</p>
+                  <p style={{ fontSize: 13.5, lineHeight: 1.55, color: inkA(0.58), margin: '4px 0 0' }}>{s.body}</p>
                 </div>
               </div>
             ))}
@@ -150,13 +151,13 @@ export function Landing({
         </section>
 
         <footer style={{ marginTop: 40, textAlign: 'center' }}>
-          <p style={{ fontSize: 11.5, lineHeight: 1.65, color: 'rgba(255,255,255,0.34)', margin: 0 }}>
+          <p style={{ fontSize: 11.5, lineHeight: 1.65, color: inkA(0.34), margin: 0 }}>
             {t.disclaimer}
           </p>
           <div style={{ display: 'flex', gap: 18, justifyContent: 'center', marginTop: 14 }}>
-            <Link href="/discover" style={{ fontSize: 12.5, color: 'rgba(255,255,255,0.45)', textDecoration: 'none' }}>{t.discoverTitle}</Link>
-            <Link href="/privacy"  style={{ fontSize: 12.5, color: 'rgba(255,255,255,0.45)', textDecoration: 'none' }}>{t.privacy}</Link>
-            <Link href="/terms"    style={{ fontSize: 12.5, color: 'rgba(255,255,255,0.45)', textDecoration: 'none' }}>{t.terms}</Link>
+            <Link href="/discover" style={{ fontSize: 12.5, color: inkA(0.45), textDecoration: 'none' }}>{t.discoverTitle}</Link>
+            <Link href="/privacy"  style={{ fontSize: 12.5, color: inkA(0.45), textDecoration: 'none' }}>{t.privacy}</Link>
+            <Link href="/terms"    style={{ fontSize: 12.5, color: inkA(0.45), textDecoration: 'none' }}>{t.terms}</Link>
           </div>
           <div style={{ marginTop: 22 }}>
             <LanguagePicker current={locale} next="/" />

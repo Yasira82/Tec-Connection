@@ -17,7 +17,7 @@
 //     once per screen, small, at the bottom — not after every card.
 import { useEffect, useState } from 'react';
 import { usePiAuth } from '@yasser172/tec-auth';
-import { TEC_COLORS } from '@yasser172/tec-ui';
+import { C, errorA, goldA } from '@/lib-client/palette';
 import { useTranslation } from '@/lib/i18n';
 import { useMe } from '@/lib-client/hooks/useMe';
 import { InviteCard } from '@/components/referral/InviteCard';
@@ -100,7 +100,7 @@ export default function ConnectionHome() {
   const { title, sub } = heading[tab];
 
   return (
-    <main style={{ minHeight: '100vh', background: TEC_COLORS.bg, color: TEC_COLORS.text, fontFamily: 'system-ui, -apple-system, sans-serif' }}>
+    <main style={{ minHeight: '100vh', background: C.bg, color: C.text, fontFamily: 'system-ui, -apple-system, sans-serif' }}>
       <div style={{ maxWidth: 760, margin: '0 auto', padding: '28px 20px calc(96px + env(safe-area-inset-bottom))' }}>
         {/* Arriving on an invite link. Said out loud, because a link that opens
             the app and then appears to do nothing reads as a broken link — and
@@ -108,10 +108,10 @@ export default function ConnectionHome() {
         {inviteState !== 'idle' && (
           <div style={{
             margin: '0 0 16px', padding: '10px 14px', borderRadius: 12,
-            background: inviteState === 'failed' ? 'rgba(239,68,68,0.10)' : `${TEC_COLORS.gold}14`,
-            border: `1px solid ${inviteState === 'failed' ? 'rgba(239,68,68,0.30)' : `${TEC_COLORS.gold}44`}`,
+            background: inviteState === 'failed' ? errorA(0.1) : goldA(0.078),
+            border: `1px solid ${inviteState === 'failed' ? errorA(0.3) : goldA(0.267)}`,
             fontSize: 13, lineHeight: 1.5,
-            color: inviteState === 'failed' ? TEC_COLORS.error : TEC_COLORS.text,
+            color: inviteState === 'failed' ? C.error : C.text,
           }}>
             {inviteState === 'failed' ? t.app.inviteInvalid : t.app.joiningByInvite}
           </div>
@@ -122,17 +122,17 @@ export default function ConnectionHome() {
             conversation in a box under a title that repeated its own name. */}
         {!(tab === 'messages' && chatOpen) && (
         <header style={{ marginBottom: 20 }}>
-          <div style={{ fontSize: 11, letterSpacing: 1.4, color: TEC_COLORS.subtext, textTransform: 'uppercase', fontWeight: 700 }}>
+          <div style={{ fontSize: 11, letterSpacing: 1.4, color: C.subtext, textTransform: 'uppercase', fontWeight: 700 }}>
             {t.connection.brand}
           </div>
           {/* <bdi>: on the Home tab the title is a Latin @handle. Inside an
               Arabic (RTL) document the '@' is bidi-neutral and resolves against
               the paragraph — it rendered as "yas55eR82@". */}
-          <h1 style={{ fontSize: 26, fontWeight: 900, color: TEC_COLORS.gold, margin: '4px 0 0', letterSpacing: '-0.02em' }}>
+          <h1 style={{ fontSize: 26, fontWeight: 900, color: C.gold, margin: '4px 0 0', letterSpacing: '-0.02em' }}>
             <bdi>{title}</bdi>
           </h1>
           {sub && (
-            <p style={{ fontSize: 13.5, color: TEC_COLORS.subtext, margin: '5px 0 0', lineHeight: 1.5 }}>{sub}</p>
+            <p style={{ fontSize: 13.5, color: C.subtext, margin: '5px 0 0', lineHeight: 1.5 }}>{sub}</p>
           )}
         </header>
         )}

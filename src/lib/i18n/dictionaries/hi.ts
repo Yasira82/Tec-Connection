@@ -24,6 +24,8 @@ export const hi: Dictionary = {
       profile: 'प्रोफ़ाइल', planFree: 'मुफ़्त', planPro: 'Pro',
       connectedPi: 'Pi से जुड़ा', notSignedIn: 'साइन इन नहीं', member: 'TEC सदस्य',
       appearance: 'दिखावट', language: 'भाषा', languageDesc: 'प्रदर्शन भाषा',
+      theme: 'थीम', themeDesc: 'हल्का, गहरा, या फ़ोन के अनुसार',
+      themeSystem: 'सिस्टम', themeLight: 'हल्का', themeDark: 'गहरा',
       about: 'परिचय', version: 'संस्करण', domain: 'डोमेन', ecosystem: 'इकोसिस्टम',
       builtOn: 'आधारित', builtOnPi: 'Pi Network', logout: 'लॉग आउट',
     },
