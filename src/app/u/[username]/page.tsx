@@ -14,6 +14,8 @@ import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import { resolvePublicProfile } from '@/lib/connection/discovery';
 import { Avatar } from '@/components/public/Avatar';
+import { FollowCta } from '@/components/public/FollowCta';
+import { ShareProfile } from '@/components/public/ShareProfile';
 import { LanguagePicker } from '@/components/public/LanguagePicker';
 import { getI18n } from '@/lib/i18n/server';
 import { fill } from '@/lib/i18n/dictionaries';
@@ -129,10 +131,34 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
             </div>
           )}
 
+          {/* The button DOES the thing now.
+              It used to be a link to /app — "go and open the app", which is the
+              one sentence a shared link exists to avoid. Whoever tapped it
+              arrived in an empty app with no memory of who they had come to
+              see. It follows this person instead, signing in on the way if
+              there is no session, and returning here. */}
           <div style={{ marginTop: 26 }}>
-            <Link href="/app" className="pub-cta" style={{ textDecoration: 'none' }}>
-              <bdi>{fill(t.follow, { name: p.username })}</bdi>
-            </Link>
+            <FollowCta
+              username={p.username}
+              labels={{
+                follow:    fill(t.follow, { name: p.username }),
+                following: fill(t.following, { name: p.username }),
+                signIn:    fill(t.followSignIn, { name: p.username }),
+                self:      t.followSelf,
+                failed:    t.followFailed,
+              }}
+            />
+          </div>
+          <div style={{ marginTop: 14 }}>
+            <ShareProfile
+              username={p.username}
+              labels={{
+                share:  t.shareProfile,
+                copied: t.shareCopied,
+                title:  `@${p.username} · TEC`,
+                text:   fill(t.shareText, { name: p.username }),
+              }}
+            />
           </div>
           <Link href="/discover" className="pub-secondary">{t.browseMore}</Link>
         </section>
