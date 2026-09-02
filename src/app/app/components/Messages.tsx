@@ -29,6 +29,7 @@ import { useBlocks } from '@/lib-client/connection/useBlocks';
 import { useTyping } from '@/lib-client/connection/useTyping';
 import { NewChat } from './NewChat';
 import { Lightbox } from './Lightbox';
+import { MediaImage } from './MediaImage';
 import { ChatInfoSheet } from './ChatInfoSheet';
 import { GroupDiscovery } from './GroupDiscovery';
 import { MessageActions } from './MessageActions';
@@ -290,9 +291,10 @@ function Chat({ id, me, conversations, onBack }: {
   // every bubble is a row of hazards down the side of the transcript.
   const [menuFor, setMenuFor] = useState<string | null>(null);
   const [viewing, setViewing] = useState<string | null>(null);
-  // Which photos have finished decoding. A tile with nothing in it reads as
-  // broken; a tile with a shimmer reads as "coming".
-  const [loaded, setLoaded] = useState<Set<string>>(new Set());
+  // Reveal state used to live here, as a Set of message ids. It moved INTO the
+  // tile (MediaImage): a transcript-level Set is only written by a load event,
+  // and a photo that arrives from cache never fires one — so the id never
+  // entered the Set and the tile stayed transparent for the life of the screen.
   const [micIssue, setMicIssue] = useState<'denied' | 'unsupported' | null>(null);
   const [reporting, setReporting] = useState<{ id: string; by: string } | null>(null);
   const { typing, ping } = useTyping(id, thread?.members ?? []);
@@ -663,19 +665,12 @@ function Chat({ id, me, conversations, onBack }: {
                       backgroundColor: TEC_COLORS.surface2,
                     }}
                   >
-                    {!loaded.has(m.id) && (
-                      <span style={{
-                        position: 'absolute', inset: 0, display: 'grid', placeItems: 'center',
-                        color: TEC_COLORS.subtext, fontSize: 11,
-                      }}>{a.loading}</span>
-                    )}
-                    <img
-                      src={mediaUrl(id, m.id)} alt={a.photo} loading="lazy" decoding="async"
-                      onLoad={() => setLoaded((sset) => new Set(sset).add(m.id))}
-                      style={{
-                        display: 'block', width: '100%', height: '100%', objectFit: 'cover',
-                        opacity: loaded.has(m.id) ? 1 : 0, transition: 'opacity 0.2s',
-                      }}
+                    <MediaImage
+                      src={mediaUrl(id, m.id)}
+                      alt={a.photo}
+                      loadingLabel={a.loading}
+                      failedLabel={a.photoUnavailable}
+                      imgStyle={{ display: 'block', width: '100%', height: '100%', objectFit: 'cover' }}
                     />
                   </button>
                 )}

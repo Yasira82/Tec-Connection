@@ -249,6 +249,7 @@ export const pt: Dictionary = {
     cancel: 'Cancelar',
     openFailed: 'Não foi possível abrir a conversa ({code}). Tente novamente.',
     photo: 'Foto',
+    photoUnavailable: 'Foto indisponível',
     voiceNote: 'Mensagem de voz',
     attachPhoto: 'Enviar uma foto',
     recordVoice: 'Gravar uma mensagem de voz',

@@ -249,6 +249,7 @@ export const vi: Dictionary = {
     cancel: 'Hủy',
     openFailed: 'Không mở được cuộc trò chuyện ({code}). Vui lòng thử lại.',
     photo: 'Ảnh',
+    photoUnavailable: 'Không tải được ảnh',
     voiceNote: 'Tin nhắn thoại',
     attachPhoto: 'Gửi ảnh',
     recordVoice: 'Ghi âm tin nhắn thoại',

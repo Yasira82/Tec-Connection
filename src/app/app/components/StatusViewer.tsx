@@ -15,6 +15,7 @@ import { TEC_COLORS } from '@yasser172/tec-ui';
 import { useTranslation } from '@/lib/i18n';
 import { storyMediaUrl, type StoryAuthor, type StoryItem } from '@/lib-client/connection/useStories';
 import { ReportSheet } from './ReportSheet';
+import { MediaImage } from './MediaImage';
 import { useBackButton } from '@/lib-client/connection/useBackButton';
 
 const relative = (iso: string, a: Record<string, string>) => {
@@ -47,7 +48,6 @@ export function StatusViewer({ group, isMine, onSeen, onDelete, onReply, onClose
   const firstUnseen = group.stories.findIndex((s) => !s.seen);
   const [i, setI] = useState(firstUnseen >= 0 ? firstUnseen : 0);
   const [armedDelete, setArmedDelete] = useState(false);
-  const [loaded, setLoaded] = useState(false);
   const [reporting, setReporting] = useState(false);
   const [reply, setReply] = useState('');
   const [replyState, setReplyState] = useState<'idle' | 'sending' | 'sent' | 'failed'>('idle');
@@ -56,7 +56,7 @@ export function StatusViewer({ group, isMine, onSeen, onDelete, onReply, onClose
   const current = group.stories[i];
 
   const next = useCallback(() => {
-    setArmedDelete(false); setLoaded(false);
+    setArmedDelete(false);
     setI((n) => {
       if (n + 1 >= group.stories.length) { onClose(); return n; }
       return n + 1;
@@ -64,7 +64,7 @@ export function StatusViewer({ group, isMine, onSeen, onDelete, onReply, onClose
   }, [group.stories.length, onClose]);
 
   const prev = useCallback(() => {
-    setArmedDelete(false); setLoaded(false);
+    setArmedDelete(false);
     setI((n) => Math.max(0, n - 1));
   }, []);
 
@@ -141,19 +141,16 @@ export function StatusViewer({ group, isMine, onSeen, onDelete, onReply, onClose
       {/* the status itself */}
       <div style={{ flex: 1, position: 'relative', display: 'grid', placeItems: 'center', padding: '0 12px', minHeight: 0 }}>
         {current.hasMedia ? (
-          <>
-            {!loaded && (
-              <span style={{ position: 'absolute', color: TEC_COLORS.subtext, fontSize: 12 }}>{a.loading}</span>
-            )}
-            <img
-              src={storyMediaUrl(current.id)} alt={current.caption || a.photo}
-              onLoad={() => setLoaded(true)}
-              style={{
-                maxWidth: '100%', maxHeight: '100%', objectFit: 'contain',
-                display: 'block', opacity: loaded ? 1 : 0, transition: 'opacity 0.2s',
-              }}
-            />
-          </>
+          <MediaImage
+            src={storyMediaUrl(current.id)}
+            alt={current.caption || a.photo}
+            loading="eager"
+            loadingLabel={a.loading}
+            failedLabel={a.photoUnavailable}
+            imgStyle={{
+              maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', display: 'block',
+            }}
+          />
         ) : (
           // Text-only: the words ARE the status, so they get the whole screen.
           <p style={{

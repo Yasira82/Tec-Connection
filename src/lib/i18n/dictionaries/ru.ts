@@ -249,6 +249,7 @@ export const ru: Dictionary = {
     cancel: 'Отмена',
     openFailed: 'Не удалось открыть переписку ({code}). Попробуйте ещё раз.',
     photo: 'Фото',
+    photoUnavailable: 'Фото недоступно',
     voiceNote: 'Голосовое сообщение',
     attachPhoto: 'Отправить фото',
     recordVoice: 'Записать голосовое сообщение',

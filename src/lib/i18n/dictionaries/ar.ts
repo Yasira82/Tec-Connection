@@ -262,6 +262,7 @@ export const ar: Dictionary = {
     cancel: 'إلغاء',
     openFailed: 'تعذّر فتح المحادثة ({code}). حاول مرة أخرى.',
     photo: 'صورة',
+    photoUnavailable: 'تعذّر تحميل الصورة',
     voiceNote: 'رسالة صوتية',
     attachPhoto: 'إرسال صورة',
     recordVoice: 'تسجيل رسالة صوتية',

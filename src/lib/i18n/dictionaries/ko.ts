@@ -249,6 +249,7 @@ export const ko: Dictionary = {
     cancel: '취소',
     openFailed: '대화를 열 수 없습니다({code}). 다시 시도하세요.',
     photo: '사진',
+    photoUnavailable: '사진을 불러올 수 없음',
     voiceNote: '음성 메시지',
     attachPhoto: '사진 보내기',
     recordVoice: '음성 메시지 녹음',

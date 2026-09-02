@@ -282,6 +282,7 @@ export const en = {
     cancel: 'Cancel',
     openFailed: 'Could not open the chat ({code}). Please try again.',
     photo: 'Photo',
+    photoUnavailable: 'Photo unavailable',
     voiceNote: 'Voice note',
     attachPhoto: 'Send a photo',
     recordVoice: 'Record a voice note',

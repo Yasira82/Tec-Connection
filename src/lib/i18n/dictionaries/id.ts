@@ -249,6 +249,7 @@ export const id: Dictionary = {
     cancel: 'Batal',
     openFailed: 'Tidak dapat membuka obrolan ({code}). Silakan coba lagi.',
     photo: 'Foto',
+    photoUnavailable: 'Foto tidak tersedia',
     voiceNote: 'Pesan suara',
     attachPhoto: 'Kirim foto',
     recordVoice: 'Rekam pesan suara',

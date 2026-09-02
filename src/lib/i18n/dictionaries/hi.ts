@@ -249,6 +249,7 @@ export const hi: Dictionary = {
     cancel: 'रद्द करें',
     openFailed: 'बातचीत नहीं खुल सकी ({code})। कृपया फिर से कोशिश करें।',
     photo: 'फ़ोटो',
+    photoUnavailable: 'फ़ोटो उपलब्ध नहीं',
     voiceNote: 'आवाज़ संदेश',
     attachPhoto: 'फ़ोटो भेजें',
     recordVoice: 'आवाज़ संदेश रिकॉर्ड करें',

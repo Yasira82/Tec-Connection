@@ -249,6 +249,7 @@ export const zh: Dictionary = {
     cancel: '取消',
     openFailed: '无法打开对话（{code}）。请重试。',
     photo: '照片',
+    photoUnavailable: '照片无法显示',
     voiceNote: '语音消息',
     attachPhoto: '发送照片',
     recordVoice: '录制语音',

@@ -249,6 +249,7 @@ export const es: Dictionary = {
     cancel: 'Cancelar',
     openFailed: 'No se pudo abrir el chat ({code}). Inténtalo de nuevo.',
     photo: 'Foto',
+    photoUnavailable: 'Foto no disponible',
     voiceNote: 'Nota de voz',
     attachPhoto: 'Enviar una foto',
     recordVoice: 'Grabar una nota de voz',

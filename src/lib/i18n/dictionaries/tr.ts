@@ -249,6 +249,7 @@ export const tr: Dictionary = {
     cancel: 'İptal',
     openFailed: 'Sohbet açılamadı ({code}). Lütfen tekrar deneyin.',
     photo: 'Fotoğraf',
+    photoUnavailable: 'Fotoğraf yüklenemedi',
     voiceNote: 'Sesli mesaj',
     attachPhoto: 'Fotoğraf gönder',
     recordVoice: 'Sesli mesaj kaydet',
