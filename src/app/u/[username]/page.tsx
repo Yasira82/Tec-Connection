@@ -76,7 +76,7 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
 
   return (
     <main className="pub-glow" style={{
-      minHeight: '100vh', color: '#fff',
+      minHeight: '100vh', color: C.text,
       fontFamily: 'var(--font-sans, system-ui, -apple-system, sans-serif)', overflowX: 'hidden',
     }}>
       <div style={{
@@ -98,7 +98,7 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
               against the surrounding direction. */}
           <h1 style={{
             fontSize: 'clamp(24px, 7vw, 30px)', fontWeight: 900, letterSpacing: '-0.02em',
-            color: '#fff', margin: '18px 0 0',
+            color: C.text, margin: '18px 0 0',
           }}><bdi>@{p.username}</bdi></h1>
 
           <div style={{ display: 'flex', gap: 7, justifyContent: 'center', flexWrap: 'wrap', marginTop: 10 }}>

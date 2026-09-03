@@ -64,7 +64,7 @@ export function DirectoryCard({
               "sara_builds@". Seen in an RTL screenshot, not in review. <bdi>
               isolates the handle so it always reads "@sara_builds", in any
               language the page is displayed in. */}
-          <bdi style={{ fontSize: 15.5, fontWeight: 800, color: '#fff', letterSpacing: '-0.01em' }}>
+          <bdi style={{ fontSize: 15.5, fontWeight: 800, color: C.text, letterSpacing: '-0.01em' }}>
             @{profile.username}
           </bdi>
           {profile.verified && (
