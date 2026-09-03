@@ -340,3 +340,46 @@ describe('a translucent surface follows the theme too', () => {
     expect(nav).not.toContain('rgba(5,8,22');
   });
 });
+
+// ── The top band ────────────────────────────────────────────────────────────
+//
+// The Hub frames every inner page with a solid band that has rounded BOTTOM
+// corners. The tabs here opened on exactly the same flat ground as each other,
+// so switching between them felt like nothing had happened.
+//
+// The band is dark in BOTH themes, which is the part that needs pinning: a
+// control inside it reads the PAGE palette, so on a light page it would paint
+// black ink onto a near-black band and disappear.
+describe('the inner pages are framed like the Hub', () => {
+  const page = strip(src('app/app/page.tsx'));
+
+  it('the header is a band with rounded bottom corners', () => {
+    expect(page).toContain("background: 'var(--tec-topbar)'");
+    expect(page).toMatch(/borderRadius:\s*'0 0 var\(--tec-topbar-radius\) var\(--tec-topbar-radius\)'/);
+  });
+
+  it('uses the fleet token, not a number of its own', () => {
+    // A hardcoded radius here is how one app ends up framed differently from
+    // the Hub it was copied from.
+    expect(css).toContain('--tec-topbar-radius');
+  });
+
+  it('re-scopes the palette for everything inside it', () => {
+    expect(page).toContain('tec-on-band');
+    expect(css).toContain('.tec-on-band');
+  });
+
+  it('the band stays dark on a LIGHT page', () => {
+    // Not `var(--tec-surface-1)`: on a light page that is white, and the band
+    // would vanish into the page it is supposed to frame.
+    const light = css.slice(css.indexOf("[data-theme='light']"));
+    expect(light).toMatch(/--tec-topbar:\s*#1[0-9a-f]{5}/);
+  });
+
+  it('the on-band ink does NOT follow the page', () => {
+    // The RULE, not the first mention of the name — the token block above
+    // refers to it in prose.
+    const band = css.slice(css.indexOf('\n.tec-on-band {'));
+    expect(band.slice(0, 700)).toMatch(/--tec-text-rgb:\s*255, 255, 255/);
+  });
+});
