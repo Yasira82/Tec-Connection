@@ -110,7 +110,7 @@ export function NetworkInsights() {
                   {f.mutual || followedBack.has(f.username)
                     ? <span style={{ fontSize: 12, color: C.success, whiteSpace: 'nowrap' }}>{a.mutual}</span>
                     : <button onClick={() => followBack(f.username)}
-                        style={{ background: `linear-gradient(135deg, ${C.gold}, ${C.goldDark})`, color: C.onGold, border: 'none', borderRadius: 8, padding: '6px 14px', fontSize: 12, fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                        style={{ background: C.gold, color: C.onGold, border: 'none', borderRadius: 8, padding: '6px 14px', fontSize: 12, fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap' }}>
                         {a.followBack}
                       </button>}
                 </div>

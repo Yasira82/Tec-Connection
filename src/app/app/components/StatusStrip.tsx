@@ -153,7 +153,7 @@ export function StatusStrip({ me, onReply }: {
               disabled={busy || !caption.trim()}
               style={{
                 background: caption.trim()
-                  ? `linear-gradient(135deg, ${C.gold}, ${C.goldDark})`
+                  ? C.gold
                   : C.surface2,
                 color: caption.trim() ? C.onGold : C.subtext,
                 border: 'none', borderRadius: 999, padding: '8px 18px',

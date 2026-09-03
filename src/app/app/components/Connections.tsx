@@ -22,7 +22,7 @@ const inputStyle = {
 } as const;
 
 const goldBtn = {
-  background: `linear-gradient(135deg, ${C.gold}, ${C.goldDark})`,
+  background: C.gold,
   color: C.onGold, border: 'none', borderRadius: 10, padding: '10px 16px',
   fontSize: 14, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap',
 } as const;

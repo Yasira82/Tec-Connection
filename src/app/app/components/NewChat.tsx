@@ -28,7 +28,7 @@ function Avatar({ name }: { name: string }) {
   return (
     <span style={{
       width: 40, height: 40, borderRadius: 999, display: 'grid', placeItems: 'center', flexShrink: 0,
-      background: `linear-gradient(135deg, ${C.gold}, ${C.goldDark})`,
+      background: C.gold,
       color: C.onGold, fontSize: 17, fontWeight: 800,
     }}>{(name || '?').charAt(0).toUpperCase()}</span>
   );

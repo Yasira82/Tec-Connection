@@ -9,7 +9,7 @@ import { useCollections, useCollection } from '@/lib-client/connection/useCollec
 
 const card = { background: C.surface, border: `1px solid ${C.border}`, borderRadius: 16, padding: '20px 22px' } as const;
 const input = { flex: 1, minWidth: 0, background: C.bg, color: C.text, border: `1px solid ${C.border}`, borderRadius: 10, padding: '10px 12px', fontSize: 14 } as const;
-const goldBtn = { background: `linear-gradient(135deg, ${C.gold}, ${C.goldDark})`, color: C.onGold, border: 'none', borderRadius: 10, padding: '10px 16px', fontSize: 14, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' } as const;
+const goldBtn = { background: C.gold, color: C.onGold, border: 'none', borderRadius: 10, padding: '10px 16px', fontSize: 14, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' } as const;
 
 function Detail({ id, onBack }: { id: string; onBack: () => void }) {
   // Its own hook: Detail is a sibling component, not a child of Collaboration,

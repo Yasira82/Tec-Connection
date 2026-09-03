@@ -53,7 +53,7 @@ const input = {
 } as const;
 
 const goldBtn = {
-  background: `linear-gradient(135deg, ${C.gold}, ${C.goldDark})`,
+  background: C.gold,
   color: C.onGold, border: 'none', borderRadius: 999, padding: '11px 18px',
   fontSize: 14, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap',
 } as const;
@@ -893,7 +893,7 @@ function Chat({ id, me, conversations, onBack }: {
           onClick={submit} disabled={busy || !draft.trim()} aria-label={a.send}
           style={{
             width: 44, height: 44, borderRadius: 999, flexShrink: 0, border: 'none',
-            background: draft.trim() ? `linear-gradient(135deg, ${C.gold}, ${C.goldDark})` : C.surface2,
+            background: draft.trim() ? C.gold : C.surface2,
             color: draft.trim() ? C.onGold : C.subtext,
             fontSize: 18, cursor: draft.trim() ? 'pointer' : 'not-allowed',
             display: 'grid', placeItems: 'center',

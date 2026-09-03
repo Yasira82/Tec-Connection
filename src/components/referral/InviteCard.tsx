@@ -70,7 +70,7 @@ export function InviteCard() {
             </code>
             <button
               onClick={copy}
-              style={{ fontSize: 13, fontWeight: 800, color: C.onGold, background: `linear-gradient(135deg, ${C.gold}, ${C.goldDark})`, border: 'none', borderRadius: 8, padding: '9px 16px', cursor: 'pointer', whiteSpace: 'nowrap' }}
+              style={{ fontSize: 13, fontWeight: 800, color: C.onGold, background: C.gold, border: 'none', borderRadius: 8, padding: '9px 16px', cursor: 'pointer', whiteSpace: 'nowrap' }}
             >
               {copied ? a.copied : a.copyLink}
             </button>

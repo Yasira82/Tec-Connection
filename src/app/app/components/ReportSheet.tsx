@@ -173,7 +173,7 @@ export function ReportSheet({ kind, target, author, onClose, onBlock }: {
                 onClick={submit} disabled={!reason || state === 'sending'}
                 style={{
                   background: reason
-                    ? `linear-gradient(135deg, ${C.gold}, ${C.goldDark})`
+                    ? C.gold
                     : C.surface2,
                   color: reason ? C.onGold : C.subtext,
                   border: 'none', borderRadius: 999, padding: '10px 22px',

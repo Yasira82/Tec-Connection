@@ -23,15 +23,14 @@ import { avatarGradient } from '@/components/public/Avatar';
 import { resolvePublicProfile } from '@/lib/connection/discovery';
 import { resolveAvatarBytes } from '@/lib/connection/avatar';
 import { getI18n } from '@/lib/i18n/server';
-import { C, goldA, inkA, successA } from '@/lib-client/palette';
 
 export const alt         = 'TEC Connection profile';
 export const size        = { width: 1200, height: 630 };
 export const contentType = 'image/png';
 
-const BG    = C.bg;
-const GOLD  = C.gold;
-const GREEN = C.success;
+const BG    = '#101014';
+const GOLD  = '#FBB44A';
+const GREEN = '#22C55E';
 
 export default async function Image({ params }: { params: Promise<{ username: string }> }) {
   const [{ username }, { t: dict }] = await Promise.all([params, getI18n()]);
@@ -59,7 +58,7 @@ export default async function Image({ params }: { params: Promise<{ username: st
         justifyContent: 'center', padding: '0 84px',
         background: BG, color: '#ffffff', fontFamily: 'system-ui, sans-serif',
         // The page's warm light source, flattened to what Satori supports.
-        backgroundImage: `radial-gradient(1000px 500px at 22% -12%, ${goldA(0.2)}, transparent 70%)`,
+        backgroundImage: `radial-gradient(1000px 500px at 22% -12%, ${'rgba(251,180,74,0.2)'}, transparent 70%)`,
       }}>
         <div style={{ display: 'flex', fontSize: 24, letterSpacing: 6, color: GOLD, fontWeight: 700 }}>
           TEC · CONNECTION
@@ -69,8 +68,8 @@ export default async function Image({ params }: { params: Promise<{ username: st
           <div style={{
             width: 156, height: 156, borderRadius: 999, display: 'flex',
             alignItems: 'center', justifyContent: 'center',
-            background: p ? avatarGradient(p.username) : `linear-gradient(140deg, #FDCF7A, ${C.goldDark})`,
-            color: C.bg, fontSize: 76, fontWeight: 900, overflow: 'hidden',
+            background: p ? avatarGradient(p.username) : 'linear-gradient(140deg, #FDCF7A, #E8962A)',
+            color: BG, fontSize: 76, fontWeight: 900, overflow: 'hidden',
           }}>
             {/* Satori renders raw elements; next/image does not exist here. */}
             {photo
@@ -85,14 +84,14 @@ export default async function Image({ params }: { params: Promise<{ username: st
                 <div style={{
                   display: 'flex', padding: '6px 18px', borderRadius: 999,
                   fontSize: 24, fontWeight: 800, color: GREEN,
-                  background: successA(0.12), border: `2px solid ${successA(0.35)}`,
+                  background: 'rgba(251,180,74,0.12)', border: `2px solid ${'rgba(251,180,74,0.35)'}`,
                 }}>✓ {t.verified}</div>
               )}
               {p && (
                 <div style={{
                   display: 'flex', padding: '6px 18px', borderRadius: 10,
-                  fontSize: 24, fontWeight: 600, color: inkA(0.55),
-                  background: inkA(0.05), border: `2px solid ${inkA(0.08)}`,
+                  fontSize: 24, fontWeight: 600, color: 'rgba(255,255,255,0.55)',
+                  background: 'rgba(255,255,255,0.05)', border: `2px solid ${'rgba(255,255,255,0.08)'}`,
                   textTransform: 'capitalize',
                 }}>{cat}</div>
               )}
@@ -100,11 +99,11 @@ export default async function Image({ params }: { params: Promise<{ username: st
           </div>
         </div>
 
-        <div style={{ display: 'flex', fontSize: 32, color: inkA(0.66), marginTop: 42, lineHeight: 1.4 }}>
+        <div style={{ display: 'flex', fontSize: 32, color: 'rgba(255,255,255,0.66)', marginTop: 42, lineHeight: 1.4 }}>
           {headline.length > 84 ? `${headline.slice(0, 84)}…` : headline}
         </div>
 
-        <div style={{ display: 'flex', fontSize: 26, color: inkA(0.4), marginTop: 26 }}>
+        <div style={{ display: 'flex', fontSize: 26, color: 'rgba(255,255,255,0.4)', marginTop: 26 }}>
           {/* The count only reaches the share card when its owner allows it
               (C-107 §14.5). This image is what WhatsApp and Telegram render, so
               a leak here travels further than the page itself. */}

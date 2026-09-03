@@ -112,7 +112,7 @@ export function StatusViewer({ group, isMine, onSeen, onDelete, onReply, onClose
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '4px 12px 10px' }}>
         <span style={{
           width: 32, height: 32, borderRadius: 999, display: 'grid', placeItems: 'center', flexShrink: 0,
-          background: `linear-gradient(135deg, ${C.gold}, ${C.goldDark})`,
+          background: C.gold,
           color: C.onGold, fontSize: 13, fontWeight: 800,
         }}>{(group.author || '?').charAt(0).toUpperCase()}</span>
         <span style={{ flex: 1, minWidth: 0 }}>
@@ -223,7 +223,7 @@ export function StatusViewer({ group, isMine, onSeen, onDelete, onReply, onClose
                 style={{
                   width: 42, height: 42, borderRadius: 999, flexShrink: 0, border: 'none',
                   background: reply.trim()
-                    ? `linear-gradient(135deg, ${C.gold}, ${C.goldDark})`
+                    ? C.gold
                     : inkA(0.08),
                   color: reply.trim() ? C.onGold : C.subtext,
                   fontSize: 17, cursor: reply.trim() ? 'pointer' : 'not-allowed',
