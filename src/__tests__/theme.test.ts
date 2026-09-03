@@ -268,6 +268,40 @@ describe('the theme is applied before the first paint', () => {
   });
 });
 
+// ── The boot script, and the one keystroke that made it a no-op ─────────────
+//
+// It shipped as `localStorage.getItem(KEY)` INSIDE the template literal, so the
+// browser received the three characters `KEY` — an undefined global. That threw
+// a ReferenceError, the catch below swallowed it, and the script ran, did
+// nothing and reported nothing: no `data-theme` stamped, no `color-scheme` set.
+//
+// The symptom is precisely the flash the script exists to prevent — a reader
+// who chose light got a dark first paint on every load and a snap to light
+// after hydration. Nothing errored, so nothing pointed at the cause.
+//
+// The empty catch is still right (see its comment): a colour preference must
+// not block the first paint of the app to report itself. The catch was not the
+// bug. The free identifier was.
+describe('the boot script actually reads the stored theme', () => {
+  const theme = src('lib-client/theme.ts');
+  const script = theme.slice(theme.indexOf('THEME_BOOT_SCRIPT'));
+
+  it('reads a real storage key, not an undefined identifier', () => {
+    expect(script).toMatch(/getItem\('tec_theme'\)/);
+    expect(script).not.toMatch(/getItem\(KEY\)/);
+  });
+
+  it('the emitted script parses on its own', () => {
+    // The script is a STRING that runs in a page with none of this module's
+    // scope. Parsing it in isolation is the only check that catches a free
+    // identifier: TypeScript sees a template literal and is perfectly happy,
+    // and the runtime failure is swallowed by design.
+    const body = script.slice(script.indexOf('`') + 1, script.lastIndexOf('`'));
+    expect(() => new Function(body)).not.toThrow();
+    expect(body).not.toMatch(/\b(KEY|THEME_KEY)\b/);
+  });
+});
+
 describe('"system" stays a live choice, not a snapshot', () => {
   const theme = strip(src('lib-client/theme.ts'));
 

@@ -75,8 +75,21 @@ export function resolvedTheme(choice: ThemeChoice): 'light' | 'dark' {
  * COLOUR PREFERENCE could not be read. The failure mode is already correct: no
  * attribute is stamped, so the page follows the phone.
  */
+/*
+ * ⚠️ THE KEY IS SPELLED OUT, NOT `${KEY}`, AND THAT IS THE POINT.
+ *
+ * This shipped as `localStorage.getItem(KEY)` INSIDE the template literal —
+ * so the browser received the four characters `KEY`, an undefined global,
+ * which threw a ReferenceError that the catch below swallowed. The script ran,
+ * did nothing, and reported nothing: no `data-theme` stamped, no `color-scheme`
+ * set. A reader who chose light got a dark first paint on every load and a snap
+ * to light after hydration — the exact flash the script exists to prevent.
+ *
+ * Interpolating `${KEY}` would work and is one keystroke from breaking the same
+ * way again. A literal cannot.
+ */
 export const THEME_BOOT_SCRIPT = `(function(){try{
-var v=localStorage.getItem(KEY);
+var v=localStorage.getItem('tec_theme');
 if(v==='light'||v==='dark'){document.documentElement.setAttribute('data-theme',v);document.documentElement.style.colorScheme=v;}
 else{document.documentElement.style.colorScheme='light dark';}
 }catch(e){/* ignore */}})();`;
