@@ -450,3 +450,68 @@ describe('the inner pages are framed like the Hub', () => {
     expect(band.slice(0, 700)).toMatch(/--tec-text-rgb:\s*255, 255, 255/);
   });
 });
+
+// ── The composer, and emoji as UI ───────────────────────────────────────────
+//
+// The message bar was the one place in the app drawing its controls with
+// emoji: 📎 🎤 ➤. Three reasons that is not a style preference:
+//
+//   · an emoji carries its OWN colour, so no token can reach it — every theme
+//     rule in this file stops at that button;
+//   · it is drawn by the platform's font, so the same control looked different
+//     on Samsung, in Pi Browser and on iOS, while the bottom nav (a real icon
+//     set, in this repo) looked identical everywhere;
+//   · `➤` is not a paper plane in most fonts. It is a triangle.
+describe('the composer draws with the icon set, not with emoji', () => {
+  const files = ['app/app/components/Messages.tsx', 'app/app/components/VoiceRecorder.tsx'];
+
+  it.each(files)('%s has no emoji glyph as a control', (f) => {
+    const code = strip(src(f));
+    for (const e of ['📎', '🎤', '➤']) expect(code).not.toContain(e);
+  });
+
+  it('the icons exist in the set rather than being drawn inline', () => {
+    const icons = src('app/app/components/Icon.tsx');
+    for (const n of ['paperclip', 'mic', 'send']) expect(icons).toContain(`${n}:`);
+  });
+
+  it('they inherit colour, so a token can still reach them', () => {
+    // `stroke="currentColor"` is the whole point: it is what an emoji could
+    // never do.
+    expect(src('app/app/components/Icon.tsx')).toContain("color = 'currentColor'");
+  });
+});
+
+describe('one slot for mic and send', () => {
+  const code = strip(src('app/app/components/Messages.tsx'));
+
+  it('Send is rendered only when there is something to send', () => {
+    // Two permanent buttons left the PRIMARY action grey and disabled for most
+    // of the time the screen was open, and the field paid for both in width.
+    expect(code).toMatch(/draft\.trim\(\) \? \([\s\S]{0,400}aria-label=\{a\.send\}/);
+  });
+
+  it('the microphone is the empty state of that same slot', () => {
+    expect(code).toMatch(/\) : \(\s*<VoiceRecorder/);
+  });
+
+  it('there is exactly ONE VoiceRecorder in the composer', () => {
+    expect(code.match(/<VoiceRecorder/g)?.length).toBe(1);
+  });
+});
+
+describe('a message bubble is grey, and gold means one thing', () => {
+  const code = strip(src('app/app/components/Messages.tsx'));
+
+  it('your own bubble is a surface, not an amber wash', () => {
+    // A hundred amber rectangles down a transcript spends the accent on the
+    // most repeated element on the screen — and after the neutral ramp the wash
+    // read as brown against #101014 rather than as amber.
+    expect(code).toContain('background: mine ? C.surface3 : C.surface2');
+    expect(code).not.toMatch(/background: mine \? goldA/);
+  });
+
+  it('the accent is kept for a MENTION — the one place it carries meaning', () => {
+    expect(code).toMatch(/includes\(meNorm\) \? goldA\(0\.533\) : C\.border/);
+  });
+});

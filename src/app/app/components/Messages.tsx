@@ -29,6 +29,7 @@ import { useBlocks } from '@/lib-client/connection/useBlocks';
 import { useTyping } from '@/lib-client/connection/useTyping';
 import { NewChat } from './NewChat';
 import { Lightbox } from './Lightbox';
+import { Icon } from './Icon';
 import { MediaImage } from './MediaImage';
 import { ChatInfoSheet } from './ChatInfoSheet';
 import { GroupDiscovery } from './GroupDiscovery';
@@ -268,7 +269,7 @@ function Chat({ id, me, conversations, onBack }: {
   conversations: Summary[];
   onBack: () => void;
 }) {
-  const { t } = useTranslation();
+  const { t, dir } = useTranslation();
   const a = t.app;
   const {
     thread, busy, error, send, sendMedia, deleteMessage, hide, clear, addMember, leave,
@@ -582,15 +583,25 @@ function Chat({ id, me, conversations, onBack }: {
                 onLongPress={() => setMenuFor(m.id)}
                 style={{
                 maxWidth: '78%', padding: '8px 12px 6px',
-                background: mine ? goldA(0.122) : C.surface2,
-                // Named YOU, in a group of forty, three hours ago. The whole
-                // bubble is marked rather than only the handle inside it —
-                // scrolling back to find one gold word is exactly the work the
-                // mention was supposed to save. Never on your own message: you
-                // know what you wrote.
+                // GREY, both sides. Your own bubble was a gold wash with a gold
+                // border, which spent the accent on the most repeated element on
+                // the screen — a hundred amber rectangles down a transcript. It
+                // also collided with the one place the accent MEANS something
+                // here (a mention), and after the neutral ramp landed the wash
+                // read as brown against #101014 rather than as amber.
+                //
+                // Side already says who spoke, and the squared corner below says
+                // it again. Elevation is the third signal: yours is the raised
+                // surface, theirs is the one under it.
+                background: mine ? C.surface3 : C.surface2,
+                // The accent is kept for exactly one thing: you were NAMED, in a
+                // group of forty, three hours ago. The whole bubble is marked
+                // rather than only the handle inside it — scrolling back to find
+                // one gold word is the work the mention was supposed to save.
+                // Never on your own message: you know what you wrote. It reads
+                // now, because it is the only gold bubble in the transcript.
                 border: `1px solid ${
-                  !mine && (m.mentions ?? []).includes(meNorm) ? goldA(0.533)
-                    : mine ? goldA(0.267) : C.border
+                  !mine && (m.mentions ?? []).includes(meNorm) ? goldA(0.533) : C.border
                 }`,
                 borderRadius: 16,
                 // The squared corner marks the speaker, the way a tail does.
@@ -850,7 +861,16 @@ function Chat({ id, me, conversations, onBack }: {
           ))}
         </div>
       )}
-      <div style={{ display: 'flex', gap: 6, alignItems: 'center', paddingTop: 10, borderTop: `1px solid ${C.border}` }}>
+      {/* Chrome, not content — so it sits on a surface of its own rather than
+          on the page. It used to be a hairline over the page background, with
+          the bottom nav directly under it: two bars on one ground, reading as
+          one thick undifferentiated strip. Bleeds to the edges for the same
+          reason the band above does. */}
+      <div style={{
+        display: 'flex', gap: 6, alignItems: 'center',
+        margin: '0 -20px', padding: '10px 20px calc(10px + env(safe-area-inset-bottom))',
+        background: C.surface, borderTop: `1px solid ${C.border}`,
+      }}>
         {/* `capture` is deliberately absent: without it Android offers BOTH the
             camera and the gallery, which is what people expect from a paperclip. */}
         <input
@@ -872,16 +892,10 @@ function Chat({ id, me, conversations, onBack }: {
           style={{
             width: 38, height: 38, borderRadius: 999, flexShrink: 0,
             background: 'none', border: `1px solid ${C.border}`,
-            color: C.subtext, fontSize: 17, cursor: busy ? 'not-allowed' : 'pointer',
+            color: C.subtext, cursor: busy ? 'not-allowed' : 'pointer',
             display: 'grid', placeItems: 'center',
           }}
-        >📎</button>
-
-        <VoiceRecorder
-          busy={busy}
-          onRecorded={(blob, ms) => { void sendMedia(blob, '', ms); }}
-          onUnavailable={setMicIssue}
-        />
+        ><Icon name="paperclip" size={18} strokeWidth={1.8} /></button>
 
         <input
           style={input} value={draft}
@@ -889,19 +903,34 @@ function Chat({ id, me, conversations, onBack }: {
           onKeyDown={(e) => { if (e.key === 'Enter') submit(); }}
           placeholder={a.messagePlaceholder} maxLength={2000} dir="auto"
         />
-        <button
-          onClick={submit} disabled={busy || !draft.trim()} aria-label={a.send}
-          style={{
-            width: 44, height: 44, borderRadius: 999, flexShrink: 0, border: 'none',
-            background: draft.trim() ? C.gold : C.surface2,
-            color: draft.trim() ? C.onGold : C.subtext,
-            fontSize: 18, cursor: draft.trim() ? 'pointer' : 'not-allowed',
-            display: 'grid', placeItems: 'center',
-          }}
-        >
-          {/* A paper plane mirrors with the writing direction. */}
-          <span style={{ transform: 'scaleX(1)', display: 'block' }} dir="ltr">➤</span>
-        </button>
+        {/* ONE slot. Empty, it is the microphone; the moment there is a draft it
+            becomes Send. Two permanent buttons meant the primary action sat
+            grey and disabled for most of the time the screen was open, beside a
+            mic that was rarely the thing wanted — and the field paid for both
+            in width. This is the arrangement every messaging app converged on
+            for the same reason. */}
+        {draft.trim() ? (
+          <button
+            onClick={submit} disabled={busy} aria-label={a.send}
+            style={{
+              width: 44, height: 44, borderRadius: 999, flexShrink: 0, border: 'none',
+              background: C.gold, color: C.onGold,
+              cursor: busy ? 'not-allowed' : 'pointer',
+              display: 'grid', placeItems: 'center',
+            }}
+          >
+            {/* The plane points the way the writing runs. */}
+            <span style={{ display: 'grid', transform: dir === 'rtl' ? 'scaleX(-1)' : undefined }}>
+              <Icon name="send" size={19} strokeWidth={1.9} />
+            </span>
+          </button>
+        ) : (
+          <VoiceRecorder
+            busy={busy}
+            onRecorded={(blob, ms) => { void sendMedia(blob, '', ms); }}
+            onUnavailable={setMicIssue}
+          />
+        )}
       </div>
       </>)}
 
