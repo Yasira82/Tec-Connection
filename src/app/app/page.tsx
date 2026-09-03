@@ -136,20 +136,30 @@ export default function ConnectionHome() {
           borderRadius: '0 0 var(--tec-topbar-radius) var(--tec-topbar-radius)',
           // Bleeds to the edges: the band frames the screen, not the column, so
           // it cancels the page gutter and restores it as its own padding.
-          margin: '-28px -20px 20px',
-          padding: 'calc(28px + env(safe-area-inset-top)) 20px 18px',
+          //
+          // The Hub's band is `12px 20px 16px`, and the first version here was
+          // 28/18 around a 26px title — which made a band nearly half again as
+          // tall as the one it was copied from, on the screen where the two are
+          // compared by tapping between them. A curve on a taller band reads as
+          // a BIGGER curve at the same radius, so the fix is the height, not the
+          // token.
+          margin: '-28px -20px 18px',
+          padding: 'calc(12px + env(safe-area-inset-top)) 20px 16px',
         }}>
-          <div style={{ fontSize: 11, letterSpacing: 1.4, color: C.subtext, textTransform: 'uppercase', fontWeight: 700 }}>
+          <div style={{ fontSize: 10, letterSpacing: 1.2, color: C.subtext, textTransform: 'uppercase', fontWeight: 700 }}>
             {t.connection.brand}
           </div>
+          {/* 22px, not 26. Chrome, not a hero — but still above the ~20px
+              section headings below it, which an 18px title (the Hub's, where it
+              sits in a ROW beside a back button) would have inverted. */}
           {/* <bdi>: on the Home tab the title is a Latin @handle. Inside an
               Arabic (RTL) document the '@' is bidi-neutral and resolves against
               the paragraph — it rendered as "yas55eR82@". */}
-          <h1 style={{ fontSize: 26, fontWeight: 900, color: C.gold, margin: '4px 0 0', letterSpacing: '-0.02em' }}>
+          <h1 style={{ fontSize: 22, fontWeight: 900, color: C.gold, margin: '2px 0 0', letterSpacing: '-0.02em' }}>
             <bdi>{title}</bdi>
           </h1>
           {sub && (
-            <p style={{ fontSize: 13.5, color: C.subtext, margin: '5px 0 0', lineHeight: 1.5 }}>{sub}</p>
+            <p style={{ fontSize: 12.5, color: C.subtext, margin: '3px 0 0', lineHeight: 1.45 }}>{sub}</p>
           )}
         </header>
         )}
