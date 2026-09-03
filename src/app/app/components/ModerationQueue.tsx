@@ -167,7 +167,7 @@ export function ModerationQueue() {
                   cursor: 'pointer', whiteSpace: 'nowrap',
                   color: active ? C.onGold : C.subtext,
                   background: active
-                    ? `linear-gradient(135deg, ${C.gold}, ${C.goldDark})`
+                    ? C.gold
                     : 'transparent',
                   border: `1px solid ${active ? 'transparent' : C.border}`,
                 }}

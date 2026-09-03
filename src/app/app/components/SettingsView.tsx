@@ -194,7 +194,7 @@ export function SettingsView() {
                   fontSize: 12.5, fontWeight: 700, lineHeight: 1.5, whiteSpace: 'nowrap',
                   padding: '6px 12px', borderRadius: 999, cursor: 'pointer',
                   color: active ? C.onGold : C.text,
-                  background: active ? `linear-gradient(135deg, ${C.gold}, ${C.goldDark})` : 'transparent',
+                  background: active ? C.gold : 'transparent',
                   border: `1px solid ${active ? 'transparent' : C.border}`,
                 }}>
                 {l.native}

@@ -80,7 +80,7 @@ function Row({ g, busy, onJoin, onWithdraw }: {
             onClick={onJoin} disabled={busy}
             style={{
               fontSize: 12.5, fontWeight: 700, color: C.onGold,
-              background: `linear-gradient(135deg, ${C.gold}, ${C.goldDark})`,
+              background: C.gold,
               border: 'none', borderRadius: 999, padding: '7px 16px', whiteSpace: 'nowrap',
               cursor: busy ? 'not-allowed' : 'pointer', opacity: busy ? 0.6 : 1,
             }}

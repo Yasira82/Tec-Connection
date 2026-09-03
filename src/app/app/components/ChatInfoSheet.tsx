@@ -550,7 +550,7 @@ export function ChatInfoSheet({
                 <button
                   onClick={() => { void decide(r.username, true); }}
                   style={{
-                    background: `linear-gradient(135deg, ${C.gold}, ${C.goldDark})`,
+                    background: C.gold,
                     color: C.onGold, border: 'none', borderRadius: 999,
                     padding: '6px 14px', fontSize: 12.5, fontWeight: 700, cursor: 'pointer',
                   }}
@@ -586,7 +586,7 @@ export function ChatInfoSheet({
                 <button
                   onClick={add}
                   style={{
-                    background: `linear-gradient(135deg, ${C.gold}, ${C.goldDark})`,
+                    background: C.gold,
                     color: C.onGold, border: 'none', borderRadius: 999, padding: '0 18px',
                     fontSize: 13.5, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap',
                   }}

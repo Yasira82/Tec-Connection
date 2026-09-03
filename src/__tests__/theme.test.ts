@@ -335,6 +335,27 @@ describe('no component paints a raw colour', () => {
    */
   const ALLOWED_LITERALS: string[] = [];
 
+  it('the EXEMPT files use hex and must NOT use var() — the exemption cuts both ways', () => {
+    // The hex exemption was one-directional and that was the hole. It said
+    // "these files may keep literals" and nothing said "these files may keep
+    // NOTHING ELSE" — so the sweep converted the share card's colours to
+    // var(--tec-*) and the test that should have caught it was the one
+    // excusing the file.
+    //
+    // Satori resolves no custom property, and the SSO landing is served before
+    // any stylesheet. In both, a var() is not a fallback — it is no colour at
+    // all. The card rendered with no ground and no gold.
+    for (const f of EXEMPT_FILES) {
+      const code = strip(src(f));
+      expect(code, `${f} cannot resolve a CSS variable`).not.toMatch(/var\(--tec-/);
+      expect(code, `${f} must not import the token refs`).not.toMatch(/from '@\/lib-client\/palette'/);
+      // The alpha helpers are just as unusable there: they return
+      // `rgba(var(--tec-text-rgb), …)`, which is the same var() one level down.
+      expect(code, `${f} cannot use the alpha helpers either`)
+        .not.toMatch(/\b(inkA|goldA|successA|errorA|bgA|onGoldA)\(/);
+    }
+  });
+
   it('no `rgba()` with literal channels — use bgA / inkA / goldA / successA / errorA', () => {
     const offenders: string[] = [];
     for (const f of files) {

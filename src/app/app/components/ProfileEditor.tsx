@@ -35,14 +35,14 @@ const field = {
   border: `1px solid ${C.border}`, borderRadius: 10, padding: '11px 13px', fontSize: 14,
 } as const;
 const goldBtn = {
-  background: `linear-gradient(135deg, ${C.gold}, ${C.goldDark})`,
+  background: C.gold,
   color: C.onGold, border: 'none', borderRadius: 10, padding: '10px 18px',
   fontSize: 13.5, fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap' as const,
 };
 const chip = (active: boolean): React.CSSProperties => ({
   fontSize: 12.5, fontWeight: 700, whiteSpace: 'nowrap',
   color: active ? C.onGold : C.text,
-  background: active ? `linear-gradient(135deg, ${C.gold}, ${C.goldDark})` : 'transparent',
+  background: active ? C.gold : 'transparent',
   border: `1px solid ${C.gold}${active ? '' : '33'}`,
   borderRadius: 999, padding: '7px 13px', cursor: 'pointer', textTransform: 'capitalize',
 });
