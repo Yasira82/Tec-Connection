@@ -17,6 +17,8 @@
 import { describe, it, expect } from 'vitest';
 import { LOCALES, DEFAULT_LOCALE, isLocale, dirOf, matchAcceptLanguage } from '@/lib/i18n/locales';
 import { DICTIONARIES, dictionaryFor, fill } from '@/lib/i18n/dictionaries';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 
 describe('locale detection from Accept-Language', () => {
   it('matches on the primary subtag, so regional variants resolve', () => {
@@ -200,5 +202,35 @@ describe('/api/locale redirect target (open-redirect guard)', () => {
     // request and could never resolve to a dictionary.
     const bad = await GET(new NextRequest('https://connection.tecosystem.app/api/locale?lang=xx&next=%2F'));
     expect(bad.cookies.get('tec_locale')).toBeUndefined();
+  });
+});
+
+describe('the language control in Settings', () => {
+  // It was a wrapping wall of twelve pills — three rows of chips, taller than
+  // every other setting combined, pushing About off the screen. A language is
+  // chosen roughly once; it should not be the largest thing in Settings.
+  // Explorer had already settled this with a select; this pins the parity.
+  const src = readFileSync(
+    join(process.cwd(), 'src/app/app/components/SettingsView.tsx'), 'utf8',
+  );
+  const code = src
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/^[ \t]*\/\/.*$/gm, '');
+
+  it('is a select over LOCALES, not a grid of buttons', () => {
+    expect(code).toMatch(/<select[\s\S]{0,400}LOCALES\.map/);
+    expect(code).not.toMatch(/LOCALES\.map[\s\S]{0,200}<button/);
+  });
+
+  it('lists every language in its own script', () => {
+    // Someone who cannot read the current interface language cannot read
+    // "Vietnamese" either — but they can always read "Tiếng Việt". That is the
+    // whole reason a language menu lists native names.
+    expect(code).toMatch(/<option[\s\S]{0,160}l\.native/);
+    for (const l of LOCALES) expect(l.native.trim().length).toBeGreaterThan(0);
+  });
+
+  it('marks each option with its own lang, so the browser picks the right font', () => {
+    expect(code).toMatch(/<option[\s\S]{0,120}lang=\{l\.code\}/);
   });
 });
