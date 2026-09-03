@@ -16,6 +16,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { C, errorA } from '@/lib-client/palette';
 import { useTranslation } from '@/lib/i18n';
+import { Icon } from './Icon';
 
 const CANDIDATE_TYPES = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'audio/ogg'];
 
@@ -125,11 +126,13 @@ export function VoiceRecorder({ busy, onRecorded, onUnavailable }: {
     <button
       onClick={() => { void start(); }} disabled={busy} aria-label={a.recordVoice}
       style={{
-        width: 38, height: 38, borderRadius: 999, flexShrink: 0,
-        background: 'none', border: `1px solid ${C.border}`,
-        color: C.subtext, fontSize: 16, cursor: busy ? 'not-allowed' : 'pointer',
+        // 44, matching the Send button it shares a slot with — the control must
+        // not resize under the thumb the moment a character is typed.
+        width: 44, height: 44, borderRadius: 999, flexShrink: 0,
+        background: C.surface2, border: `1px solid ${C.border}`,
+        color: C.subtext, cursor: busy ? 'not-allowed' : 'pointer',
         display: 'grid', placeItems: 'center',
       }}
-    >🎤</button>
+    ><Icon name="mic" size={19} strokeWidth={1.8} /></button>
   );
 }
