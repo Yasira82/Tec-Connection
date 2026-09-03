@@ -63,6 +63,39 @@ describe('the token layer defines all three theme states', () => {
     }
   });
 
+  it('the surface ramp is the Hub\'s NEUTRAL charcoal, not the old blue-black', () => {
+    // C-83 §5.6. #050816 reads cold and pushes the Pi amber green; #101014 is
+    // four points of blue — enough to avoid a dead grey, not enough to tint.
+    // Pinned by VALUE because the whole point of §5.6 is that two apps must not
+    // be a shade apart: an approximation here is the bug it documents.
+    const dark = css.slice(css.indexOf("[data-theme='dark']"), css.indexOf("[data-theme='light']"));
+    for (const [t, v] of [
+      ['--tec-bg', '#101014'], ['--tec-surface-1', '#21212a'],
+      ['--tec-surface-2', '#2c2c37'], ['--tec-surface-3', '#383844'],
+    ] as const) {
+      expect(new RegExp(`${t}:\\s*${v}`).test(dark)).toBe(true);
+    }
+    // The page CHANNELS move with it, or the frosted bar stays the old colour.
+    expect(dark).toMatch(/--tec-bg-rgb:\s*16, 16, 20/);
+  });
+
+  it('the light ramp is a WARM off-white PAGE under a WHITE card', () => {
+    // That order. A white page with a grey card inverts elevation: the thing
+    // you are meant to look at ends up darker than its ground.
+    const light = css.slice(css.indexOf("[data-theme='light']"));
+    expect(light).toMatch(/--tec-bg:\s*#f4f3f1/);
+    expect(light).toMatch(/--tec-surface-1:\s*#ffffff/);
+    expect(light).toMatch(/--tec-surface-2:\s*#f1efec/);
+  });
+
+  it('the ink ladder has FOUR steps and its own icon stroke', () => {
+    // With three, a component that needs a fourth hardcodes it — which is how
+    // #3a3a4a ended up on a bottom nav and went invisible in light.
+    for (const t of ['--tec-text-4', '--tec-icon', '--tec-fill-softer']) {
+      expect(css).toContain(t);
+    }
+  });
+
   it('status colours DARKEN for light — contrast, not taste', () => {
     // The dark-theme brights were picked to glow on near-black. #22C55E on
     // white measures ~2.3:1, so every success line was unreadable as TEXT once
