@@ -64,23 +64,32 @@ describe('the number is given a consequence', () => {
 });
 
 describe('the ranking copy, in every language', () => {
+  // Read through the TYPED dictionary, not `as Record<string, string>`.
+  //
+  // That cast was the bug CI caught: it replaces a mapped type whose keys are
+  // known with an index signature, so under `noUncheckedIndexedAccess` every
+  // lookup becomes `string | undefined` — and it throws away the exact
+  // guarantee the dictionary system exists for. `Dictionary = typeof en`, so a
+  // key missing from a language is a TYPE ERROR, not a blank space that only a
+  // speaker of that language would ever notice. A test asserting the keys exist
+  // should lean on that, not cast it away.
+  const KEYS = ['trustRankTitle', 'trustRankBuilding', 'trustRankTop'] as const;
+
   it('exists in all twelve', () => {
     for (const l of LOCALES) {
-      const app = DICTIONARIES[l.code].app as Record<string, string>;
-      for (const key of ['trustRankTitle', 'trustRankBuilding', 'trustRankTop']) {
-        expect(app[key], `${l.code}.${key}`).toBeTruthy();
+      for (const key of KEYS) {
+        expect(DICTIONARIES[l.code].app[key], `${l.code}.${key}`).toBeTruthy();
       }
     }
   });
 
-  it('never claims trust can be bought, in any language', () => {
+  it('says something, rather than being a placeholder', () => {
     // The whole point of the note is that this ranking sits ABOVE the paid
-    // slot. Copy that blurred that would undo C-108 §7 in the one place a
-    // merchant reads about it.
+    // slot. A locale left with a stub would drop that argument in the one place
+    // a merchant reads about it.
     for (const l of LOCALES) {
-      const app = DICTIONARIES[l.code].app as Record<string, string>;
-      expect(app.trustRankTop.length).toBeGreaterThan(10);
-      expect(app.trustRankBuilding.length).toBeGreaterThan(10);
+      expect(DICTIONARIES[l.code].app.trustRankTop.length, l.code).toBeGreaterThan(10);
+      expect(DICTIONARIES[l.code].app.trustRankBuilding.length, l.code).toBeGreaterThan(10);
     }
   });
 
@@ -88,8 +97,7 @@ describe('the ranking copy, in every language', () => {
     // The number is the promise. A locale that said 10 would send a merchant
     // looking for a tier they cannot reach.
     for (const l of LOCALES) {
-      const app = DICTIONARIES[l.code].app as Record<string, string>;
-      expect(app.trustRankBuilding, l.code).toMatch(/5|٥|५/);
+      expect(DICTIONARIES[l.code].app.trustRankBuilding, l.code).toMatch(/5|٥|५/);
     }
   });
 });
