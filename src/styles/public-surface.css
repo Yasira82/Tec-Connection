@@ -43,7 +43,7 @@
   z-index: -1;
   pointer-events: none;
   background:
-    radial-gradient(60% 55% at 50% 0%, rgba(251, 180, 74, 0.16), transparent 70%),
+    radial-gradient(60% 55% at 50% 0%, rgba(var(--tec-gold-rgb), 0.16), transparent 70%),
     radial-gradient(40% 40% at 78% 12%, rgba(139, 92, 246, 0.10), transparent 70%);
 }
 
@@ -58,14 +58,14 @@
   letter-spacing: -0.03em;
   line-height: 1.08;
   font-size: clamp(32px, 9vw, 46px);
-  color: #ffffff;
-  background: linear-gradient(135deg, #ffffff 22%, #FDCF7A 62%, #FBB44A 100%);
+  color: var(--tec-text-1);
+  background: linear-gradient(135deg, var(--tec-text-1) 22%, var(--tec-gold-light) 62%, var(--tec-gold) 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 @supports not ((-webkit-background-clip: text) or (background-clip: text)) {
-  .pub-h1 { -webkit-text-fill-color: #ffffff; background: none; }
+  .pub-h1 { -webkit-text-fill-color: var(--tec-text-1); background: none; }
 }
 
 .pub-eyebrow {
@@ -77,13 +77,13 @@
 }
 
 /* Body copy on the public pages uses a brighter secondary than the package's
-   `subtext` (#6b6b7a), which sits near the contrast floor on #050816. The
+   `subtext` (#6b6b7a), which sits near the contrast floor on the dark ground. The
    dimmest token stays for labels and captions, never for a sentence. */
 .pub-lede {
   margin: 14px 0 0;
   font-size: clamp(15px, 4vw, 17px);
   line-height: 1.6;
-  color: rgba(255, 255, 255, 0.66);
+  color: rgba(var(--tec-text-rgb), 0.66);
 }
 
 /* ── Primary action ─────────────────────────────────────────────────────── */
@@ -97,16 +97,16 @@
   padding: 16px 30px;
   border: none;
   border-radius: 16px;
-  background: linear-gradient(135deg, #FDCF7A, #FBB44A 45%, #E8962A);
-  color: #12080a;
+  background: linear-gradient(135deg, var(--tec-gold-light), var(--tec-gold) 45%, var(--tec-gold-dark));
+  color: var(--tec-on-gold);
   font-size: 16px;
   font-weight: 850;
   font-family: inherit;
   cursor: pointer;
-  box-shadow: 0 10px 30px rgba(251, 180, 74, 0.26), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  box-shadow: 0 10px 30px rgba(var(--tec-gold-rgb), 0.26), inset 0 1px 0 rgba(var(--tec-text-rgb), 0.4);
   transition: transform var(--dur-fast) var(--ease-out), box-shadow var(--dur-base) var(--ease-out);
 }
-.pub-cta:hover  { box-shadow: 0 14px 38px rgba(251, 180, 74, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.45); }
+.pub-cta:hover  { box-shadow: 0 14px 38px rgba(var(--tec-gold-rgb), 0.34), inset 0 1px 0 rgba(var(--tec-text-rgb), 0.45); }
 .pub-cta:active { transform: scale(0.975); }
 .pub-cta:disabled { opacity: 0.55; cursor: not-allowed; box-shadow: none; }
 
@@ -116,9 +116,9 @@
   padding: 6px 2px;
   font-size: 14px;
   font-weight: 700;
-  color: rgba(255, 255, 255, 0.62);
+  color: rgba(var(--tec-text-rgb), 0.62);
   text-decoration: none;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.16);
+  border-bottom: 1px solid rgba(var(--tec-text-rgb), 0.16);
   transition: color var(--dur-base) var(--ease-out), border-color var(--dur-base) var(--ease-out);
 }
 .pub-secondary:hover { color: var(--tec-gold); border-color: var(--tec-border-gold); }
@@ -136,7 +136,7 @@
   padding: 15px 17px;
   border-radius: 18px;
   text-decoration: none;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.015));
+  background: linear-gradient(180deg, rgba(var(--tec-text-rgb), 0.045), rgba(var(--tec-text-rgb), 0.015));
   border: 1px solid var(--tec-border);
   transition: transform var(--dur-base) var(--ease-out),
               border-color var(--dur-base) var(--ease-out),
@@ -145,14 +145,14 @@
 .pub-card:hover {
   transform: translateY(-2px);
   border-color: var(--tec-border-gold);
-  background: linear-gradient(180deg, rgba(251, 180, 74, 0.07), rgba(255, 255, 255, 0.02));
+  background: linear-gradient(180deg, rgba(var(--tec-gold-rgb), 0.07), rgba(var(--tec-text-rgb), 0.02));
 }
 .pub-card:active { transform: scale(0.985); }
 
 .pub-panel {
   border-radius: 22px;
   border: 1px solid var(--tec-border);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.012));
+  background: linear-gradient(180deg, rgba(var(--tec-text-rgb), 0.04), rgba(var(--tec-text-rgb), 0.012));
 }
 
 /* ── Avatar ─────────────────────────────────────────────────────────────────
@@ -164,12 +164,12 @@
   flex-shrink: 0;
   border-radius: 999px;
   font-weight: 900;
-  color: #0a0812;
+  color: var(--tec-on-gold);
 }
 
 /* Overlapping stack — social proof built from people who are actually there. */
 .pub-stack { display: flex; align-items: center; }
-.pub-stack > * { margin-left: -9px; box-shadow: 0 0 0 3px #050816; }
+.pub-stack > * { margin-left: -9px; box-shadow: 0 0 0 3px var(--tec-bg); }
 .pub-stack > *:first-child { margin-left: 0; }
 
 /* ── Chips (category filter) ────────────────────────────────────────────── */
@@ -182,15 +182,15 @@
   text-transform: capitalize;
   text-decoration: none;
   white-space: nowrap;
-  color: rgba(255, 255, 255, 0.72);
-  background: rgba(255, 255, 255, 0.04);
+  color: rgba(var(--tec-text-rgb), 0.72);
+  background: rgba(var(--tec-text-rgb), 0.04);
   border: 1px solid var(--tec-border);
   transition: all var(--dur-base) var(--ease-out);
 }
-.pub-chip:hover { color: #fff; border-color: var(--tec-border-gold); }
+.pub-chip:hover { color: var(--tec-text-1); border-color: var(--tec-border-gold); }
 .pub-chip[data-active='true'] {
-  color: #12080a;
-  background: linear-gradient(135deg, #FDCF7A, #E8962A);
+  color: var(--tec-on-gold);
+  background: linear-gradient(135deg, var(--tec-gold-light), var(--tec-gold-dark));
   border-color: transparent;
 }
 
@@ -201,17 +201,17 @@
   padding: 13px 16px;
   font-size: 15px;
   font-family: inherit;
-  color: #fff;
-  background: rgba(255, 255, 255, 0.04);
+  color: var(--tec-text-1);
+  background: rgba(var(--tec-text-rgb), 0.04);
   border: 1px solid var(--tec-border);
   border-radius: 14px;
   outline: none;
   transition: border-color var(--dur-base) var(--ease-out), box-shadow var(--dur-base) var(--ease-out);
 }
-.pub-input::placeholder { color: rgba(255, 255, 255, 0.34); }
+.pub-input::placeholder { color: rgba(var(--tec-text-rgb), 0.34); }
 .pub-input:focus {
   border-color: var(--tec-border-gold);
-  box-shadow: 0 0 0 3px rgba(251, 180, 74, 0.12);
+  box-shadow: 0 0 0 3px rgba(var(--tec-gold-rgb), 0.12);
 }
 
 /* ── Badges ─────────────────────────────────────────────────────────────────
@@ -227,9 +227,9 @@
   border-radius: 999px;
   font-size: 10.5px;
   font-weight: 800;
-  color: #22C55E;
-  background: rgba(34, 197, 94, 0.12);
-  border: 1px solid rgba(34, 197, 94, 0.3);
+  color: var(--tec-green);
+  background: rgba(var(--tec-green-rgb), 0.12);
+  border: 1px solid rgba(var(--tec-green-rgb), 0.3);
 }
 .pub-badge-featured {
   display: inline-flex;
@@ -238,8 +238,8 @@
   border-radius: 6px;
   font-size: 10.5px;
   font-weight: 750;
-  color: rgba(255, 255, 255, 0.55);
-  background: rgba(255, 255, 255, 0.05);
+  color: rgba(var(--tec-text-rgb), 0.55);
+  background: rgba(var(--tec-text-rgb), 0.05);
   border: 1px solid var(--tec-border);
 }
 
@@ -255,15 +255,15 @@
   line-height: 1.5;
   text-decoration: none;
   white-space: nowrap;
-  color: rgba(255, 255, 255, 0.5);
+  color: rgba(var(--tec-text-rgb), 0.5);
   border: 1px solid transparent;
   transition: color var(--dur-base) var(--ease-out), border-color var(--dur-base) var(--ease-out);
 }
-.pub-lang:hover { color: rgba(255, 255, 255, 0.9); border-color: var(--tec-border); }
+.pub-lang:hover { color: rgba(var(--tec-text-rgb), 0.9); border-color: var(--tec-border); }
 .pub-lang[data-active='true'] {
   color: var(--tec-gold);
   border-color: var(--tec-border-gold);
-  background: rgba(251, 180, 74, 0.07);
+  background: rgba(var(--tec-gold-rgb), 0.07);
 }
 
 /* ── RTL ────────────────────────────────────────────────────────────────────

@@ -15,6 +15,7 @@
 // not always grant clipboard access, and a share button that appears to do
 // nothing is worse than no share button.
 import { useState } from 'react';
+import { C, inkA } from '@/lib-client/palette';
 
 export function ShareProfile({ username, labels }: {
   username: string;
@@ -63,7 +64,7 @@ export function ShareProfile({ username, labels }: {
         <p
           dir="ltr"
           style={{
-            fontSize: 11.5, color: 'rgba(255,255,255,0.55)', margin: '10px 0 0',
+            fontSize: 11.5, color: inkA(0.55), margin: '10px 0 0',
             wordBreak: 'break-all', userSelect: 'all',
           }}
         >{shown}</p>

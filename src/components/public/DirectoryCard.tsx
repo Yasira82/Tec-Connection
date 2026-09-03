@@ -16,6 +16,7 @@
 // placement read as verification. Trust is earned, never bought.
 import Link from 'next/link';
 import { Avatar } from './Avatar';
+import { C, inkA } from '@/lib-client/palette';
 
 export interface DirectoryCardProfile {
   username:  string;
@@ -76,7 +77,7 @@ export function DirectoryCard({
             English headline on an Arabic page truncates from the wrong end. */}
         {profile.headline && (
           <div dir="auto" style={{
-            fontSize: 13.5, color: 'rgba(255,255,255,0.60)', marginTop: 3, lineHeight: 1.45,
+            fontSize: 13.5, color: inkA(0.6), marginTop: 3, lineHeight: 1.45,
             overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
           }}>{profile.headline}</div>
         )}
@@ -88,7 +89,7 @@ export function DirectoryCard({
             does not belong in the same row as their identity and their evidence.
             `capitalize` is scoped to the category alone; on the whole line it also
             title-cased the count — "Builder · 184 Followers". */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 11.5, color: 'rgba(255,255,255,0.38)', marginTop: 5 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 11.5, color: inkA(0.38), marginTop: 5 }}>
           <span>
             <span style={{ textTransform: 'capitalize' }}>{categoryLabel ?? profile.category}</span>
             {/* Nothing at all when the count is withheld — not "0 followers".
@@ -105,7 +106,7 @@ export function DirectoryCard({
         </div>
       </div>
 
-      <span aria-hidden="true" style={{ color: 'rgba(255,255,255,0.28)', fontSize: 18, flexShrink: 0 }}>›</span>
+      <span aria-hidden="true" style={{ color: inkA(0.28), fontSize: 18, flexShrink: 0 }}>›</span>
     </Link>
   );
 }

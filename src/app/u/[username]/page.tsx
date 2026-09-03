@@ -19,6 +19,7 @@ import { ShareProfile } from '@/components/public/ShareProfile';
 import { LanguagePicker } from '@/components/public/LanguagePicker';
 import { getI18n } from '@/lib/i18n/server';
 import { fill } from '@/lib/i18n/dictionaries';
+import { C, inkA } from '@/lib-client/palette';
 
 export const dynamic = 'force-dynamic';
 
@@ -112,7 +113,7 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
 
           {p.headline && (
             <p dir="auto" style={{
-              fontSize: 15, lineHeight: 1.6, color: 'rgba(255,255,255,0.68)',
+              fontSize: 15, lineHeight: 1.6, color: inkA(0.68),
               margin: '18px auto 0', maxWidth: 340,
             }}>{p.headline}</p>
           )}
@@ -126,17 +127,17 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
           <div style={{
             display: 'inline-flex', alignItems: 'baseline', gap: 8,
             margin: '24px 0 0', padding: '12px 22px', borderRadius: 14,
-            background: 'rgba(255,255,255,0.04)', border: '1px solid var(--tec-border)',
+            background: inkA(0.04), border: '1px solid var(--tec-border)',
           }}>
             <span style={{ fontSize: 24, fontWeight: 900, color: 'var(--tec-gold)' }}>{p.followers}</span>
-            <span style={{ fontSize: 12.5, fontWeight: 650, color: 'rgba(255,255,255,0.5)' }}>
+            <span style={{ fontSize: 12.5, fontWeight: 650, color: inkA(0.5) }}>
               {p.followers === 1 ? t.follower : t.followers}
             </span>
           </div>
           )}
 
           {since && (
-            <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.34)', marginTop: 12 }}>
+            <div style={{ fontSize: 12, color: inkA(0.34), marginTop: 12 }}>
               {fill(t.since, { date: since })}
             </div>
           )}
@@ -174,7 +175,7 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
         </section>
 
         <p style={{
-          fontSize: 11.5, color: 'rgba(255,255,255,0.34)', marginTop: 20,
+          fontSize: 11.5, color: inkA(0.34), marginTop: 20,
           textAlign: 'center', lineHeight: 1.65,
         }}>
           {t.profileNote}

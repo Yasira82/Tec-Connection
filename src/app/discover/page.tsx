@@ -21,6 +21,7 @@ import { CATEGORIES, resolveDirectory } from '@/lib/connection/discovery';
 import { DirectoryCard } from '@/components/public/DirectoryCard';
 import { LanguagePicker } from '@/components/public/LanguagePicker';
 import { getI18n } from '@/lib/i18n/server';
+import { C, inkA } from '@/lib-client/palette';
 
 export const dynamic = 'force-dynamic';
 
@@ -106,7 +107,7 @@ export default async function DiscoverPage(
               <div style={{ fontSize: 16, fontWeight: 800, color: '#fff' }}>
                 {q || active ? t.emptyFiltered : t.emptyAll}
               </div>
-              <p style={{ fontSize: 13.5, color: 'rgba(255,255,255,0.55)', margin: '10px auto 0', maxWidth: 380, lineHeight: 1.6 }}>
+              <p style={{ fontSize: 13.5, color: inkA(0.55), margin: '10px auto 0', maxWidth: 380, lineHeight: 1.6 }}>
                 {t.emptyBody}
               </p>
               {(q || active) && (
@@ -130,7 +131,7 @@ export default async function DiscoverPage(
           <div style={{ fontSize: 17, fontWeight: 850, color: '#fff', letterSpacing: '-0.01em' }}>
             {t.findableTitle}
           </div>
-          <p style={{ fontSize: 13.5, color: 'rgba(255,255,255,0.58)', margin: '10px auto 20px', maxWidth: 380, lineHeight: 1.6 }}>
+          <p style={{ fontSize: 13.5, color: inkA(0.58), margin: '10px auto 20px', maxWidth: 380, lineHeight: 1.6 }}>
             {t.findableBody}
           </p>
           <Link href="/app" className="pub-cta" style={{ textDecoration: 'none', maxWidth: 300 }}>

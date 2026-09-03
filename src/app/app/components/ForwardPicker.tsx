@@ -12,7 +12,7 @@
 // forward reads as "nothing happened" and gets tapped again — which sends the
 // message twice, into a conversation the person is not looking at.
 import { useState } from 'react';
-import { TEC_COLORS } from '@yasser172/tec-ui';
+import { C, bgA } from '@/lib-client/palette';
 import { useTranslation } from '@/lib/i18n';
 import { useBackButton } from '@/lib-client/connection/useBackButton';
 import type { Summary } from '@/lib-client/connection/useMessages';
@@ -52,34 +52,34 @@ export function ForwardPicker({ conversations, exceptId, onPick, onClose }: {
       role="dialog" aria-modal="true" aria-label={a.forward}
       style={{
         position: 'fixed', inset: 0, zIndex: 955,
-        background: 'rgba(3,5,12,0.72)', display: 'flex', alignItems: 'flex-end',
+        background: bgA(0.72), display: 'flex', alignItems: 'flex-end',
       }}
     >
       <div
         onClick={(e) => e.stopPropagation()}
         style={{
           width: '100%', maxHeight: '70vh', overflowY: 'auto',
-          background: TEC_COLORS.surface,
+          background: C.surface,
           borderStartStartRadius: 20, borderStartEndRadius: 20,
-          border: `1px solid ${TEC_COLORS.border}`, borderBottom: 'none',
+          border: `1px solid ${C.border}`, borderBottom: 'none',
           paddingBottom: 'calc(env(safe-area-inset-bottom) + 10px)',
         }}
       >
         <div style={{ display: 'grid', placeItems: 'center', padding: '10px 0 6px' }}>
-          <span style={{ width: 38, height: 4, borderRadius: 999, background: TEC_COLORS.border }} />
+          <span style={{ width: 38, height: 4, borderRadius: 999, background: C.border }} />
         </div>
-        <h3 style={{ margin: 0, padding: '4px 16px 10px', fontSize: 15, fontWeight: 800, color: TEC_COLORS.text }}>
+        <h3 style={{ margin: 0, padding: '4px 16px 10px', fontSize: 15, fontWeight: 800, color: C.text }}>
           {a.forwardTo}
         </h3>
 
         {failed && (
-          <p style={{ margin: 0, padding: '0 16px 10px', fontSize: 12.5, color: TEC_COLORS.error }}>
+          <p style={{ margin: 0, padding: '0 16px 10px', fontSize: 12.5, color: C.error }}>
             {a.forwardFailed}
           </p>
         )}
 
         {rows.length === 0 ? (
-          <p style={{ margin: 0, padding: '0 16px 16px', fontSize: 13, color: TEC_COLORS.subtext, lineHeight: 1.5 }}>
+          <p style={{ margin: 0, padding: '0 16px 16px', fontSize: 13, color: C.subtext, lineHeight: 1.5 }}>
             {a.forwardNowhere}
           </p>
         ) : rows.map((c) => (
@@ -90,15 +90,15 @@ export function ForwardPicker({ conversations, exceptId, onPick, onClose }: {
             style={{
               display: 'flex', alignItems: 'center', gap: 10, width: '100%',
               padding: '12px 16px', textAlign: 'start',
-              background: 'none', border: 'none', borderTop: `1px solid ${TEC_COLORS.border}`,
+              background: 'none', border: 'none', borderTop: `1px solid ${C.border}`,
               cursor: busy || sent ? 'default' : 'pointer',
               opacity: busy && busy !== c.id ? 0.5 : 1,
             }}
           >
-            <span style={{ flex: 1, minWidth: 0, fontSize: 14.5, fontWeight: 600, color: TEC_COLORS.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <span style={{ flex: 1, minWidth: 0, fontSize: 14.5, fontWeight: 600, color: C.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               <bdi dir="auto">{c.kind === 'GROUP' ? (c.title ?? '') : `@${c.peer ?? ''}`}</bdi>
             </span>
-            <span style={{ fontSize: 12, fontWeight: 700, color: sent === c.id ? TEC_COLORS.success : TEC_COLORS.gold, flexShrink: 0 }}>
+            <span style={{ fontSize: 12, fontWeight: 700, color: sent === c.id ? C.success : C.gold, flexShrink: 0 }}>
               {sent === c.id ? a.forwardSent : busy === c.id ? '…' : a.send}
             </span>
           </button>

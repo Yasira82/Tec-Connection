@@ -21,7 +21,7 @@
 //     looks identical to sending into a real conversation, and the message
 //     "not arriving" is the only symptom.
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { TEC_COLORS } from '@yasser172/tec-ui';
+import { C, goldA, inkA } from '@/lib-client/palette';
 import { useTranslation } from '@/lib/i18n';
 import { useThread, sendToConversation, type Summary, type Msg } from '@/lib-client/connection/useMessages';
 import { VoiceRecorder } from './VoiceRecorder';
@@ -29,6 +29,7 @@ import { useBlocks } from '@/lib-client/connection/useBlocks';
 import { useTyping } from '@/lib-client/connection/useTyping';
 import { NewChat } from './NewChat';
 import { Lightbox } from './Lightbox';
+import { MediaImage } from './MediaImage';
 import { ChatInfoSheet } from './ChatInfoSheet';
 import { GroupDiscovery } from './GroupDiscovery';
 import { MessageActions } from './MessageActions';
@@ -46,19 +47,19 @@ import { useLongPress } from '@/lib-client/connection/useLongPress';
 const norm = (u: string) => (u ?? '').trim().replace(/^@+/, '').toLowerCase();
 
 const input = {
-  flex: 1, minWidth: 0, background: TEC_COLORS.bg, color: TEC_COLORS.text,
-  border: `1px solid ${TEC_COLORS.border}`, borderRadius: 999, padding: '11px 16px', fontSize: 14,
+  flex: 1, minWidth: 0, background: C.bg, color: C.text,
+  border: `1px solid ${C.border}`, borderRadius: 999, padding: '11px 16px', fontSize: 14,
   outline: 'none',
 } as const;
 
 const goldBtn = {
-  background: `linear-gradient(135deg, ${TEC_COLORS.gold}, ${TEC_COLORS.goldDark})`,
-  color: '#0a0800', border: 'none', borderRadius: 999, padding: '11px 18px',
+  background: `linear-gradient(135deg, ${C.gold}, ${C.goldDark})`,
+  color: C.onGold, border: 'none', borderRadius: 999, padding: '11px 18px',
   fontSize: 14, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap',
 } as const;
 
 const quietBtn = {
-  background: 'none', border: `1px solid ${TEC_COLORS.border}`, color: TEC_COLORS.subtext,
+  background: 'none', border: `1px solid ${C.border}`, color: C.subtext,
   borderRadius: 999, padding: '7px 14px', fontSize: 12.5, cursor: 'pointer', whiteSpace: 'nowrap',
 } as const;
 
@@ -218,8 +219,8 @@ function Body({ text, mentions, me }: { text: string; mentions?: string[]; me: s
         <span
           key={`mn-${i}`}
           style={{
-            color: TEC_COLORS.gold, fontWeight: 700,
-            ...(p.handle === me && { background: `${TEC_COLORS.gold}22`, borderRadius: 4, padding: '0 3px' }),
+            color: C.gold, fontWeight: 700,
+            ...(p.handle === me && { background: goldA(0.133), borderRadius: 4, padding: '0 3px' }),
           }}
         >{p.text}</span>
       )
@@ -290,9 +291,10 @@ function Chat({ id, me, conversations, onBack }: {
   // every bubble is a row of hazards down the side of the transcript.
   const [menuFor, setMenuFor] = useState<string | null>(null);
   const [viewing, setViewing] = useState<string | null>(null);
-  // Which photos have finished decoding. A tile with nothing in it reads as
-  // broken; a tile with a shimmer reads as "coming".
-  const [loaded, setLoaded] = useState<Set<string>>(new Set());
+  // Reveal state used to live here, as a Set of message ids. It moved INTO the
+  // tile (MediaImage): a transcript-level Set is only written by a load event,
+  // and a photo that arrives from cache never fires one — so the id never
+  // entered the Set and the tile stayed transparent for the life of the screen.
   const [micIssue, setMicIssue] = useState<'denied' | 'unsupported' | null>(null);
   const [reporting, setReporting] = useState<{ id: string; by: string } | null>(null);
   const { typing, ping } = useTyping(id, thread?.members ?? []);
@@ -431,10 +433,10 @@ function Chat({ id, me, conversations, onBack }: {
       {/* header */}
       <div style={{
         display: 'flex', alignItems: 'center', gap: 12, padding: '10px 4px 14px',
-        borderBottom: `1px solid ${TEC_COLORS.border}`,
+        borderBottom: `1px solid ${C.border}`,
       }}>
         <button onClick={onBack} aria-label={a.messages} style={{
-          background: 'none', border: 'none', color: TEC_COLORS.gold, cursor: 'pointer',
+          background: 'none', border: 'none', color: C.gold, cursor: 'pointer',
           fontSize: 26, lineHeight: 1, padding: '0 4px',
         }}>›</button>
         <Avatar name={isGroup ? (thread?.title ?? 'G') : (thread?.peer ?? '?')} size={40} group={!!isGroup} convId={id} />
@@ -442,20 +444,20 @@ function Chat({ id, me, conversations, onBack }: {
           onClick={() => setShowInfo(true)}
           style={{ flex: 1, minWidth: 0, background: 'none', border: 'none', padding: 0, textAlign: 'start', cursor: 'pointer' }}
         >
-          <span style={{ display: 'block', fontSize: 16, fontWeight: 700, color: TEC_COLORS.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          <span style={{ display: 'block', fontSize: 16, fontWeight: 700, color: C.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             <bdi dir="auto">{title}</bdi>
           </span>
-          <span style={{ fontSize: 11.5, color: typing.length ? TEC_COLORS.success : TEC_COLORS.subtext }}>
+          <span style={{ fontSize: 11.5, color: typing.length ? C.success : C.subtext }}>
             {typing.length
               ? <bdi dir="auto">{isGroup ? `@${typing[0]} ${a.typingNow}` : a.typingNow}</bdi>
               : isGroup ? <bdi>{thread?.members.length} {a.membersLabel}</bdi> : a.directLabel}
           </span>
         </button>
         <button onClick={() => setSearching(true)} aria-label={a.searchMessages} style={{
-          background: 'none', border: 'none', color: TEC_COLORS.subtext, cursor: 'pointer', fontSize: 17, padding: '0 4px',
+          background: 'none', border: 'none', color: C.subtext, cursor: 'pointer', fontSize: 17, padding: '0 4px',
         }}>🔍</button>
         <button onClick={() => setShowInfo(true)} aria-label={isGroup ? a.groupInfo : a.contactInfo} style={{
-          background: 'none', border: 'none', color: TEC_COLORS.subtext, cursor: 'pointer', fontSize: 20, padding: '0 4px',
+          background: 'none', border: 'none', color: C.subtext, cursor: 'pointer', fontSize: 20, padding: '0 4px',
         }}>⋯</button>
       </div>
 
@@ -467,8 +469,8 @@ function Chat({ id, me, conversations, onBack }: {
         <div style={{
           display: 'flex', alignItems: 'center', gap: 8,
           margin: '10px 0 0', padding: '8px 12px', borderRadius: 10,
-          background: `${TEC_COLORS.gold}12`,
-          borderInlineStart: `3px solid ${TEC_COLORS.gold}`,
+          background: goldA(0.071),
+          borderInlineStart: `3px solid ${C.gold}`,
         }}>
           <button
             onClick={() => {
@@ -477,11 +479,11 @@ function Chat({ id, me, conversations, onBack }: {
             }}
             style={{ flex: 1, minWidth: 0, background: 'none', border: 'none', padding: 0, textAlign: 'start', cursor: 'pointer' }}
           >
-            <span style={{ display: 'block', fontSize: 11, fontWeight: 700, color: TEC_COLORS.gold }}>
+            <span style={{ display: 'block', fontSize: 11, fontWeight: 700, color: C.gold }}>
               📌 {a.pinnedMessage}
             </span>
             <span style={{
-              display: 'block', fontSize: 12.5, color: TEC_COLORS.text, marginTop: 1,
+              display: 'block', fontSize: 12.5, color: C.text, marginTop: 1,
               overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
             }} dir="auto">
               {thread.pinned.body || (thread.pinned.media === 'audio' ? a.voiceNote : a.photo)}
@@ -492,7 +494,7 @@ function Chat({ id, me, conversations, onBack }: {
               onClick={() => { void setPinned(null); }} aria-label={a.unpinMessage}
               style={{
                 width: 28, height: 28, borderRadius: 999, flexShrink: 0,
-                background: 'none', border: 'none', color: TEC_COLORS.subtext,
+                background: 'none', border: 'none', color: C.subtext,
                 fontSize: 13, cursor: 'pointer', display: 'grid', placeItems: 'center',
               }}
             >✕</button>
@@ -504,8 +506,8 @@ function Chat({ id, me, conversations, onBack }: {
       {alone && (
         <div style={{
           margin: '12px 0 0', padding: '10px 14px', borderRadius: 12,
-          background: `${TEC_COLORS.gold}14`, border: `1px solid ${TEC_COLORS.gold}44`,
-          fontSize: 12.5, color: TEC_COLORS.text, lineHeight: 1.5,
+          background: goldA(0.078), border: `1px solid ${goldA(0.267)}`,
+          fontSize: 12.5, color: C.text, lineHeight: 1.5,
         }}>{a.onlyYouInGroup}</div>
       )}
 
@@ -522,16 +524,16 @@ function Chat({ id, me, conversations, onBack }: {
             disabled={loadingOlder}
             style={{
               alignSelf: 'center', margin: '2px 0 10px', padding: '6px 16px',
-              background: 'none', border: `1px solid ${TEC_COLORS.border}`,
-              borderRadius: 999, color: TEC_COLORS.subtext, fontSize: 12,
+              background: 'none', border: `1px solid ${C.border}`,
+              borderRadius: 999, color: C.subtext, fontSize: 12,
               cursor: loadingOlder ? 'not-allowed' : 'pointer',
             }}
           >{loadingOlder ? a.loading : a.loadOlder}</button>
         )}
         {!thread ? (
-          <p style={{ color: TEC_COLORS.subtext, fontSize: 13 }}>{error === 'notfound' ? a.threadUnavailable : a.loading}</p>
+          <p style={{ color: C.subtext, fontSize: 13 }}>{error === 'notfound' ? a.threadUnavailable : a.loading}</p>
         ) : rows.length === 0 ? (
-          <p style={{ color: TEC_COLORS.subtext, fontSize: 13, textAlign: 'center', marginTop: 24 }}>{a.noMessagesYet}</p>
+          <p style={{ color: C.subtext, fontSize: 13, textAlign: 'center', marginTop: 24 }}>{a.noMessagesYet}</p>
         ) : rows.map(({ m, mine, newDay, showSender }) => (
           // The anchor a quote scrolls back to.
           <div key={m.id} id={`msg-${m.id}`}>
@@ -540,18 +542,18 @@ function Chat({ id, me, conversations, onBack }: {
                 below is new", and the two must not read as the same mark. */}
             {m.id === firstUnreadId && (
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '14px 2px 10px' }}>
-                <span style={{ flex: 1, height: 1, background: `${TEC_COLORS.gold}55` }} />
-                <span style={{ fontSize: 11, fontWeight: 700, color: TEC_COLORS.gold, whiteSpace: 'nowrap' }}>
+                <span style={{ flex: 1, height: 1, background: goldA(0.333) }} />
+                <span style={{ fontSize: 11, fontWeight: 700, color: C.gold, whiteSpace: 'nowrap' }}>
                   {a.unreadDivider}
                 </span>
-                <span style={{ flex: 1, height: 1, background: `${TEC_COLORS.gold}55` }} />
+                <span style={{ flex: 1, height: 1, background: goldA(0.333) }} />
               </div>
             )}
             {newDay && (
               <div style={{ textAlign: 'center', margin: '14px 0 10px' }}>
                 <span style={{
-                  fontSize: 11, color: TEC_COLORS.subtext, background: TEC_COLORS.surface,
-                  border: `1px solid ${TEC_COLORS.border}`, borderRadius: 999, padding: '3px 12px',
+                  fontSize: 11, color: C.subtext, background: C.surface,
+                  border: `1px solid ${C.border}`, borderRadius: 999, padding: '3px 12px',
                 }}>{dayLabel(m.at, a)}</span>
               </div>
             )}
@@ -568,7 +570,7 @@ function Chat({ id, me, conversations, onBack }: {
                   // three dots the same colour as the background, which is why
                   // nobody could find the way to delete a message. Every other
                   // tappable mark in this app is the amber.
-                  background: 'none', border: 'none', color: TEC_COLORS.gold,
+                  background: 'none', border: 'none', color: C.gold,
                   fontSize: 18, lineHeight: 1, cursor: 'pointer', padding: '0 4px',
                   flexShrink: 0,
                   // Always on the side AWAY from the edge the bubble hugs, so
@@ -580,15 +582,15 @@ function Chat({ id, me, conversations, onBack }: {
                 onLongPress={() => setMenuFor(m.id)}
                 style={{
                 maxWidth: '78%', padding: '8px 12px 6px',
-                background: mine ? `${TEC_COLORS.gold}1F` : TEC_COLORS.surface2,
+                background: mine ? goldA(0.122) : C.surface2,
                 // Named YOU, in a group of forty, three hours ago. The whole
                 // bubble is marked rather than only the handle inside it —
                 // scrolling back to find one gold word is exactly the work the
                 // mention was supposed to save. Never on your own message: you
                 // know what you wrote.
                 border: `1px solid ${
-                  !mine && (m.mentions ?? []).includes(meNorm) ? `${TEC_COLORS.gold}88`
-                    : mine ? `${TEC_COLORS.gold}44` : TEC_COLORS.border
+                  !mine && (m.mentions ?? []).includes(meNorm) ? goldA(0.533)
+                    : mine ? goldA(0.267) : C.border
                 }`,
                 borderRadius: 16,
                 // The squared corner marks the speaker, the way a tail does.
@@ -596,12 +598,12 @@ function Chat({ id, me, conversations, onBack }: {
                 borderEndStartRadius: mine ? 16 : 5,
               }}>
                 {showSender && (
-                  <div style={{ fontSize: 11.5, fontWeight: 700, color: TEC_COLORS.gold, marginBottom: 3 }}>
+                  <div style={{ fontSize: 11.5, fontWeight: 700, color: C.gold, marginBottom: 3 }}>
                     <bdi>@{m.by}</bdi>
                   </div>
                 )}
                 {m.deleted ? (
-                  <div style={{ fontSize: 13.5, lineHeight: 1.5, color: TEC_COLORS.subtext, fontStyle: 'italic' }}>
+                  <div style={{ fontSize: 13.5, lineHeight: 1.5, color: C.subtext, fontStyle: 'italic' }}>
                     {a.messageDeleted}
                   </div>
                 ) : (<>
@@ -609,7 +611,7 @@ function Chat({ id, me, conversations, onBack }: {
                     person who WROTE it — the chain of who passed it on is not
                     the interesting fact, and the service only keeps the origin. */}
                 {m.forwardedFrom && (
-                  <div style={{ fontSize: 11, color: TEC_COLORS.subtext, marginBottom: 3, fontStyle: 'italic' }}>
+                  <div style={{ fontSize: 11, color: C.subtext, marginBottom: 3, fontStyle: 'italic' }}>
                     ↪ {a.forwardedFrom} <bdi>@{m.forwardedFrom}</bdi>
                   </div>
                 )}
@@ -627,16 +629,16 @@ function Chat({ id, me, conversations, onBack }: {
                     }}
                     style={{
                       display: 'block', width: '100%', textAlign: 'start', cursor: 'pointer',
-                      background: 'rgba(255,255,255,0.05)', border: 'none',
-                      borderInlineStart: `3px solid ${TEC_COLORS.gold}`,
+                      background: inkA(0.05), border: 'none',
+                      borderInlineStart: `3px solid ${C.gold}`,
                       borderRadius: 8, padding: '6px 10px', marginBottom: 6,
                     }}
                   >
-                    <span style={{ display: 'block', fontSize: 11.5, fontWeight: 700, color: TEC_COLORS.gold }}>
+                    <span style={{ display: 'block', fontSize: 11.5, fontWeight: 700, color: C.gold }}>
                       {m.replyTo.by ? <bdi>@{m.replyTo.by}</bdi> : a.messageDeleted}
                     </span>
                     <span style={{
-                      display: 'block', fontSize: 12.5, color: TEC_COLORS.subtext, marginTop: 1,
+                      display: 'block', fontSize: 12.5, color: C.subtext, marginTop: 1,
                       overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                       fontStyle: m.replyTo.deleted || m.replyTo.hidden ? 'italic' : 'normal',
                     }} dir="auto">
@@ -660,22 +662,15 @@ function Chat({ id, me, conversations, onBack }: {
                       // transcript does not jump as each photo lands.
                       width: 240, maxWidth: '100%', height: 180,
                       borderRadius: 10, overflow: 'hidden', position: 'relative',
-                      backgroundColor: TEC_COLORS.surface2,
+                      backgroundColor: C.surface2,
                     }}
                   >
-                    {!loaded.has(m.id) && (
-                      <span style={{
-                        position: 'absolute', inset: 0, display: 'grid', placeItems: 'center',
-                        color: TEC_COLORS.subtext, fontSize: 11,
-                      }}>{a.loading}</span>
-                    )}
-                    <img
-                      src={mediaUrl(id, m.id)} alt={a.photo} loading="lazy" decoding="async"
-                      onLoad={() => setLoaded((sset) => new Set(sset).add(m.id))}
-                      style={{
-                        display: 'block', width: '100%', height: '100%', objectFit: 'cover',
-                        opacity: loaded.has(m.id) ? 1 : 0, transition: 'opacity 0.2s',
-                      }}
+                    <MediaImage
+                      src={mediaUrl(id, m.id)}
+                      alt={a.photo}
+                      loadingLabel={a.loading}
+                      failedLabel={a.photoUnavailable}
+                      imgStyle={{ display: 'block', width: '100%', height: '100%', objectFit: 'cover' }}
                     />
                   </button>
                 )}
@@ -686,7 +681,7 @@ function Chat({ id, me, conversations, onBack }: {
                 )}
                 {/* Written by another person: it lays out by its own script. */}
                 {m.body && (
-                  <div style={{ fontSize: 14.5, lineHeight: 1.5, color: TEC_COLORS.text, wordBreak: 'break-word' }}>
+                  <div style={{ fontSize: 14.5, lineHeight: 1.5, color: C.text, wordBreak: 'break-word' }}>
                     <Body text={m.body} mentions={m.mentions} me={meNorm} />
                   </div>
                 )}
@@ -706,9 +701,9 @@ function Chat({ id, me, conversations, onBack }: {
                           display: 'flex', alignItems: 'center', gap: 3,
                           padding: '2px 7px', borderRadius: 999, cursor: 'pointer',
                           fontSize: 12, lineHeight: 1.6,
-                          background: r.mine ? `${TEC_COLORS.gold}22` : 'rgba(255,255,255,0.06)',
-                          border: `1px solid ${r.mine ? `${TEC_COLORS.gold}66` : 'transparent'}`,
-                          color: TEC_COLORS.text,
+                          background: r.mine ? goldA(0.133) : inkA(0.06),
+                          border: `1px solid ${r.mine ? goldA(0.4) : 'transparent'}`,
+                          color: C.text,
                         }}
                       >
                         <span>{r.emoji}</span>
@@ -720,7 +715,7 @@ function Chat({ id, me, conversations, onBack }: {
                   </div>
                 )}
                 </>)}
-                <div style={{ fontSize: 10, color: TEC_COLORS.subtext, textAlign: 'end', marginTop: 2, display: 'flex', gap: 4, justifyContent: 'flex-end', alignItems: 'center' }}>
+                <div style={{ fontSize: 10, color: C.subtext, textAlign: 'end', marginTop: 2, display: 'flex', gap: 4, justifyContent: 'flex-end', alignItems: 'center' }}>
                   {/* Said, not hidden. A message whose words changed after
                       people read them must say so, or the edit is a quiet
                       rewrite of what everyone remembers. */}
@@ -734,7 +729,7 @@ function Chat({ id, me, conversations, onBack }: {
                   {mine && !m.deleted && !isGroup && (
                     <span
                       title={seenBy(m.at, thread?.peerReadAt) ? a.seen : a.delivered}
-                      style={{ color: seenBy(m.at, thread?.peerReadAt) ? TEC_COLORS.success : TEC_COLORS.subtext }}
+                      style={{ color: seenBy(m.at, thread?.peerReadAt) ? C.success : C.subtext }}
                     >{seenBy(m.at, thread?.peerReadAt) ? '✓✓' : '✓'}</span>
                   )}
                 </div>
@@ -745,19 +740,19 @@ function Chat({ id, me, conversations, onBack }: {
         <div ref={endRef} />
       </div>
 
-      {error === 'refused' && <p style={{ color: TEC_COLORS.error, fontSize: 12, margin: '0 0 6px' }}>{a.messageRefused}</p>}
-      {error === 'failed' && <p style={{ color: TEC_COLORS.error, fontSize: 12, margin: '0 0 6px' }}>{a.messageFailed}</p>}
-      {error === 'toobig' && <p style={{ color: TEC_COLORS.error, fontSize: 12, margin: '0 0 6px' }}>{a.attachTooBig}</p>}
-      {error === 'attach' && <p style={{ color: TEC_COLORS.error, fontSize: 12, margin: '0 0 6px' }}>{a.attachFailed}</p>}
+      {error === 'refused' && <p style={{ color: C.error, fontSize: 12, margin: '0 0 6px' }}>{a.messageRefused}</p>}
+      {error === 'failed' && <p style={{ color: C.error, fontSize: 12, margin: '0 0 6px' }}>{a.messageFailed}</p>}
+      {error === 'toobig' && <p style={{ color: C.error, fontSize: 12, margin: '0 0 6px' }}>{a.attachTooBig}</p>}
+      {error === 'attach' && <p style={{ color: C.error, fontSize: 12, margin: '0 0 6px' }}>{a.attachFailed}</p>}
       {micIssue === 'denied' && (
-        <p style={{ color: TEC_COLORS.subtext, fontSize: 11.5, margin: '0 0 6px', lineHeight: 1.5 }}>{a.micBlockedHere}</p>
+        <p style={{ color: C.subtext, fontSize: 11.5, margin: '0 0 6px', lineHeight: 1.5 }}>{a.micBlockedHere}</p>
       )}
 
       {/* composer — replaced by the reason when the thread is blocked, rather
           than left in place to fail on send. */}
       {peerBlocked ? (
-        <div style={{ paddingTop: 12, borderTop: `1px solid ${TEC_COLORS.border}`, display: 'flex', alignItems: 'center', gap: 10 }}>
-          <p style={{ flex: 1, fontSize: 12.5, color: TEC_COLORS.subtext, margin: 0, lineHeight: 1.5 }}>{a.blockedNotice}</p>
+        <div style={{ paddingTop: 12, borderTop: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', gap: 10 }}>
+          <p style={{ flex: 1, fontSize: 12.5, color: C.subtext, margin: 0, lineHeight: 1.5 }}>{a.blockedNotice}</p>
           <button style={quietBtn} disabled={blockBusy} onClick={() => { void unblock(peerName); }}>{a.unblock}</button>
         </div>
       ) : readOnly ? (
@@ -767,8 +762,8 @@ function Chat({ id, me, conversations, onBack }: {
         // keyboard that will not open is a bug as far as anyone using it is
         // concerned; a sentence saying only admins can post here is the answer
         // to the question they were about to ask.
-        <div style={{ paddingTop: 12, borderTop: `1px solid ${TEC_COLORS.border}` }}>
-          <p style={{ fontSize: 12.5, color: TEC_COLORS.subtext, margin: 0, lineHeight: 1.5, textAlign: 'center' }}>
+        <div style={{ paddingTop: 12, borderTop: `1px solid ${C.border}` }}>
+          <p style={{ fontSize: 12.5, color: C.subtext, margin: 0, lineHeight: 1.5, textAlign: 'center' }}>
             📣 {a.announcementOnly}
           </p>
         </div>
@@ -786,14 +781,14 @@ function Chat({ id, me, conversations, onBack }: {
         <div style={{
           display: 'flex', alignItems: 'center', gap: 10, marginTop: 10,
           padding: '8px 12px', borderRadius: 10,
-          background: `${TEC_COLORS.gold}14`,
-          borderInlineStart: `3px solid ${TEC_COLORS.gold}`,
+          background: goldA(0.078),
+          borderInlineStart: `3px solid ${C.gold}`,
         }}>
           <span style={{ flex: 1, minWidth: 0 }}>
-            <span style={{ display: 'block', fontSize: 11.5, fontWeight: 700, color: TEC_COLORS.gold }}>
+            <span style={{ display: 'block', fontSize: 11.5, fontWeight: 700, color: C.gold }}>
               {a.editingMessage}
             </span>
-            <span style={{ display: 'block', fontSize: 11.5, color: TEC_COLORS.subtext, marginTop: 1, lineHeight: 1.4 }}>
+            <span style={{ display: 'block', fontSize: 11.5, color: C.subtext, marginTop: 1, lineHeight: 1.4 }}>
               {a.editMessageHint}
             </span>
           </span>
@@ -801,7 +796,7 @@ function Chat({ id, me, conversations, onBack }: {
             onClick={() => { setEditing(null); setDraft(''); }} aria-label={a.cancel}
             style={{
               width: 30, height: 30, borderRadius: 999, flexShrink: 0,
-              background: 'none', border: 'none', color: TEC_COLORS.subtext,
+              background: 'none', border: 'none', color: C.subtext,
               fontSize: 15, cursor: 'pointer', display: 'grid', placeItems: 'center',
             }}
           >✕</button>
@@ -811,15 +806,15 @@ function Chat({ id, me, conversations, onBack }: {
         <div style={{
           display: 'flex', alignItems: 'center', gap: 10, marginTop: 10,
           padding: '8px 12px', borderRadius: 10,
-          background: 'rgba(255,255,255,0.05)',
-          borderInlineStart: `3px solid ${TEC_COLORS.gold}`,
+          background: inkA(0.05),
+          borderInlineStart: `3px solid ${C.gold}`,
         }}>
           <span style={{ flex: 1, minWidth: 0 }}>
-            <span style={{ display: 'block', fontSize: 11.5, fontWeight: 700, color: TEC_COLORS.gold }}>
+            <span style={{ display: 'block', fontSize: 11.5, fontWeight: 700, color: C.gold }}>
               {a.replyingTo} <bdi>@{replyTo.by}</bdi>
             </span>
             <span style={{
-              display: 'block', fontSize: 12.5, color: TEC_COLORS.subtext, marginTop: 1,
+              display: 'block', fontSize: 12.5, color: C.subtext, marginTop: 1,
               overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
             }} dir="auto">
               {replyTo.body || (replyTo.media?.type === 'audio' ? a.voiceNote : a.photo)}
@@ -829,7 +824,7 @@ function Chat({ id, me, conversations, onBack }: {
             onClick={() => setReplyTo(null)} aria-label={a.cancel}
             style={{
               width: 30, height: 30, borderRadius: 999, flexShrink: 0,
-              background: 'none', border: 'none', color: TEC_COLORS.subtext,
+              background: 'none', border: 'none', color: C.subtext,
               fontSize: 15, cursor: 'pointer', display: 'grid', placeItems: 'center',
             }}
           >✕</button>
@@ -846,16 +841,16 @@ function Chat({ id, me, conversations, onBack }: {
               key={u}
               onClick={() => setDraft(`${draft.slice(0, mentionPick.start)}${u} `)}
               style={{
-                flexShrink: 0, background: `${TEC_COLORS.gold}14`,
-                border: `1px solid ${TEC_COLORS.gold}44`, borderRadius: 999,
+                flexShrink: 0, background: goldA(0.078),
+                border: `1px solid ${goldA(0.267)}`, borderRadius: 999,
                 padding: '6px 14px', fontSize: 12.5, fontWeight: 700,
-                color: TEC_COLORS.gold, cursor: 'pointer', whiteSpace: 'nowrap',
+                color: C.gold, cursor: 'pointer', whiteSpace: 'nowrap',
               }}
             ><bdi>@{u}</bdi></button>
           ))}
         </div>
       )}
-      <div style={{ display: 'flex', gap: 6, alignItems: 'center', paddingTop: 10, borderTop: `1px solid ${TEC_COLORS.border}` }}>
+      <div style={{ display: 'flex', gap: 6, alignItems: 'center', paddingTop: 10, borderTop: `1px solid ${C.border}` }}>
         {/* `capture` is deliberately absent: without it Android offers BOTH the
             camera and the gallery, which is what people expect from a paperclip. */}
         <input
@@ -876,8 +871,8 @@ function Chat({ id, me, conversations, onBack }: {
           onClick={() => fileRef.current?.click()} disabled={busy} aria-label={a.attachPhoto}
           style={{
             width: 38, height: 38, borderRadius: 999, flexShrink: 0,
-            background: 'none', border: `1px solid ${TEC_COLORS.border}`,
-            color: TEC_COLORS.subtext, fontSize: 17, cursor: busy ? 'not-allowed' : 'pointer',
+            background: 'none', border: `1px solid ${C.border}`,
+            color: C.subtext, fontSize: 17, cursor: busy ? 'not-allowed' : 'pointer',
             display: 'grid', placeItems: 'center',
           }}
         >📎</button>
@@ -898,8 +893,8 @@ function Chat({ id, me, conversations, onBack }: {
           onClick={submit} disabled={busy || !draft.trim()} aria-label={a.send}
           style={{
             width: 44, height: 44, borderRadius: 999, flexShrink: 0, border: 'none',
-            background: draft.trim() ? `linear-gradient(135deg, ${TEC_COLORS.gold}, ${TEC_COLORS.goldDark})` : TEC_COLORS.surface2,
-            color: draft.trim() ? '#0a0800' : TEC_COLORS.subtext,
+            background: draft.trim() ? `linear-gradient(135deg, ${C.gold}, ${C.goldDark})` : C.surface2,
+            color: draft.trim() ? C.onGold : C.subtext,
             fontSize: 18, cursor: draft.trim() ? 'pointer' : 'not-allowed',
             display: 'grid', placeItems: 'center',
           }}
@@ -1035,7 +1030,7 @@ function Row({ c, onOpen, a }: { c: Summary; onOpen: () => void; a: Record<strin
       <Avatar name={isGroup ? (c.title ?? 'G') : (c.peer ?? '?')} group={isGroup} convId={c.id} />
       <span style={{ flex: 1, minWidth: 0 }}>
         <span style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
-          <span style={{ flex: 1, minWidth: 0, fontSize: 15, fontWeight: 700, color: TEC_COLORS.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          <span style={{ flex: 1, minWidth: 0, fontSize: 15, fontWeight: 700, color: C.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             <bdi dir="auto">{name}</bdi>
           </span>
           {/* Muted, and it has to be visible HERE. A muted thread still shows a
@@ -1043,12 +1038,12 @@ function Row({ c, onOpen, a }: { c: Summary; onOpen: () => void; a: Record<strin
               because nobody wrote" and "quiet because you silenced it" is
               memory — and the usual next step is deciding the app is broken. */}
           {c.muted && (
-            <span title={a.muted} style={{ fontSize: 12, color: TEC_COLORS.subtext, flexShrink: 0 }}>🔕</span>
+            <span title={a.muted} style={{ fontSize: 12, color: C.subtext, flexShrink: 0 }}>🔕</span>
           )}
-          {c.last && <span style={{ fontSize: 11, color: TEC_COLORS.subtext, flexShrink: 0 }}><bdi>{clock(c.last.at)}</bdi></span>}
+          {c.last && <span style={{ fontSize: 11, color: C.subtext, flexShrink: 0 }}><bdi>{clock(c.last.at)}</bdi></span>}
         </span>
         <span style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 2 }}>
-          <span style={{ flex: 1, minWidth: 0, fontSize: 13, color: TEC_COLORS.subtext, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          <span style={{ flex: 1, minWidth: 0, fontSize: 13, color: C.subtext, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {c.last ? <bdi dir="auto">{c.last.body}</bdi>
                     : isGroup ? <bdi>{c.members} {a.membersLabel}</bdi> : a.directLabel}
           </span>
@@ -1060,9 +1055,9 @@ function Row({ c, onOpen, a }: { c: Summary; onOpen: () => void; a: Record<strin
             <span style={{
               minWidth: 20, height: 20, padding: '0 6px', borderRadius: 999, flexShrink: 0,
               display: 'grid', placeItems: 'center', fontSize: 11, fontWeight: 800,
-              background: c.muted ? TEC_COLORS.surface2 : TEC_COLORS.gold,
-              color: c.muted ? TEC_COLORS.subtext : '#0a0800',
-              ...(c.muted && { border: `1px solid ${TEC_COLORS.border}` }),
+              background: c.muted ? C.surface2 : C.gold,
+              color: c.muted ? C.subtext : C.onGold,
+              ...(c.muted && { border: `1px solid ${C.border}` }),
             }}>{c.unread}</span>
           )}
         </span>
@@ -1172,8 +1167,8 @@ export function Messages({ me, conversations, loading, openDirect, createGroup, 
         onClick={() => setDiscovering(true)}
         style={{
           width: '100%', marginBottom: 8, padding: '10px 14px',
-          background: 'none', border: `1px dashed ${TEC_COLORS.border}`,
-          borderRadius: 14, color: TEC_COLORS.subtext, fontSize: 13,
+          background: 'none', border: `1px dashed ${C.border}`,
+          borderRadius: 14, color: C.subtext, fontSize: 13,
           cursor: 'pointer', textAlign: 'center',
         }}
       >🔎 {a.discoverGroups}</button>
@@ -1183,19 +1178,19 @@ export function Messages({ me, conversations, loading, openDirect, createGroup, 
           which the normal poll picks up. */}
       {discovering && <GroupDiscovery onClose={() => setDiscovering(false)} />}
 
-      {pickError && <p style={{ color: TEC_COLORS.error, fontSize: 12.5, margin: '0 0 6px' }}>{pickError}</p>}
+      {pickError && <p style={{ color: C.error, fontSize: 12.5, margin: '0 0 6px' }}>{pickError}</p>}
 
       <div style={{ marginTop: 8 }}>
         {loading ? (
-          <p style={{ color: TEC_COLORS.subtext, fontSize: 13 }}>{a.loading}</p>
+          <p style={{ color: C.subtext, fontSize: 13 }}>{a.loading}</p>
         ) : conversations.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '40px 20px' }}>
             <div style={{ fontSize: 40, marginBottom: 10 }}>💬</div>
-            <p style={{ color: TEC_COLORS.text, fontSize: 14, fontWeight: 600, margin: 0 }}>{a.noConversations}</p>
-            <p style={{ color: TEC_COLORS.subtext, fontSize: 13, margin: '6px 0 0', lineHeight: 1.5 }}>{a.startConversation}</p>
+            <p style={{ color: C.text, fontSize: 14, fontWeight: 600, margin: 0 }}>{a.noConversations}</p>
+            <p style={{ color: C.subtext, fontSize: 13, margin: '6px 0 0', lineHeight: 1.5 }}>{a.startConversation}</p>
           </div>
         ) : conversations.map((c, i) => (
-          <div key={c.id} style={{ borderTop: i === 0 ? 'none' : `1px solid ${TEC_COLORS.border}` }}>
+          <div key={c.id} style={{ borderTop: i === 0 ? 'none' : `1px solid ${C.border}` }}>
             <Row c={c} a={a} onOpen={() => setOpenId(c.id)} />
           </div>
         ))}

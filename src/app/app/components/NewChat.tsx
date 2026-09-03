@@ -13,7 +13,7 @@
 // be writing to. Typing an exact handle still works — the last row offers it
 // explicitly — so nothing that worked before stops working.
 import { useEffect, useMemo, useState } from 'react';
-import { TEC_COLORS } from '@yasser172/tec-ui';
+import { C, goldA } from '@/lib-client/palette';
 import { useTranslation } from '@/lib/i18n';
 import { useBackButton } from '@/lib-client/connection/useBackButton';
 
@@ -28,8 +28,8 @@ function Avatar({ name }: { name: string }) {
   return (
     <span style={{
       width: 40, height: 40, borderRadius: 999, display: 'grid', placeItems: 'center', flexShrink: 0,
-      background: `linear-gradient(135deg, ${TEC_COLORS.gold}, ${TEC_COLORS.goldDark})`,
-      color: '#0a0800', fontSize: 17, fontWeight: 800,
+      background: `linear-gradient(135deg, ${C.gold}, ${C.goldDark})`,
+      color: C.onGold, fontSize: 17, fontWeight: 800,
     }}>{(name || '?').charAt(0).toUpperCase()}</span>
   );
 }
@@ -38,7 +38,7 @@ function Section({ label }: { label: string }) {
   return (
     <div style={{
       fontSize: 11, fontWeight: 700, letterSpacing: 0.6, textTransform: 'uppercase',
-      color: TEC_COLORS.subtext, margin: '16px 0 2px',
+      color: C.subtext, margin: '16px 0 2px',
     }}>{label}</div>
   );
 }
@@ -118,27 +118,27 @@ export function NewChat({ onPick, onCancel, error }: {
           autoCapitalize="none"
           autoCorrect="off"
           style={{
-            flex: 1, minWidth: 0, background: TEC_COLORS.bg, color: TEC_COLORS.text,
-            border: `1px solid ${TEC_COLORS.border}`, borderRadius: 999,
+            flex: 1, minWidth: 0, background: C.bg, color: C.text,
+            border: `1px solid ${C.border}`, borderRadius: 999,
             padding: '11px 16px', fontSize: 14, outline: 'none',
           }}
         />
         <button onClick={onCancel} style={{
-          background: 'none', border: `1px solid ${TEC_COLORS.border}`, color: TEC_COLORS.subtext,
+          background: 'none', border: `1px solid ${C.border}`, color: C.subtext,
           borderRadius: 999, padding: '9px 14px', fontSize: 13, cursor: 'pointer', whiteSpace: 'nowrap',
         }}>{a.cancel}</button>
       </div>
 
       {error && (
-        <p style={{ color: TEC_COLORS.error, fontSize: 12.5, margin: '0 0 8px' }}>{error}</p>
+        <p style={{ color: C.error, fontSize: 12.5, margin: '0 0 8px' }}>{error}</p>
       )}
 
       {followingShown.length > 0 && <Section label={a.peopleYouFollow} />}
       {followingShown.map((u, i) => (
         <button key={u} onClick={() => onPick(u)}
-          style={{ ...row, borderTop: i === 0 ? 'none' : `1px solid ${TEC_COLORS.border}` }}>
+          style={{ ...row, borderTop: i === 0 ? 'none' : `1px solid ${C.border}` }}>
           <Avatar name={u} />
-          <span style={{ fontSize: 15, fontWeight: 600, color: TEC_COLORS.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          <span style={{ fontSize: 15, fontWeight: 600, color: C.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             <bdi>@{u}</bdi>
           </span>
         </button>
@@ -147,14 +147,14 @@ export function NewChat({ onPick, onCancel, error }: {
       {foundShown.length > 0 && <Section label={a.fromDiscover} />}
       {foundShown.map((p, i) => (
         <button key={p.username} onClick={() => onPick(p.username)}
-          style={{ ...row, borderTop: i === 0 ? 'none' : `1px solid ${TEC_COLORS.border}` }}>
+          style={{ ...row, borderTop: i === 0 ? 'none' : `1px solid ${C.border}` }}>
           <Avatar name={p.username} />
           <span style={{ flex: 1, minWidth: 0 }}>
-            <span style={{ display: 'block', fontSize: 15, fontWeight: 600, color: TEC_COLORS.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <span style={{ display: 'block', fontSize: 15, fontWeight: 600, color: C.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               <bdi>@{p.username}</bdi>{p.verified ? ' ✅' : ''}
             </span>
             {p.headline && (
-              <span style={{ display: 'block', fontSize: 12.5, color: TEC_COLORS.subtext, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              <span style={{ display: 'block', fontSize: 12.5, color: C.subtext, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 <bdi dir="auto">{p.headline}</bdi>
               </span>
             )}
@@ -163,17 +163,17 @@ export function NewChat({ onPick, onCancel, error }: {
       ))}
 
       {term.length >= 2 && !searching && foundShown.length === 0 && followingShown.length === 0 && (
-        <p style={{ color: TEC_COLORS.subtext, fontSize: 13, margin: '18px 0 0' }}>{a.noPeopleFound}</p>
+        <p style={{ color: C.subtext, fontSize: 13, margin: '18px 0 0' }}>{a.noPeopleFound}</p>
       )}
 
       {exactOffered && (
         <button onClick={() => onPick(term)} style={{
           ...row, marginTop: 14, padding: '12px 14px',
-          border: `1px solid ${TEC_COLORS.gold}55`, borderRadius: 14,
-          background: `${TEC_COLORS.gold}12`,
+          border: `1px solid ${goldA(0.333)}`, borderRadius: 14,
+          background: goldA(0.071),
         }}>
           <span style={{ fontSize: 18 }}>✉</span>
-          <span style={{ fontSize: 14, fontWeight: 700, color: TEC_COLORS.gold }}>
+          <span style={{ fontSize: 14, fontWeight: 700, color: C.gold }}>
             <bdi dir="auto">{a.messageExact.replace('{name}', term)}</bdi>
           </span>
         </button>

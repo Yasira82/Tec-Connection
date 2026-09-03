@@ -11,7 +11,7 @@
 // progress bar that use the platform's colours. `preload="none"` is kept: a
 // transcript with ten voice notes must not fetch ten audio files to render.
 import { useEffect, useRef, useState } from 'react';
-import { TEC_COLORS } from '@yasser172/tec-ui';
+import { C } from '@/lib-client/palette';
 import { useTranslation } from '@/lib/i18n';
 
 const mmss = (seconds: number) => {
@@ -60,7 +60,7 @@ export function VoiceNote({ src, durationMs, mine }: { src: string; durationMs?:
   };
 
   const pct = total > 0 ? Math.min(100, (at / total) * 100) : 0;
-  const accent = mine ? TEC_COLORS.gold : TEC_COLORS.subtext;
+  const accent = mine ? C.gold : C.subtext;
 
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 190, padding: '2px 0' }}>
@@ -78,14 +78,14 @@ export function VoiceNote({ src, durationMs, mine }: { src: string; durationMs?:
       <span style={{ flex: 1, minWidth: 0 }}>
         <span style={{
           display: 'block', height: 4, borderRadius: 999,
-          background: `${TEC_COLORS.border}`, overflow: 'hidden',
+          background: C.border, overflow: 'hidden',
         }}>
           <span style={{
             display: 'block', height: '100%', width: `${pct}%`,
             background: accent, transition: 'width 0.15s linear',
           }} />
         </span>
-        <span style={{ display: 'block', fontSize: 10.5, color: TEC_COLORS.subtext, marginTop: 4 }}>
+        <span style={{ display: 'block', fontSize: 10.5, color: C.subtext, marginTop: 4 }}>
           {/* Digits and a colon are bidi-neutral: in an RTL paragraph the pair
               would otherwise swap and read as the remaining time first. */}
           <bdi>{a.voiceNote} · {mmss(playing || at > 0 ? at : total)}</bdi>

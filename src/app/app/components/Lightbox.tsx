@@ -18,7 +18,7 @@
 // toggles. Nothing else on the page is affected, and closing the viewer returns
 // the page at exactly the scale it had.
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { TEC_COLORS } from '@yasser172/tec-ui';
+import { C, bgA, inkA } from '@/lib-client/palette';
 import { useTranslation } from '@/lib/i18n';
 import { useBackButton } from '@/lib-client/connection/useBackButton';
 
@@ -121,7 +121,7 @@ export function Lightbox({ src, alt, onClose }: { src: string; alt: string; onCl
       aria-label={alt}
       style={{
         position: 'fixed', inset: 0, zIndex: 1000,
-        background: 'rgba(3,5,12,0.96)',
+        background: bgA(0.96),
         display: 'grid', placeItems: 'center', overflow: 'hidden',
         padding: 'env(safe-area-inset-top) 12px env(safe-area-inset-bottom)',
         // The browser must not claim the gesture before this component sees it.
@@ -153,8 +153,8 @@ export function Lightbox({ src, alt, onClose }: { src: string; alt: string; onCl
           style={{
             position: 'absolute', bottom: 'calc(env(safe-area-inset-bottom) + 18px)',
             insetInlineStart: '50%', transform: 'translateX(-50%)',
-            background: 'rgba(255,255,255,0.10)', border: `1px solid ${TEC_COLORS.border}`,
-            color: TEC_COLORS.text, borderRadius: 999, padding: '8px 18px',
+            background: inkA(0.1), border: `1px solid ${C.border}`,
+            color: C.text, borderRadius: 999, padding: '8px 18px',
             fontSize: 12.5, fontWeight: 600, cursor: 'pointer',
           }}
         >{t.app.resetZoom}</button>
@@ -168,8 +168,8 @@ export function Lightbox({ src, alt, onClose }: { src: string; alt: string; onCl
         style={{
           position: 'absolute', top: 'calc(env(safe-area-inset-top) + 12px)', insetInlineEnd: 14,
           width: 38, height: 38, borderRadius: 999,
-          background: 'rgba(255,255,255,0.10)', border: `1px solid ${TEC_COLORS.border}`,
-          color: TEC_COLORS.text, fontSize: 17, cursor: 'pointer',
+          background: inkA(0.1), border: `1px solid ${C.border}`,
+          color: C.text, fontSize: 17, cursor: 'pointer',
           display: 'grid', placeItems: 'center',
         }}
       >✕</button>

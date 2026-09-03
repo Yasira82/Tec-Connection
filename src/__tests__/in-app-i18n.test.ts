@@ -38,6 +38,12 @@ const FILES = readdirSync(DIR).filter((f) => f.endsWith('.tsx'));
 const NO_PROSE: Record<string, string> = {
   'Icon.tsx':      'renders SVG paths only',
   'BottomNav.tsx': 'tab labels come from t.connection.nav',
+  // Every word it shows arrives as a REQUIRED prop (`loadingLabel`,
+  // `failedLabel`, `alt`), so it owns no copy to translate — and both callers
+  // do read theirs from the dictionary. The `hardcodes no English sentence`
+  // case below still runs on it, which is the check that would catch a string
+  // creeping in.
+  'MediaImage.tsx': 'all visible text is a required prop from the caller',
 };
 
 // Attributes the user can actually read. `alt` and `title` are included because
