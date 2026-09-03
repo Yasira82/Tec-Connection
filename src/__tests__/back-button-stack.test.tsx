@@ -143,6 +143,85 @@ describe('one overlay on its own', () => {
   });
 });
 
+describe('the tab is a layer too', () => {
+  beforeEach(() => { cleanup(); __resetBackButtonForTests(); });
+
+  // Back used to leave the app from any tab: the tabs are React state, so the
+  // last real history entry was whatever came before the app — the Hub. The tab
+  // joins the SAME stack rather than pushing an entry of its own, because a
+  // second writer races the one already there.
+
+  /** The page: a tab layer, and a chat that may be open inside it. */
+  function Page({ start, chatFrom }: { start: 'home' | 'messages'; chatFrom?: boolean }) {
+    const [tab, setTab] = useState(start);
+    const [chat, setChat] = useState(!!chatFrom);
+    useBackButton(tab !== 'home', () => {
+      if (chat) { setChat(false); return; }
+      setTab('home');
+    });
+    return (
+      <>
+        {/* The child — React runs its effect BEFORE the parent's. */}
+        {tab === 'messages' && chat && <Layer onClose={() => setChat(false)} />}
+        <span data-testid="state">{tab}/{chat ? 'chat' : '-'}</span>
+        <button data-testid="go" onClick={() => setTab('messages')}>go</button>
+        <button data-testid="open" onClick={() => setChat(true)}>open</button>
+      </>
+    );
+  }
+
+  it('Back returns to Home instead of leaving the app', async () => {
+    const h = fakeHistory();
+    const { getByTestId } = render(<Page start="home" />);
+    await flush();
+    expect(h.calls).toEqual([]);            // Home holds no entry: Back leaves, rightly
+
+    await act(async () => { getByTestId('go').click(); });
+    await flush();
+    expect(h.calls).toEqual(['push']);      // one entry, for the tab
+
+    await act(async () => { h.pressBack(); });
+    await flush();
+    expect(getByTestId('state').textContent).toBe('home/-');
+  });
+
+  it('closes the chat first, then the tab — one entry for both', async () => {
+    const h = fakeHistory();
+    const { getByTestId } = render(<Page start="home" />);
+    await flush();
+    await act(async () => { getByTestId('go').click(); });
+    await act(async () => { getByTestId('open').click(); });
+    await flush();
+    // The tab and the chat share ONE entry — that is what makes a transition
+    // between them free of history churn.
+    expect(h.calls.filter((c) => c === 'push')).toHaveLength(1);
+
+    await act(async () => { h.pressBack(); });
+    await flush();
+    expect(getByTestId('state').textContent).toBe('messages/-');   // chat only
+
+    await act(async () => { h.pressBack(); });
+    await flush();
+    expect(getByTestId('state').textContent).toBe('home/-');
+  });
+
+  it('still closes the chat first when both open in the SAME commit', async () => {
+    // The invite link does exactly this: it sets the tab and the open thread
+    // together. React runs the child's effect before the parent's, so the layers
+    // register inverted — the tab's lands on TOP of the chat's. Back must still
+    // take the chat first, or arriving on an invite would skip the conversation
+    // it just joined.
+    const h = fakeHistory();
+    const { getByTestId } = render(<Page start="messages" chatFrom />);
+    await flush();
+    expect(h.calls.filter((c) => c === 'push')).toHaveLength(1);
+
+    await act(async () => { h.pressBack(); });
+    await flush();
+    expect(getByTestId('state').textContent).toBe('messages/-');
+  });
+});
+
 describe('two overlays stacked', () => {
   beforeEach(() => { cleanup(); __resetBackButtonForTests(); });
 

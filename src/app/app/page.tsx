@@ -31,6 +31,7 @@ import { Notifications } from './components/Notifications';
 import { Collaboration } from './components/Collaboration';
 import { Messages } from './components/Messages';
 import { useConversations } from '@/lib-client/connection/useMessages';
+import { useBackButton } from '@/lib-client/connection/useBackButton';
 import { joinByInvite } from '@/lib-client/connection/useInvite';
 
 export default function ConnectionHome() {
@@ -48,6 +49,33 @@ export default function ConnectionHome() {
   const [openChatId, setOpenChatId] = useState<string | null>(null);
   const chatOpen = openChatId !== null;
   const [inviteState, setInviteState] = useState<'idle' | 'joining' | 'failed'>('idle');
+
+  // The phone's Back button, on a tab that is not Home.
+  //
+  // The tabs are React state, so the history knew nothing about them: someone on
+  // Messages or Settings pressed Back and left the app, because the last real
+  // history entry was whatever came before the app — usually the Hub.
+  //
+  // This registers the tab as a LAYER in the overlay stack rather than pushing a
+  // history entry of its own. A second writer would race the one that is already
+  // there: an entry pushed on top of an open chat's entry is the one Back pops,
+  // while `onPop` closes the chat and leaves the other stranded — and switching
+  // tabs unmounts <Messages/>, whose cleanup calls `history.back()` on an entry
+  // that is no longer the top one. As a layer it composes by construction: Back
+  // closes the innermost thing, and the tab is simply the outermost of them.
+  //
+  // Back therefore returns to Home rather than walking the whole tab path. That
+  // is the deliberate trade for having one history writer: Home is the app's
+  // front door, and the next Back from there leaves — which is correct.
+  useBackButton(tab !== 'home', () => {
+    // Layer order follows the order effects run in, and React runs a CHILD's
+    // effect before its parent's — so a commit that opens a tab and a chat at
+    // once (the invite link below does exactly that) registers them inverted,
+    // with this layer on top of the chat's. Closing the chat first here makes
+    // the outcome the same either way instead of depending on that ordering.
+    if (chatOpen) { setOpenChatId(null); return; }
+    setTab('home');
+  });
 
   // Someone arrived on an invite link.
   //

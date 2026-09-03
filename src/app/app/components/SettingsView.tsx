@@ -172,36 +172,36 @@ export function SettingsView() {
             })}
           </div>
         </Row>
-        {/* All twelve, in their own scripts. The public pages have spoken these
-            languages since the front-door work; a settings panel still offering
-            EN/AR was the app disagreeing with itself, and the two lists are now
-            the same list — LOCALES — so they cannot drift apart again.
-            A wrapping row rather than Pills: twelve options do not fit one line
-            on a phone, and a horizontal scroller hides most of them. */}
+        {/* All twelve, in their own scripts — as a SELECT, matching Explorer.
+            It was a wrapping wall of twelve pills: three rows of chips that took
+            more vertical space than every other setting combined, and pushed the
+            About section off the screen. A language is chosen roughly once, so it
+            should not be the largest thing in Settings.
+
+            Each is written in ITS OWN SCRIPT. Someone who cannot read the current
+            interface language cannot read "Vietnamese" either, but they can always
+            read "Tiếng Việt". That is the whole reason a language menu lists
+            native names.
+
+            The public pages have spoken these languages since the front-door
+            work; the two lists are the same list — LOCALES — so they cannot
+            drift apart again. */}
         <Row label={s.language} desc={s.languageDesc} first>
-          <div />
+          <select
+            value={locale}
+            onChange={(e) => setLocale(e.target.value as typeof locale)}
+            aria-label={s.language}
+            style={{
+              background: C.bg, color: C.text, fontSize: 14,
+              border: `1px solid ${goldA(0.2)}`, borderRadius: 8,
+              padding: '8px 10px', outline: 'none', maxWidth: 200,
+            }}
+          >
+            {LOCALES.map((l) => (
+              <option key={l.code} value={l.code} lang={l.code}>{l.native}</option>
+            ))}
+          </select>
         </Row>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7, padding: '2px 0 14px' }}>
-          {LOCALES.map((l) => {
-            const active = l.code === locale;
-            return (
-              <button
-                key={l.code}
-                onClick={() => setLocale(l.code)}
-                lang={l.code}
-                aria-pressed={active}
-                style={{
-                  fontSize: 12.5, fontWeight: 700, lineHeight: 1.5, whiteSpace: 'nowrap',
-                  padding: '6px 12px', borderRadius: 999, cursor: 'pointer',
-                  color: active ? C.onGold : C.text,
-                  background: active ? C.gold : 'transparent',
-                  border: `1px solid ${active ? 'transparent' : C.border}`,
-                }}>
-                {l.native}
-              </button>
-            );
-          })}
-        </div>
       </Section>
 
       {/* About */}

@@ -96,6 +96,9 @@ export const en = {
     seller:    'Seller',
     buyer:     'Buyer',
     trustEmpty: 'Nothing yet. This fills in from completed Pi payments across TEC.',
+    trustRankTitle: 'Discovery ranking',
+    trustRankBuilding: 'Counts toward your ranking in Explorer discovery — above businesses with no buyers. 5 buyers reaches the top tier.',
+    trustRankTop: 'Top trust tier in Explorer discovery. Paid placement cannot outrank it.',
 
     collaboration: 'Collaboration',
     sharedCollections: 'shared collections',
