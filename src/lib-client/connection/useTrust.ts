@@ -7,6 +7,14 @@ import { useCallback, useEffect, useState } from 'react';
 
 export interface TrustEdge {
   user_id: string;
+  /**
+   * The counterparty's Pi username, when auth could resolve it.
+   *
+   * Optional on purpose: the backend asks auth (the identity authority) and
+   * falls back to an empty map on any failure, so a row without a name is the
+   * normal degraded case and never an error. The UI renders an ordinal there.
+   */
+  username?: string;
   orders:  number;
   volume:  string;
   last_at: string;
