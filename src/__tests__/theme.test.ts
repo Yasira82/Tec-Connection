@@ -63,6 +63,70 @@ describe('the token layer defines all three theme states', () => {
     }
   });
 
+  it('the surface ramp is the Hub\'s NEUTRAL charcoal, not the old blue-black', () => {
+    // C-83 §5.6. #050816 reads cold and pushes the Pi amber green; #101014 is
+    // four points of blue — enough to avoid a dead grey, not enough to tint.
+    // Pinned by VALUE because the whole point of §5.6 is that two apps must not
+    // be a shade apart: an approximation here is the bug it documents.
+    const dark = css.slice(css.indexOf("[data-theme='dark']"), css.indexOf("[data-theme='light']"));
+    for (const [t, v] of [
+      ['--tec-bg', '#101014'], ['--tec-surface-1', '#21212a'],
+      ['--tec-surface-2', '#2c2c37'], ['--tec-surface-3', '#383844'],
+    ] as const) {
+      expect(new RegExp(`${t}:\\s*${v}`).test(dark)).toBe(true);
+    }
+    // The page CHANNELS move with it, or the frosted bar stays the old colour.
+    expect(dark).toMatch(/--tec-bg-rgb:\s*16, 16, 20/);
+  });
+
+  it('the light ramp is a WARM off-white PAGE under a WHITE card', () => {
+    // That order. A white page with a grey card inverts elevation: the thing
+    // you are meant to look at ends up darker than its ground.
+    const light = css.slice(css.indexOf("[data-theme='light']"));
+    expect(light).toMatch(/--tec-bg:\s*#f4f3f1/);
+    expect(light).toMatch(/--tec-surface-1:\s*#ffffff/);
+    expect(light).toMatch(/--tec-surface-2:\s*#f1efec/);
+  });
+
+  it('the ink ladder has FOUR steps and its own icon stroke', () => {
+    // With three, a component that needs a fourth hardcodes it — which is how
+    // #3a3a4a ended up on a bottom nav and went invisible in light.
+    for (const t of ['--tec-text-4', '--tec-icon', '--tec-fill-softer']) {
+      expect(css).toContain(t);
+    }
+  });
+
+  it('status colours DARKEN for light — contrast, not taste', () => {
+    // The dark-theme brights were picked to glow on near-black. #22C55E on
+    // white measures ~2.3:1, so every success line was unreadable as TEXT once
+    // the page went light. The gold-family check below did not cover these,
+    // and they were missed for exactly that reason.
+    const light = css.slice(css.indexOf("[data-theme='light']"));
+    for (const t of ['--tec-green', '--tec-blue', '--tec-red', '--tec-purple']) {
+      expect(light).toMatch(new RegExp(`${t}:`));
+    }
+    // And the CHANNELS with them, or `successA()` keeps painting the bright one.
+    expect(light).toMatch(/--tec-green-rgb:\s*21, 128, 61/);
+  });
+
+  it('the light theme overrides the WHOLE gold family, not just the accent', () => {
+    // Overriding `--tec-gold` alone is not a theme, it is half of one. The
+    // companions stayed on their dark-ground values, so every primary button
+    // ran `#FEA500 -> #E8962A` — and #E8962A carries a desaturated brown cast
+    // chosen to sit on near-black. On white it reads as a dirty dark patch, in
+    // 26 places, and it looks like the gradient is broken rather than a token.
+    //
+    // Derived from `:root` rather than listed, so a NEW gold token is covered
+    // the day it is added instead of the day someone notices.
+    const root = css.slice(css.indexOf(':root'), css.indexOf("[data-theme='dark']"));
+    const family = [...root.matchAll(/(--tec-gold[a-z-]*):/g)].map((m) => m[1]!);
+    expect(family.length).toBeGreaterThan(4);
+
+    const light = css.slice(css.indexOf("[data-theme='light']"));
+    const missing = family.filter((t) => !new RegExp(`${t}:`).test(light));
+    expect(missing).toEqual([]);
+  });
+
   it('the ink channels actually flip between the themes', () => {
     const light = css.slice(css.indexOf("[data-theme='light']"));
     expect(light).toMatch(/--tec-text-rgb:\s*0, 0, 0/);
@@ -282,11 +346,16 @@ describe('no component paints a raw colour', () => {
     expect(offenders).toEqual([]);
   });
 
-  it('no `#rrggbb` literal in a component', () => {
+  it('no `#rrggbb` OR `#rgb` literal in a component', () => {
+    // The SHORTHAND was the hole. This checked six digits only, so nine
+    // `color: '#fff'` survived the sweep — on the landing, the directory card,
+    // /discover and /u/<handle>, which are exactly the surfaces least likely to
+    // be opened in light mode during a spot check. White text on a white page.
+    // `#333`/`#888` on the disabled Pro button went the same way.
     const offenders: string[] = [];
     for (const f of files) {
       const code = strip(src(f.slice(4)));
-      for (const m of code.matchAll(/#[0-9a-fA-F]{6}\b/g)) {
+      for (const m of code.matchAll(/#(?:[0-9a-fA-F]{6}|[0-9a-fA-F]{3})\b/g)) {
         if (ALLOWED_LITERALS.includes(m[0])) continue;
         offenders.push(`${f}: ${m[0]}`);
       }
@@ -315,5 +384,48 @@ describe('a translucent surface follows the theme too', () => {
     const nav = strip(src('app/app/components/BottomNav.tsx'));
     expect(nav).toContain('bgA(');
     expect(nav).not.toContain('rgba(5,8,22');
+  });
+});
+
+// ── The top band ────────────────────────────────────────────────────────────
+//
+// The Hub frames every inner page with a solid band that has rounded BOTTOM
+// corners. The tabs here opened on exactly the same flat ground as each other,
+// so switching between them felt like nothing had happened.
+//
+// The band is dark in BOTH themes, which is the part that needs pinning: a
+// control inside it reads the PAGE palette, so on a light page it would paint
+// black ink onto a near-black band and disappear.
+describe('the inner pages are framed like the Hub', () => {
+  const page = strip(src('app/app/page.tsx'));
+
+  it('the header is a band with rounded bottom corners', () => {
+    expect(page).toContain("background: 'var(--tec-topbar)'");
+    expect(page).toMatch(/borderRadius:\s*'0 0 var\(--tec-topbar-radius\) var\(--tec-topbar-radius\)'/);
+  });
+
+  it('uses the fleet token, not a number of its own', () => {
+    // A hardcoded radius here is how one app ends up framed differently from
+    // the Hub it was copied from.
+    expect(css).toContain('--tec-topbar-radius');
+  });
+
+  it('re-scopes the palette for everything inside it', () => {
+    expect(page).toContain('tec-on-band');
+    expect(css).toContain('.tec-on-band');
+  });
+
+  it('the band stays dark on a LIGHT page', () => {
+    // Not `var(--tec-surface-1)`: on a light page that is white, and the band
+    // would vanish into the page it is supposed to frame.
+    const light = css.slice(css.indexOf("[data-theme='light']"));
+    expect(light).toMatch(/--tec-topbar:\s*#1[0-9a-f]{5}/);
+  });
+
+  it('the on-band ink does NOT follow the page', () => {
+    // The RULE, not the first mention of the name — the token block above
+    // refers to it in prose.
+    const band = css.slice(css.indexOf('\n.tec-on-band {'));
+    expect(band.slice(0, 700)).toMatch(/--tec-text-rgb:\s*255, 255, 255/);
   });
 });

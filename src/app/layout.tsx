@@ -42,7 +42,7 @@ export default async function RootLayout({
             by the browser's own chrome, outside the document's style
             resolution, so `var(--tec-bg)` there is simply ignored. Same class
             of constraint as the SSO landing HTML and `next/og`. */}
-        <meta name="theme-color" media="(prefers-color-scheme: dark)"  content="#050816" />
+        <meta name="theme-color" media="(prefers-color-scheme: dark)"  content="#101014" />
         <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f4f3f1" />
         {/* `color-scheme` is NOT declared here any more. It has to follow the
             reader's stored choice, which only the boot script knows — a static

@@ -53,7 +53,7 @@ export function Landing({
   return (
     <main className="pub-glow" style={{
       minHeight: '100vh',
-      color: '#fff',
+      color: C.text,
       fontFamily: 'var(--font-sans, system-ui, -apple-system, sans-serif)',
       overflowX: 'hidden',
     }}>
@@ -142,7 +142,7 @@ export function Landing({
                   background: goldA(0.12), border: '1px solid var(--tec-border-gold)',
                 }}>{s.n}</div>
                 <div>
-                  <div style={{ fontSize: 14.5, fontWeight: 800, color: '#fff' }}>{s.title}</div>
+                  <div style={{ fontSize: 14.5, fontWeight: 800, color: C.text }}>{s.title}</div>
                   <p style={{ fontSize: 13.5, lineHeight: 1.55, color: inkA(0.58), margin: '4px 0 0' }}>{s.body}</p>
                 </div>
               </div>

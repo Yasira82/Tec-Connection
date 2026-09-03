@@ -61,7 +61,7 @@ export default async function DiscoverPage(
 
   return (
     <main className="pub-glow" style={{
-      minHeight: '100vh', color: '#fff',
+      minHeight: '100vh', color: C.text,
       fontFamily: 'var(--font-sans, system-ui, -apple-system, sans-serif)', overflowX: 'hidden',
     }}>
       <div style={{
@@ -104,7 +104,7 @@ export default async function DiscoverPage(
           {profiles.length === 0 ? (
             <div className="pub-panel pub-in" style={{ padding: '34px 24px', textAlign: 'center' }}>
               <div style={{ fontSize: 30, marginBottom: 10 }} aria-hidden="true">🔍</div>
-              <div style={{ fontSize: 16, fontWeight: 800, color: '#fff' }}>
+              <div style={{ fontSize: 16, fontWeight: 800, color: C.text }}>
                 {q || active ? t.emptyFiltered : t.emptyAll}
               </div>
               <p style={{ fontSize: 13.5, color: inkA(0.55), margin: '10px auto 0', maxWidth: 380, lineHeight: 1.6 }}>
@@ -128,7 +128,7 @@ export default async function DiscoverPage(
         </div>
 
         <div className="pub-panel" style={{ marginTop: 34, padding: '28px 24px', textAlign: 'center' }}>
-          <div style={{ fontSize: 17, fontWeight: 850, color: '#fff', letterSpacing: '-0.01em' }}>
+          <div style={{ fontSize: 17, fontWeight: 850, color: C.text, letterSpacing: '-0.01em' }}>
             {t.findableTitle}
           </div>
           <p style={{ fontSize: 13.5, color: inkA(0.58), margin: '10px auto 20px', maxWidth: 380, lineHeight: 1.6 }}>

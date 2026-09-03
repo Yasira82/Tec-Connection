@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 // A person's mark on the public surfaces.
 //
@@ -72,6 +72,26 @@ export function Avatar({
 }) {
   const hue = hueFor(username.toLowerCase());
   const [failed, setFailed] = useState(false);
+  const src = photoSrc ?? avatarSrc(username);
+
+  // A failure belongs to the URL that failed, not to the component.
+  //
+  // Without this reset, one 404 disabled the photo for the life of the mount —
+  // even after the src changed to a URL that WOULD have worked. That is exactly
+  // how a group's picture went missing from the chat header and the chat list
+  // while showing correctly inside the info sheet:
+  //
+  //   1st render — the thread is still loading, so `kind` is not yet 'GROUP'.
+  //                The component is handed a placeholder handle and no
+  //                `photoSrc`, asks /api/avatar/<placeholder>, and gets a 404.
+  //   2nd render — the thread arrives, `photoSrc` becomes the real group URL…
+  //                and `failed` is already true, so no <img> is ever rendered.
+  //
+  // The info sheet worked only because it mounts fresh, with the answer already
+  // in hand. Same shape as the chat photo that stayed invisible until tapped:
+  // state that outlives the thing it describes.
+  useEffect(() => { setFailed(false); }, [src]);
+
   const show = (hasPhoto || tryPhoto) && !failed;
 
   return (
@@ -104,7 +124,7 @@ export function Avatar({
         // the directory list; `decoding="async"` keeps a slow decode off the main
         // thread on a phone.
         <img
-          src={photoSrc ?? avatarSrc(username)}
+          src={src}
           alt=""
           width={size}
           height={size}

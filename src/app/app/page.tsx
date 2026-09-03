@@ -121,7 +121,24 @@ export default function ConnectionHome() {
             people already know. Keeping the page header above it left the
             conversation in a box under a title that repeated its own name. */}
         {!(tab === 'messages' && chatOpen) && (
-        <header style={{ marginBottom: 20 }}>
+        /* ── The band ───────────────────────────
+           The Hub frames every inner page with a solid band that has rounded
+           BOTTOM corners; the tabs here opened on exactly the same flat ground
+           as each other, so switching between them felt like nothing had
+           happened. Same shape, same token, same radius as the Hub — one frame
+           across the fleet rather than a per-app flourish.
+
+           `tec-on-band` re-scopes the palette for this subtree: the band is
+           dark in BOTH themes, so on a light page the ink inside it has to stay
+           light. Anything dropped in here is correct without knowing that. */
+        <header className="tec-on-band" style={{
+          background: 'var(--tec-topbar)',
+          borderRadius: '0 0 var(--tec-topbar-radius) var(--tec-topbar-radius)',
+          // Bleeds to the edges: the band frames the screen, not the column, so
+          // it cancels the page gutter and restores it as its own padding.
+          margin: '-28px -20px 20px',
+          padding: 'calc(28px + env(safe-area-inset-top)) 20px 18px',
+        }}>
           <div style={{ fontSize: 11, letterSpacing: 1.4, color: C.subtext, textTransform: 'uppercase', fontWeight: 700 }}>
             {t.connection.brand}
           </div>
