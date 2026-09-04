@@ -29,7 +29,7 @@ export const ar: Dictionary = {
     brand:       'TEC Connection · شبكتك',
     welcome:     'أهلاً',
     welcomeName: 'أهلاً، {name}',
-    subtitle:    'شبكة علاقاتك في منظومة TEC. علاقاتك مِلكك — أنت من يحدّد من تثق به ومن يمكنه رؤيتها.',
+    subtitle:    'شبكة علاقاتك داخل منظومة TEC',
     nav: { home: 'الرئيسية', discover: 'اكتشف', trust: 'الثقة', settings: 'الإعدادات',
       homeSub: 'الجديد، ومَن تتابعهم.', discoverSub: 'ابحث عن أشخاص في اقتصاد Pi.', trustSub: 'مبنيّة من مدفوعات Pi المكتملة.' },
     footer:      'Connection هو مكان علاقاتك الموثوقة — من تتابعه، وتتواصل معه، وتبني معه الثقة عبر TEC. أنت دائماً المتحكّم في شبكتك.',

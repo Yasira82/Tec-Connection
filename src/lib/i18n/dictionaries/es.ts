@@ -16,7 +16,7 @@ export const es: Dictionary = {
   connection: {
     brand: 'TEC Connection · Tu red',
     welcome: 'Bienvenido', welcomeName: 'Bienvenido, {name}',
-    subtitle: 'Tu grafo de relaciones en el ecosistema TEC. Tus conexiones son tuyas: tú decides en quién confías y quién puede verlo.',
+    subtitle: 'tu red de relaciones en el ecosistema TEC',
     nav: { home: 'Inicio', discover: 'Descubrir', trust: 'Confianza', settings: 'Ajustes',
       homeSub: 'Novedades y a quién sigues.', discoverSub: 'Encuentra personas en la economía Pi.', trustSub: 'Se construye con pagos en Pi completados.' },
     footer: 'Connection es donde viven tus relaciones de confianza: a quién sigues, con quién te conectas y con quién construyes confianza en TEC. Siempre controlas tu propia red.',

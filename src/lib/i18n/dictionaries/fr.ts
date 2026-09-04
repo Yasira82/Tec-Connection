@@ -16,7 +16,7 @@ export const fr: Dictionary = {
   connection: {
     brand: 'TEC Connection · Votre réseau',
     welcome: 'Bienvenue', welcomeName: 'Bienvenue, {name}',
-    subtitle: 'Votre graphe de relations dans l’écosystème TEC. Vos connexions vous appartiennent — vous décidez à qui vous faites confiance et qui peut le voir.',
+    subtitle: 'votre graphe de relations dans l’écosystème TEC',
     nav: { home: 'Accueil', discover: 'Découvrir', trust: 'Confiance', settings: 'Réglages',
       homeSub: 'Les nouveautés, et qui vous suivez.', discoverSub: 'Trouvez des gens dans l’économie Pi.', trustSub: 'Construite à partir de paiements Pi finalisés.' },
     footer: 'Connection est l’endroit où vivent vos relations de confiance — ceux que vous suivez, avec qui vous vous connectez et bâtissez la confiance sur TEC. Vous gardez toujours le contrôle de votre réseau.',
