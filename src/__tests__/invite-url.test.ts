@@ -144,6 +144,23 @@ describe('the login redirect keeps the invite', () => {
     expect(mw()).toMatch(/pathname \+ req\.nextUrl\.search/);
   });
 
+  it('is READ by the landing, not dropped a second time', () => {
+    // The middleware fix is inert on its own: handleLogin hard-coded `/app`, so
+    // an invite that survived the bounce was thrown away here instead — and the
+    // person arrived signed in, on the right app, nowhere near the group.
+    const landing = readFileSync(join(process.cwd(), 'src/components/landing/Landing.tsx'), 'utf8');
+    expect(landing).toMatch(/searchParams\.get\('redirect'\)/);
+    expect(landing).toMatch(/ssoRedirect\(HUB_URL, `\$\{APP_URL\}\$\{target\(\)\}`\)/);
+    expect(landing).toMatch(/router\.replace\(target\(\)\)/);
+  });
+
+  it('refuses a redirect that could leave the origin', () => {
+    // `//evil.com` is protocol-relative — browsers treat it as external, which
+    // is why startsWith('/') alone is not enough.
+    const landing = readFileSync(join(process.cwd(), 'src/components/landing/Landing.tsx'), 'utf8');
+    expect(landing).toMatch(/!raw\.startsWith\('\/\/'\)/);
+  });
+
   it('still sends them to the landing, not somewhere a caller chose', () => {
     // The destination is ours; only the return path is taken from the request,
     // and sso-callback refuses anything that is not a same-origin absolute path.

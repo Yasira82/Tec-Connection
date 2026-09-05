@@ -38,11 +38,35 @@ export function Landing({
   const { isAuthenticated, isLoading } = usePiAuth();
   const router = useRouter();
 
+  /**
+   * Where the visitor was actually heading.
+   *
+   * `middleware.ts` bounces anyone without a session off a protected page and
+   * puts the page they wanted in `?redirect=`. This read is what makes that
+   * mean anything: `handleLogin` used to hard-code `/app`, so the destination
+   * was thrown away a second time — an invite link survived the middleware only
+   * to be dropped here, and the person arrived signed in, on the right app, and
+   * nowhere near the group they had been invited to.
+   *
+   * Guarded like every other redirect on this platform: a same-origin absolute
+   * path and nothing else. `//evil.com` is protocol-relative and browsers treat
+   * it as external, which is why `startsWith('/')` alone is not enough.
+   */
+  const target = (): string => {
+    if (typeof window === 'undefined') return '/app';
+    let raw = '';
+    try { raw = new URL(window.location.href).searchParams.get('redirect') ?? ''; } catch { raw = ''; }
+    const safe = raw.startsWith('/') && !raw.startsWith('//') && !raw.startsWith('/\\') && raw.length < 512;
+    return safe ? raw : '/app';
+  };
+
   useEffect(() => {
-    if (!isLoading && isAuthenticated) router.replace('/app');
+    if (!isLoading && isAuthenticated) router.replace(target());
+    // `target` reads the URL at call time; the deps that matter are the auth ones.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoading, isAuthenticated, router]);
 
-  const handleLogin = () => ssoRedirect(HUB_URL, `${APP_URL}/app`);
+  const handleLogin = () => ssoRedirect(HUB_URL, `${APP_URL}${target()}`);
 
   const steps = [
     { n: '1', title: t.step1Title, body: t.step1Body },
