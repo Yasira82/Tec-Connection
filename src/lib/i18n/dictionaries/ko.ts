@@ -16,7 +16,7 @@ export const ko: Dictionary = {
   connection: {
     brand: 'TEC Connection · 나의 네트워크',
     welcome: '환영합니다', welcomeName: '환영합니다, {name}',
-    subtitle: 'TEC 생태계 안의 나의 관계 그래프. 연결은 온전히 당신의 것입니다 — 누구를 신뢰하고 누구에게 보일지 당신이 정합니다.',
+    subtitle: 'TEC 생태계에서의 관계 그래프',
     nav: { home: '홈', discover: '탐색', trust: '신뢰', settings: '설정',
       homeSub: '새 소식과 내가 팔로우하는 사람들.', discoverSub: 'Pi 경제에서 사람을 찾아보세요.', trustSub: '완료된 Pi 결제로 만들어집니다.' },
     footer: 'Connection은 신뢰하는 관계가 머무는 곳입니다 — TEC 전반에서 팔로우하고, 연결하고, 신뢰를 쌓아가는 사람들. 네트워크의 주도권은 언제나 당신에게 있습니다.',
