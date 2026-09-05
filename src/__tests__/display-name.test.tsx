@@ -99,3 +99,47 @@ describe('display name — the directory card', () => {
     expect(within(container).getByText('@yas55er82')).toBeTruthy();
   });
 });
+
+describe('saving without publishing', () => {
+  // The bug this pins: the only button an UNLISTED profile had was "Publish",
+  // so there was no way to save a name without joining the public directory —
+  // and a person who did not want to be listed could not save at all.
+  const UNLISTED = { ...PROFILE, display_name: '', published: false };
+
+  beforeEach(() => {
+    vi.stubGlobal('fetch', vi.fn(async (url: string, init?: RequestInit) => ({
+      ok: true,
+      json: async () => (init?.method === 'PUT'
+        ? { ok: true, profile: UNLISTED }
+        : { profile: UNLISTED, isPro: false }),
+    })) as unknown as typeof fetch);
+  });
+  afterEach(() => { vi.unstubAllGlobals(); cleanup(); });
+
+  const put = () => (fetch as unknown as ReturnType<typeof vi.fn>).mock.calls
+    .find((c) => (c[1] as RequestInit | undefined)?.method === 'PUT');
+
+  it('offers Save to an unlisted profile, and it does NOT publish them', async () => {
+    render(<LocaleProvider><ProfileEditor /></LocaleProvider>);
+    await waitFor(() => expect(screen.getByText('Save')).toBeTruthy());
+
+    fireEvent.change(screen.getByPlaceholderText(/Your name/i), { target: { value: 'Nour' } });
+    fireEvent.click(screen.getByText('Save'));
+
+    await waitFor(() => {
+      expect(put()).toBeTruthy();
+      expect(JSON.parse(String((put()![1] as RequestInit).body)))
+        .toMatchObject({ display_name: 'Nour', published: false });
+    });
+  });
+
+  it('still offers Publish, as its own separate act', async () => {
+    render(<LocaleProvider><ProfileEditor /></LocaleProvider>);
+    await waitFor(() => expect(screen.getByText('Publish')).toBeTruthy());
+
+    fireEvent.click(screen.getByText('Publish'));
+    await waitFor(() => {
+      expect(JSON.parse(String((put()![1] as RequestInit).body))).toMatchObject({ published: true });
+    });
+  });
+});

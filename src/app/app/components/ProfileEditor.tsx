@@ -91,7 +91,10 @@ export function ProfileEditor() {
         }),
       });
       const j = (await res.json().catch(() => ({}))) as { profile?: MyProfile; ok?: boolean };
-      if (!res.ok || !j.ok || !j.profile) { setMsg(a.saveFailed); return; }
+      // The status is SHOWN, not just returned. "Could not save" is the same
+      // sentence for a lapsed session (401), a backend that has not deployed the
+      // column yet (502) and a typo — three different problems, one screenshot.
+      if (!res.ok || !j.ok || !j.profile) { setMsg(`${a.saveFailed} (${res.status})`); return; }
       setMe(j.profile);
       setMsg(j.profile.published ? a.savedPublic : a.savedHidden);
     } catch { setMsg(a.networkError); }
@@ -148,16 +151,23 @@ export function ProfileEditor() {
           ))}
         </div>
 
+        {/* Save and Publish are two different acts, and merging them cost a
+            person their name.
+
+            The only button an UNLISTED profile had was "Publish" — so there was
+            no way to save a name without also joining the public directory, and
+            somebody who (rightly) did not want to be listed had no way to save
+            at all. Saving now keeps `published` exactly where it is; listing
+            yourself is the separate button beside it. */}
         <div style={{ display: 'flex', gap: 8, marginTop: 14, flexWrap: 'wrap' }}>
-          <button style={{ ...goldBtn, opacity: saving ? 0.6 : 1 }} disabled={saving} onClick={() => save(true)}>
-            {me?.published ? a.save : a.publish}
+          <button style={{ ...goldBtn, opacity: saving ? 0.6 : 1 }} disabled={saving}
+            onClick={() => save(me?.published ?? false)}>
+            {a.save}
           </button>
-          {me?.published && (
-            <button disabled={saving} onClick={() => save(false)}
-              style={{ background: 'none', border: `1px solid ${C.border}`, color: C.subtext, borderRadius: 10, padding: '10px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
-              {a.hide}
-            </button>
-          )}
+          <button disabled={saving} onClick={() => save(!me?.published)}
+            style={{ background: 'none', border: `1px solid ${C.border}`, color: C.subtext, borderRadius: 10, padding: '10px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
+            {me?.published ? a.hide : a.publish}
+          </button>
         </div>
 
         {/* Who can see the follower count.

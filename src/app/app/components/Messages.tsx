@@ -1029,6 +1029,8 @@ function Chat({ id, me, conversations, onBack }: {
           onReport={isGroup && thread.role !== 'owner'
             ? () => { setShowInfo(false); setReportingGroup(true); }
             : undefined}
+          // The header 🔍 stays; this is the same action with a name on it.
+          onSearch={() => { setShowInfo(false); setSearching(true); }}
           onClear={() => { void clear(); }}
           muted={!!thread.muted}
           onToggleMute={async (next) => { await setMuted(next); }}

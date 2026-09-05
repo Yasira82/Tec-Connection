@@ -19,6 +19,7 @@ import { useBackButton } from '@/lib-client/connection/useBackButton';
 import { Avatar } from '@/components/public/Avatar';
 import { downscaleImage, AVATAR_MAX_EDGE } from '@/lib-client/connection/downscaleImage';
 import { useJoinRequests } from '@/lib-client/connection/useGroupDiscovery';
+import { usePresence } from '@/lib-client/connection/usePresence';
 import { useInvite, inviteUrl } from '@/lib-client/connection/useInvite';
 
 /** What a group photo may be. Same three as a profile photo, same 2MB ceiling. */
@@ -55,7 +56,7 @@ function ActionRow({ label, icon, danger, onClick, disabled }: {
 export function ChatInfoSheet({
   isGroup, title, members, role, me, onClose, convId, visibility, description,
   admins = [], ownerName, onRemoved,
-  onAddMember, onLeave, onReport, onDelete, onClear,
+  onAddMember, onLeave, onReport, onSearch, onDelete, onClear,
   muted, onToggleMute, posting, onSetPosting,
   blocked, onBlock, onUnblock, blockBusy, blockError, peerName,
 }: {
@@ -88,6 +89,16 @@ export function ChatInfoSheet({
   onLeave: () => void;
   /** Absent for a conversation nobody can report — a DM, or your own group. */
   onReport?: () => void;
+  /**
+   * Search this conversation.
+   *
+   * There is already a 🔍 in the header, and this row does not replace it —
+   * the icon is the shortcut for people who know it is there. Everything a
+   * member can do to a group was reported as "not showing up", and the reason
+   * is that half of it lived behind an unlabelled glyph while the other half
+   * lived in this sheet. One place lists them all.
+   */
+  onSearch?: () => void;
   /** Removes the conversation AND its history — it does not come back. */
   onDelete: () => void;
   /** Empties the transcript but keeps the conversation. */
@@ -116,6 +127,10 @@ export function ChatInfoSheet({
   const [postBusy, setPostBusy] = useState(false);
   const [copied, setCopied] = useState(false);
   const invite = useInvite(convId);
+  // Who in this group is here right now. The same 30s heartbeat the Connections
+  // tab uses — presence is best-effort and eventual, so an empty answer shows
+  // nobody as online rather than guessing (C-107 §13).
+  const { isOnline } = usePresence(isGroup ? members : []);
   // Read once, and only for the owner — it is the only person the endpoint
   // answers, and a 403 fetched on every member's behalf would be noise in the
   // logs for no gain.
@@ -609,7 +624,22 @@ export function ChatInfoSheet({
 
                 return (
                   <div key={u} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0' }}>
-                    <Avatar username={u} size={32} tryPhoto />
+                    <div style={{ position: 'relative', flexShrink: 0, lineHeight: 0 }}>
+                      <Avatar username={u} size={32} tryPhoto />
+                      {/* On the avatar, not beside the name: a dot in the text
+                          run moves with the handle's length and lands somewhere
+                          different on every row. `title` because a coloured dot
+                          alone says nothing to a screen reader. */}
+                      {isOnline(u) && (
+                        <span
+                          title={a.onlineNow} aria-label={a.onlineNow}
+                          style={{
+                            position: 'absolute', insetInlineEnd: -1, bottom: -1,
+                            width: 10, height: 10, borderRadius: 999,
+                            background: C.success, border: `2px solid ${C.surface}`,
+                          }} />
+                      )}
+                    </div>
                     <span style={{
                       flex: 1, minWidth: 0, fontSize: 13.5, color: C.text,
                       overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
@@ -670,6 +700,14 @@ export function ChatInfoSheet({
                 );
               })}
             </div>
+          </section>
+        )}
+
+        {/* Search, with Mute below it and the destructive actions last — the
+            order a member reads down. Neither of these can cost anything. */}
+        {onSearch && (
+          <section style={{ borderTop: `1px solid ${C.border}`, paddingTop: 4 }}>
+            <ActionRow icon="🔍" label={a.searchMessages} onClick={onSearch} />
           </section>
         )}
 

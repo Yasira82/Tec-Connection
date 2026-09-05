@@ -78,7 +78,13 @@ export async function POST(req: NextRequest) {
     const signed = await signRes.json().catch(() => ({}));
     const { uploadUrl, key } = signed?.data ?? {};
     if (!signRes.ok || !uploadUrl || !key) {
-      return NextResponse.json({ error: 'UPLOAD_FAILED', step: 'sign' }, { status: 502 });
+      // The UPSTREAM status travels with the step. A refused presign is a 401
+      // (session), a 403 (internal key) or a 500 (bucket) — three different
+      // problems that look identical from the phone, and this upload has been
+      // reported working on one account and not another.
+      return NextResponse.json(
+        { error: 'UPLOAD_FAILED', step: `sign:${signRes.status}` }, { status: 502 },
+      );
     }
 
     // 2. PUT the bytes server-side. Content-Type must match what the URL was
@@ -86,7 +92,9 @@ export async function POST(req: NextRequest) {
     const put = await fetch(uploadUrl, {
       method: 'PUT', body: bytes, headers: { 'Content-Type': mimeType },
     });
-    if (!put.ok) return NextResponse.json({ error: 'UPLOAD_FAILED', step: 'put' }, { status: 502 });
+    if (!put.ok) {
+      return NextResponse.json({ error: 'UPLOAD_FAILED', step: `put:${put.status}` }, { status: 502 });
+    }
 
     // 3. Attach the key to the profile. Read-modify-write, because the backend
     //    profile PUT is a full replace — sending the key alone would erase the
