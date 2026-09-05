@@ -14,6 +14,7 @@ import { useEffect, useState } from 'react';
 import { C, goldA, successA } from '@/lib-client/palette';
 import { useTranslation } from '@/lib/i18n';
 import { AvatarUpload } from './AvatarUpload';
+import { refreshMyName } from '@/lib-client/connection/useMyName';
 
 const CATEGORIES = ['builder', 'merchant', 'creator', 'investor', 'mentor', 'other'] as const;
 type Category = (typeof CATEGORIES)[number];
@@ -96,6 +97,10 @@ export function ProfileEditor() {
       // column yet (502) and a typo — three different problems, one screenshot.
       if (!res.ok || !j.ok || !j.profile) { setMsg(`${a.saveFailed} (${res.status})`); return; }
       setMe(j.profile);
+      // Tell the rest of the app at once. The Home header, the Settings card
+      // and the status strip all show the caller — leaving them on the old
+      // name until the next full load is how a save looks like it failed.
+      void refreshMyName(j.profile.display_name ?? null);
       setMsg(j.profile.published ? a.savedPublic : a.savedHidden);
     } catch { setMsg(a.networkError); }
     finally { setSaving(false); }

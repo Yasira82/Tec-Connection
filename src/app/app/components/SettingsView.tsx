@@ -15,6 +15,7 @@ import { Avatar } from '@/components/public/Avatar';
 import { ProfileEditor } from './ProfileEditor';
 import { ConnectionPro } from './ConnectionPro';
 import { ModerationQueue } from './ModerationQueue';
+import { useMyName } from '@/lib-client/connection/useMyName';
 
 const cardStyle = {
   background: C.surface, border: `1px solid ${C.border}`, borderRadius: 16,
@@ -76,6 +77,7 @@ export function SettingsView() {
   // Prefer the server-resolved Pi username (/api/auth/me) — Pi Browser hides the
   // tec_user cookie from client JS, so usePiAuth alone shows no name / "Not signed in".
   const username = me.username ?? user?.piUsername ?? null;
+  const myName = useMyName();
   const blocks = useBlocks();
 
   // Reflect the real subscription (same source ConnectionPro reads).
@@ -120,9 +122,17 @@ export function SettingsView() {
             <Avatar username={username ?? '?'} size={56} tryPhoto />
           </span>
           <div style={{ minWidth: 0 }}>
+            {/* A chosen name leads; the handle sits under it in its own line,
+                never replaced. This card is the one place a person checks that
+                the app knows who they are, so it has to show both halves. */}
             <div style={{ fontSize: 18, fontWeight: 800, color: C.text }}>
-              {username ? <bdi>@{username}</bdi> : signedIn ? s.member : s.notSignedIn}
+              {myName ? <bdi dir="auto">{myName}</bdi>
+                      : username ? <bdi>@{username}</bdi>
+                      : signedIn ? s.member : s.notSignedIn}
             </div>
+            {myName && username && (
+              <div style={{ fontSize: 13, color: C.subtext, marginTop: 1 }}><bdi>@{username}</bdi></div>
+            )}
             <div style={{ fontSize: 13, color: C.subtext, marginTop: 2 }}>{isPro ? s.planPro : s.planFree}</div>
             {signedIn && (
               <span style={{

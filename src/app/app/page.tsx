@@ -20,6 +20,7 @@ import { usePiAuth } from '@yasser172/tec-auth';
 import { C, errorA, goldA } from '@/lib-client/palette';
 import { useTranslation } from '@/lib/i18n';
 import { useMe } from '@/lib-client/hooks/useMe';
+import { useMyName } from '@/lib-client/connection/useMyName';
 import { InviteCard } from '@/components/referral/InviteCard';
 import { BottomNav, type ConnTab } from './components/BottomNav';
 import { SettingsView } from './components/SettingsView';
@@ -153,12 +154,23 @@ export default function ConnectionHome() {
   };
 
   const piName = me.username ?? user?.piUsername ?? null;
-  const name = piName ? `@${piName}` : '';
+  const handle = piName ? `@${piName}` : '';
+  // The caller's own chosen name. When there is one it leads and the handle
+  // moves to the line under it — the same treatment every other person gets on
+  // every other screen. With no name, nothing changes.
+  const myName = useMyName();
+  const name = myName || handle;
 
   // One title, one subtitle, per screen. The subtitle says what the tab is FOR
   // in a few words — it is not a place to explain the platform.
   const heading: Record<ConnTab, { title: string; sub: string }> = {
-    home:     { title: isLoading || !name ? t.connection.welcome : name, sub: t.connection.nav.homeSub },
+    home: {
+      title: isLoading || !name ? t.connection.welcome : name,
+      // The handle takes the subtitle when a name is showing. It is not
+      // dropped: this is the screen that carries your invite link and your
+      // follower count, and the handle is what both are keyed on.
+      sub: myName && handle ? handle : t.connection.nav.homeSub,
+    },
     messages: { title: t.app.messages,            sub: t.app.messagesSub },
     discover: { title: t.connection.nav.discover, sub: t.connection.nav.discoverSub },
     trust:    { title: t.connection.nav.trust,    sub: t.connection.nav.trustSub },
