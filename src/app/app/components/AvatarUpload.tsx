@@ -85,9 +85,15 @@ export function AvatarUpload({
         headers: { 'Content-Type': blob.type || file.type },
         body: blob,
       });
-      const out = await res.json().catch(() => ({}));
+      const out = await res.json().catch(() => ({})) as { ok?: boolean; message?: string; step?: string };
       if (!res.ok || !out?.ok) {
-        setMsg(out?.message ?? a.uploadFailed);
+        // The STEP is shown, not swallowed. This upload is four hops — presign,
+        // PUT to R2, read the profile, attach the key — and "Upload failed" is
+        // the same sentence for all four. It works on one account and not
+        // another, which is exactly the case where a generic message costs a
+        // day and the step name costs a screenshot.
+        const detail = out?.step ? ` (${out.step} ${res.status})` : ` (${res.status})`;
+        setMsg((out?.message ?? a.uploadFailed) + detail);
         setPreview(null); return;
       }
 

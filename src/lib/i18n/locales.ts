@@ -29,6 +29,30 @@ export type Locale = (typeof LOCALES)[number]['code'];
 export const DEFAULT_LOCALE: Locale = 'en';
 export const LOCALE_COOKIE = 'tec_locale';
 
+/**
+ * The ONE place the locale cookie's attributes are written.
+ *
+ * They used to exist twice — here, and as a `document.cookie` string in the
+ * client provider — and the two disagreed on `Partitioned`. That is not a
+ * cosmetic difference: a browser keeps partitioned and unpartitioned cookies of
+ * the same name in SEPARATE jars, so inside Pi Browser (an embedded context)
+ * the in-app language picker wrote to a jar nothing reads, while the value the
+ * server saw stayed whatever the public picker had set. The language changed
+ * on screen and was gone on the next visit.
+ *
+ * `Partitioned` alongside `None`+`Secure` is C-123 LAW 3 — the embedded context
+ * requires all three. `httpOnly: false` because the client provider reads this
+ * to stay in sync; it is a display preference, not a credential.
+ */
+export const LOCALE_COOKIE_OPTIONS = {
+  httpOnly:    false,
+  secure:      true,
+  sameSite:    'none',
+  partitioned: true,
+  path:        '/',
+  maxAge:      60 * 60 * 24 * 365,
+} as const;
+
 const CODES = LOCALES.map(l => l.code) as readonly string[];
 
 export const isLocale = (v: unknown): v is Locale =>
