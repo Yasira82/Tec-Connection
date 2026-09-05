@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { LOCALE_COOKIE, isLocale } from '@/lib/i18n/locales';
+import { LOCALE_COOKIE, LOCALE_COOKIE_OPTIONS, isLocale } from '@/lib/i18n/locales';
 
 // Set the visitor's language and send them back where they were.
 //
@@ -14,8 +14,6 @@ import { LOCALE_COOKIE, isLocale } from '@/lib/i18n/locales';
 // that sets a cookie and then bounces the visitor to an attacker's page while
 // still looking like connection.tecosystem.app.
 export const dynamic = 'force-dynamic';
-
-const ONE_YEAR = 60 * 60 * 24 * 365;
 
 function safeNext(raw: string | null): string {
   if (!raw) return '/';
@@ -36,14 +34,31 @@ export async function GET(req: NextRequest) {
   // An unknown code is ignored rather than stored: a bad value would otherwise
   // sit in the cookie and be re-read on every request.
   if (isLocale(lang)) {
-    res.cookies.set(LOCALE_COOKIE, lang, {
-      httpOnly: false,      // the client provider reads it to stay in sync
-      secure:   true,
-      sameSite: 'none',     // survives the Hub SSO hop (C-123 LAW 3)
-      partitioned: true,
-      path:     '/',
-      maxAge:   ONE_YEAR,
-    });
+    res.cookies.set(LOCALE_COOKIE, lang, LOCALE_COOKIE_OPTIONS);
   }
+  return res;
+}
+
+/**
+ * The same choice, from a client that is already on the page.
+ *
+ * The in-app picker used to write the cookie itself with `document.cookie`, and
+ * a string built by hand cannot express `Partitioned` reliably — nor should it
+ * have to. One writer, one set of attributes (P1/P2): the picker sends the code
+ * here and the server sets exactly the cookie the GET route sets.
+ *
+ * No redirect: the caller already re-renders itself from React state, so this
+ * answers with the stored value and nothing moves.
+ */
+export async function POST(req: NextRequest) {
+  const body = (await req.json().catch(() => ({}))) as { lang?: unknown };
+  const lang = typeof body.lang === 'string' ? body.lang : null;
+  // Unknown code → refuse rather than store. A bad value would otherwise sit in
+  // the cookie and be re-read on every request (P6).
+  if (!isLocale(lang)) {
+    return NextResponse.json({ error: 'UNKNOWN_LOCALE' }, { status: 400 });
+  }
+  const res = NextResponse.json({ ok: true, locale: lang });
+  res.cookies.set(LOCALE_COOKIE, lang, LOCALE_COOKIE_OPTIONS);
   return res;
 }
