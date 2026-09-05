@@ -16,6 +16,7 @@ import { useStories, type StoryAuthor, type StoryItem } from '@/lib-client/conne
 import { Avatar as PersonAvatar } from '@/components/public/Avatar';
 import { downscaleImage } from '@/lib-client/connection/downscaleImage';
 import { StatusViewer } from './StatusViewer';
+import { VISUALLY_HIDDEN } from '@/lib-client/visuallyHidden';
 
 function Ring({ name, unseen, onClick, label }: {
   name: string; unseen: boolean; onClick: () => void; label: string;
@@ -83,7 +84,7 @@ export function StatusStrip({ me, onReply }: {
   return (
     <div style={{ marginBottom: 10 }}>
       <input
-        ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp" hidden
+        ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp" style={VISUALLY_HIDDEN} tabIndex={-1} aria-hidden="true"
         onChange={(e) => {
           const f = e.target.files?.[0];
           e.target.value = '';   // so picking the same file twice still fires

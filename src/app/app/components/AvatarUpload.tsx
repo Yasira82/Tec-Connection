@@ -17,6 +17,7 @@ import { useRef, useState, useEffect } from 'react';
 import { C, goldA } from '@/lib-client/palette';
 import { useTranslation } from '@/lib/i18n';
 import { downscaleImage, AVATAR_MAX_EDGE } from '@/lib-client/connection/downscaleImage';
+import { VISUALLY_HIDDEN } from '@/lib-client/visuallyHidden';
 
 const MAX_BYTES = 2 * 1024 * 1024;
 const ACCEPT    = 'image/jpeg,image/png,image/webp';
@@ -173,7 +174,7 @@ export function AvatarUpload({
       </div>
 
       <input
-        ref={fileRef} type="file" accept={ACCEPT} hidden
+        ref={fileRef} type="file" accept={ACCEPT} style={VISUALLY_HIDDEN} tabIndex={-1} aria-hidden="true"
         onChange={(e) => { const f = e.target.files?.[0]; if (f) void upload(f); }}
       />
     </div>

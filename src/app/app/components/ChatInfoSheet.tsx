@@ -21,6 +21,7 @@ import { downscaleImage, AVATAR_MAX_EDGE } from '@/lib-client/connection/downsca
 import { useJoinRequests } from '@/lib-client/connection/useGroupDiscovery';
 import { usePresence } from '@/lib-client/connection/usePresence';
 import { useInvite, inviteUrl } from '@/lib-client/connection/useInvite';
+import { VISUALLY_HIDDEN } from '@/lib-client/visuallyHidden';
 
 /** What a group photo may be. Same three as a profile photo, same 2MB ceiling. */
 const PHOTO_ACCEPT = 'image/jpeg,image/png,image/webp';
@@ -54,13 +55,19 @@ function ActionRow({ label, icon, danger, onClick, disabled }: {
 }
 
 export function ChatInfoSheet({
-  isGroup, title, members, role, me, onClose, convId, visibility, description,
+  isGroup, title, members, memberNames = {}, role, me, onClose, convId, visibility, description,
   admins = [], ownerName, onRemoved,
   onAddMember, onLeave, onReport, onSearch, onDelete, onClear,
   muted, onToggleMute, posting, onSetPosting,
   blocked, onBlock, onUnblock, blockBusy, blockError, peerName,
 }: {
   isGroup: boolean;
+  /**
+   * `{ handle: chosen name }` for the members, from the thread payload. Only
+   * the people who set a name appear — a missing entry means the row shows the
+   * handle alone, which is what most rows will always be.
+   */
+  memberNames?: Record<string, string>;
   /** Needed for the group photo, which is keyed by the conversation. */
   convId: string;
   /** PUBLIC means the group is findable — not that its contents are readable. */
@@ -338,7 +345,7 @@ export function ChatInfoSheet({
           {isGroup && role === 'owner' && (
             <>
               <input
-                ref={photoRef} type="file" accept={PHOTO_ACCEPT} hidden
+                ref={photoRef} type="file" accept={PHOTO_ACCEPT} style={VISUALLY_HIDDEN} tabIndex={-1} aria-hidden="true"
                 onChange={(e) => {
                   const f = e.target.files?.[0];
                   // Cleared so picking the SAME file again still fires onChange.
@@ -640,10 +647,21 @@ export function ChatInfoSheet({
                           }} />
                       )}
                     </div>
+                    {/* A chosen name on top, the handle under it. Two lines
+                        rather than one because this list is where a member is
+                        promoted, removed or recognised, and the handle is what
+                        every one of those acts is keyed on. */}
                     <span style={{
-                      flex: 1, minWidth: 0, fontSize: 13.5, color: C.text,
+                      flex: 1, minWidth: 0,
                       overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                    }}><bdi>@{u}</bdi></span>
+                    }}>
+                      <bdi dir="auto" style={{ display: 'block', fontSize: 13.5, color: C.text }}>
+                        {memberNames[u] || `@${u}`}
+                      </bdi>
+                      {memberNames[u] && (
+                        <bdi style={{ display: 'block', fontSize: 11.5, color: C.subtext }}>@{u}</bdi>
+                      )}
+                    </span>
 
                     {/* The badge says what someone IS; the buttons say what you
                         may do about it. Keeping them separate means a member
