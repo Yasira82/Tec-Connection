@@ -227,6 +227,7 @@ export const en = {
     linkCopied: "Link copied",
     joiningByInvite: "Joining…",
     inviteInvalid: "That link is not valid any more.",
+    inviteNeedsAuth: "Sign in with Pi to join — the invite is saved, and you will go straight in.",
     unreadDivider: "Unread messages",
     muted: "Muted",
     muteChat: "Mute this chat",

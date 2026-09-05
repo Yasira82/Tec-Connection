@@ -195,6 +195,7 @@ export const ko: Dictionary = {
     linkCopied: "링크 복사됨",
     joiningByInvite: "참여 중…",
     inviteInvalid: "이 링크는 더 이상 유효하지 않습니다.",
+    inviteNeedsAuth: "참여하려면 Pi로 로그인하세요 — 초대는 저장되어 있으며 바로 입장합니다.",
     unreadDivider: "읽지 않은 메시지",
     muted: "알림 꺼짐",
     muteChat: "이 대화 알림 끄기",

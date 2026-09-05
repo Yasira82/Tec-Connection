@@ -195,6 +195,7 @@ export const vi: Dictionary = {
     linkCopied: "Đã sao chép liên kết",
     joiningByInvite: "Đang tham gia…",
     inviteInvalid: "Liên kết đó không còn hiệu lực.",
+    inviteNeedsAuth: "Đăng nhập bằng Pi để tham gia — lời mời đã được lưu, bạn sẽ vào ngay.",
     unreadDivider: "Tin nhắn chưa đọc",
     muted: "Đã tắt thông báo",
     muteChat: "Tắt thông báo cuộc trò chuyện này",

@@ -195,6 +195,7 @@ export const ru: Dictionary = {
     linkCopied: "Ссылка скопирована",
     joiningByInvite: "Вход…",
     inviteInvalid: "Эта ссылка больше не действует.",
+    inviteNeedsAuth: "Войдите через Pi, чтобы присоединиться — приглашение сохранено, вы войдёте сразу.",
     unreadDivider: "Непрочитанные сообщения",
     muted: "Без звука",
     muteChat: "Отключить уведомления",

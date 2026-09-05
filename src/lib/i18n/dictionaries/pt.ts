@@ -195,6 +195,7 @@ export const pt: Dictionary = {
     linkCopied: "Link copiado",
     joiningByInvite: "Entrando…",
     inviteInvalid: "Esse link não é mais válido.",
+    inviteNeedsAuth: "Entre com Pi para participar — o convite fica guardado e você entrará direto.",
     unreadDivider: "Mensagens não lidas",
     muted: "Silenciado",
     muteChat: "Silenciar esta conversa",

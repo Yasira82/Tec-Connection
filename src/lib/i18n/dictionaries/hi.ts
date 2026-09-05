@@ -195,6 +195,7 @@ export const hi: Dictionary = {
     linkCopied: "लिंक कॉपी हुआ",
     joiningByInvite: "जुड़ रहे हैं…",
     inviteInvalid: "यह लिंक अब मान्य नहीं है।",
+    inviteNeedsAuth: "शामिल होने के लिए Pi से साइन इन करें — निमंत्रण सहेजा गया है, आप सीधे अंदर आ जाएंगे।",
     unreadDivider: "अपठित संदेश",
     muted: "म्यूट",
     muteChat: "इस चैट को म्यूट करें",

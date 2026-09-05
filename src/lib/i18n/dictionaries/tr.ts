@@ -195,6 +195,7 @@ export const tr: Dictionary = {
     linkCopied: "Bağlantı kopyalandı",
     joiningByInvite: "Katılıyor…",
     inviteInvalid: "Bu bağlantı artık geçerli değil.",
+    inviteNeedsAuth: "Katılmak için Pi ile giriş yapın — davet saklandı, doğrudan gireceksiniz.",
     unreadDivider: "Okunmamış mesajlar",
     muted: "Sessize alındı",
     muteChat: "Bu sohbeti sessize al",

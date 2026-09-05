@@ -195,6 +195,7 @@ export const zh: Dictionary = {
     linkCopied: "链接已复制",
     joiningByInvite: "正在加入…",
     inviteInvalid: "该链接已失效。",
+    inviteNeedsAuth: "使用 Pi 登录即可加入 — 邀请已保存，你会直接进入。",
     unreadDivider: "未读消息",
     muted: "已静音",
     muteChat: "将此聊天静音",

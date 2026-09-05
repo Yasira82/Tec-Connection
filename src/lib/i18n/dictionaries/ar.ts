@@ -208,6 +208,7 @@ export const ar: Dictionary = {
     linkCopied: "اتنسخ اللينك",
     joiningByInvite: "بينضم…",
     inviteInvalid: "اللينك ده مابقاش شغال.",
+    inviteNeedsAuth: "سجّل دخول بـ Pi علشان تنضم — الدعوة محفوظة، وهتدخل على طول.",
     unreadDivider: "رسايل جديدة",
     muted: "مكتوم",
     muteChat: "اكتم الشات ده",

@@ -195,6 +195,7 @@ export const id: Dictionary = {
     linkCopied: "Tautan disalin",
     joiningByInvite: "Bergabung…",
     inviteInvalid: "Tautan itu sudah tidak berlaku.",
+    inviteNeedsAuth: "Masuk dengan Pi untuk bergabung — undangan tersimpan, dan Anda akan langsung masuk.",
     unreadDivider: "Pesan belum dibaca",
     muted: "Dibisukan",
     muteChat: "Bisukan obrolan ini",
