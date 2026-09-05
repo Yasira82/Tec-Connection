@@ -230,6 +230,7 @@ export const vi: Dictionary = {
     addMemberPlaceholder: 'Thêm @tên người dùng',
     addMember: 'Thêm',
     leaveGroup: 'Rời nhóm',
+    reportGroup: "Báo cáo nhóm này",
     you: 'Bạn',
     backToMessages: '← Tin nhắn',
     block: 'Chặn',

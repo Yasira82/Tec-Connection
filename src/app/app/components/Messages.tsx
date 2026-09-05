@@ -298,6 +298,7 @@ function Chat({ id, me, conversations, onBack }: {
   // entered the Set and the tile stayed transparent for the life of the screen.
   const [micIssue, setMicIssue] = useState<'denied' | 'unsupported' | null>(null);
   const [reporting, setReporting] = useState<{ id: string; by: string } | null>(null);
+  const [reportingGroup, setReportingGroup] = useState(false);
   const { typing, ping } = useTyping(id, thread?.members ?? []);
   const endRef = useRef<HTMLDivElement | null>(null);
   const meNorm = norm(me);
@@ -961,6 +962,13 @@ function Chat({ id, me, conversations, onBack }: {
         />
       )}
 
+      {reportingGroup && (
+        <ReportSheet
+          kind="group" target={id}
+          onClose={() => setReportingGroup(false)}
+        />
+      )}
+
       {reporting && (
         <ReportSheet
           kind="message" target={reporting.id} author={reporting.by}
@@ -1015,6 +1023,12 @@ function Chat({ id, me, conversations, onBack }: {
           onClose={() => setShowInfo(false)}
           onAddMember={(u) => { void addMember(u); }}
           onLeave={async () => { if (await leave()) onBack(); }}
+          // A member can say what is wrong before they go. The owner cannot
+          // report their own group — the service refuses it — so the row is
+          // simply absent for them rather than present and always failing.
+          onReport={isGroup && thread.role !== 'owner'
+            ? () => { setShowInfo(false); setReportingGroup(true); }
+            : undefined}
           onClear={() => { void clear(); }}
           muted={!!thread.muted}
           onToggleMute={async (next) => { await setMuted(next); }}

@@ -230,6 +230,7 @@ export const zh: Dictionary = {
     addMemberPlaceholder: '添加 @用户名',
     addMember: '添加',
     leaveGroup: '退出群组',
+    reportGroup: "举报此群组",
     you: '你',
     backToMessages: '← 消息',
     block: '屏蔽',

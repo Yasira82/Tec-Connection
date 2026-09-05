@@ -230,6 +230,7 @@ export const pt: Dictionary = {
     addMemberPlaceholder: 'Adicionar @usuário',
     addMember: 'Adicionar',
     leaveGroup: 'Sair do grupo',
+    reportGroup: "Denunciar este grupo",
     you: 'Você',
     backToMessages: '← Mensagens',
     block: 'Bloquear',

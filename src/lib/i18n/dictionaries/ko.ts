@@ -230,6 +230,7 @@ export const ko: Dictionary = {
     addMemberPlaceholder: '@사용자 이름 추가',
     addMember: '추가',
     leaveGroup: '그룹 나가기',
+    reportGroup: "이 그룹 신고",
     you: '나',
     backToMessages: '← 메시지',
     block: '차단',

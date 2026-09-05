@@ -230,6 +230,7 @@ export const tr: Dictionary = {
     addMemberPlaceholder: '@kullanıcı adı ekle',
     addMember: 'Ekle',
     leaveGroup: 'Gruptan ayrıl',
+    reportGroup: "Bu grubu bildir",
     you: 'Siz',
     backToMessages: '← Mesajlar',
     block: 'Engelle',

@@ -230,6 +230,7 @@ export const ru: Dictionary = {
     addMemberPlaceholder: 'Добавить @имя пользователя',
     addMember: 'Добавить',
     leaveGroup: 'Покинуть группу',
+    reportGroup: "Пожаловаться на группу",
     you: 'Вы',
     backToMessages: '← Сообщения',
     block: 'Заблокировать',

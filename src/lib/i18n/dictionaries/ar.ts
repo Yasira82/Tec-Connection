@@ -243,6 +243,7 @@ export const ar: Dictionary = {
     addMemberPlaceholder: 'أضف @اسم مستخدم',
     addMember: 'إضافة',
     leaveGroup: 'مغادرة المجموعة',
+    reportGroup: "الإبلاغ عن الجروب",
     you: 'أنت',
     backToMessages: '→ الرسائل',
     block: 'حظر',

@@ -230,6 +230,7 @@ export const id: Dictionary = {
     addMemberPlaceholder: 'Tambah @nama pengguna',
     addMember: 'Tambah',
     leaveGroup: 'Keluar dari grup',
+    reportGroup: "Laporkan grup ini",
     you: 'Anda',
     backToMessages: '← Pesan',
     block: 'Blokir',

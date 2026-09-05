@@ -263,6 +263,7 @@ export const en = {
     addMemberPlaceholder: 'Add a @username',
     addMember: 'Add',
     leaveGroup: 'Leave group',
+    reportGroup: "Report this group",
     you: 'You',
     backToMessages: '← Messages',
     block: 'Block',

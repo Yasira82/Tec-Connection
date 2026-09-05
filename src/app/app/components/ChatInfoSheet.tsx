@@ -55,7 +55,7 @@ function ActionRow({ label, icon, danger, onClick, disabled }: {
 export function ChatInfoSheet({
   isGroup, title, members, role, me, onClose, convId, visibility, description,
   admins = [], ownerName, onRemoved,
-  onAddMember, onLeave, onDelete, onClear,
+  onAddMember, onLeave, onReport, onDelete, onClear,
   muted, onToggleMute, posting, onSetPosting,
   blocked, onBlock, onUnblock, blockBusy, blockError, peerName,
 }: {
@@ -86,6 +86,8 @@ export function ChatInfoSheet({
   /** Absent unless this is a group the caller owns; the row is then not shown. */
   onSetPosting?: (next: 'EVERYONE' | 'ADMINS') => void | Promise<void>;
   onLeave: () => void;
+  /** Absent for a conversation nobody can report — a DM, or your own group. */
+  onReport?: () => void;
   /** Removes the conversation AND its history — it does not come back. */
   onDelete: () => void;
   /** Empties the transcript but keeps the conversation. */
@@ -710,6 +712,15 @@ export function ChatInfoSheet({
                 onClick={() => { if (armedBlock) { onBlock(); setArmedBlock(false); } else setArmedBlock(true); }}
               />
             )
+          )}
+
+          {/* Report, then Leave — the order Telegram uses, and the right one:
+              leaving is the last thing you do, and a member who can only leave
+              has no way to say WHY. Not offered to the owner, whose own group
+              the service refuses to accept a report about; a row that always
+              errors is worse than no row. */}
+          {isGroup && onReport && !isOwner && (
+            <ActionRow icon="⚑" danger label={a.reportGroup} onClick={onReport} />
           )}
 
           {isGroup && (

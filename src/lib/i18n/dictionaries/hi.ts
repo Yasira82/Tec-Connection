@@ -230,6 +230,7 @@ export const hi: Dictionary = {
     addMemberPlaceholder: '@उपयोगकर्ता नाम जोड़ें',
     addMember: 'जोड़ें',
     leaveGroup: 'समूह छोड़ें',
+    reportGroup: "इस समूह की रिपोर्ट करें",
     you: 'आप',
     backToMessages: '← संदेश',
     block: 'ब्लॉक करें',
