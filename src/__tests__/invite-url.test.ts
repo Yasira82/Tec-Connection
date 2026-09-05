@@ -128,3 +128,25 @@ describe('the invite waits for the session before it is spent', () => {
     expect(src()).toMatch(/inviteState === 'failed' \? errorA\(0\.1\) : goldA/);
   });
 });
+
+describe('the login redirect keeps the invite', () => {
+  const mw = () =>
+    readFileSync(join(process.cwd(), 'middleware.ts'), 'utf8')
+      .replace(/\/\*[\s\S]*?\*\//g, '')
+      .replace(/^\s*\/\/.*$/gm, '');
+
+  it('carries the QUERY, not just the path', () => {
+    // `/app` is protected, and the guard sent back `pathname` alone — so
+    // `/app?invite=CODE` became `/app` and the invite was destroyed before the
+    // page it was meant for ever ran. Someone who already had a session for
+    // THIS origin skipped the branch entirely, which is exactly why it worked
+    // for one account and not the other.
+    expect(mw()).toMatch(/pathname \+ req\.nextUrl\.search/);
+  });
+
+  it('still sends them to the landing, not somewhere a caller chose', () => {
+    // The destination is ours; only the return path is taken from the request,
+    // and sso-callback refuses anything that is not a same-origin absolute path.
+    expect(mw()).toMatch(/new URL\('\/', req\.url\)/);
+  });
+});

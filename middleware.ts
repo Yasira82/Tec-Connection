@@ -66,8 +66,23 @@ export function middleware(req: NextRequest) {
     const token = req.cookies.get('tec_access_token')?.value;
     if (!token || token.trim() === '') {
       const loginUrl = new URL('/', req.url);
-      loginUrl.searchParams.set('redirect', pathname);
-      return NextResponse.redirect(loginUrl);
+      // The QUERY comes too.
+      //
+      // This sent back `pathname` alone, so `/app?invite=CODE` became `/app` —
+      // the invite was destroyed before the page it was meant for ever ran.
+      // Anyone who had not signed into THIS app before (the session is
+      // per-origin) tapped a perfectly good link, signed in, and arrived
+      // nowhere near the group, with nothing left to explain why. Someone who
+      // already had a session skipped this branch entirely, which is exactly
+      // why it worked for one account and not the other.
+      //
+      // `sso-callback` already refuses anything that is not a same-origin
+      // absolute path, and a query string does not change that.
+      return NextResponse.redirect(
+        Object.assign(loginUrl, {
+          search: new URLSearchParams({ redirect: pathname + req.nextUrl.search }).toString(),
+        }),
+      );
     }
   }
 
