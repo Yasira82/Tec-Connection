@@ -109,6 +109,8 @@ export const fr: Dictionary = {
     publicBadge: 'Public',
     hiddenBadge: 'Masqué',
     headlinePlaceholder: 'Que faites-vous ? (p. ex. développeur d’applis Pi)',
+    namePlaceholder: 'Votre nom (facultatif)',
+    nameHint: 'Affiché à côté de votre identifiant Pi.',
     save: 'Enregistrer',
     publish: 'Publier',
     hide: 'Masquer',

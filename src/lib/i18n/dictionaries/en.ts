@@ -140,6 +140,8 @@ export const en = {
     publicBadge: 'Public',
     hiddenBadge: 'Hidden',
     headlinePlaceholder: 'What do you do? (e.g. Pi app developer)',
+    namePlaceholder: 'Your name (optional)',
+    nameHint: 'Shown next to your Pi username.',
     save:      'Save',
     publish:   'Publish',
     hide:      'Hide',

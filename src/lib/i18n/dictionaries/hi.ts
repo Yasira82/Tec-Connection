@@ -109,6 +109,8 @@ export const hi: Dictionary = {
     publicBadge: 'सार्वजनिक',
     hiddenBadge: 'छिपा हुआ',
     headlinePlaceholder: 'आप क्या करते हैं? (जैसे: Pi ऐप डेवलपर)',
+    namePlaceholder: 'आपका नाम (वैकल्पिक)',
+    nameHint: 'आपके Pi उपयोक्तानाम के साथ दिखता है।',
     save: 'सहेजें',
     publish: 'प्रकाशित करें',
     hide: 'छिपाएँ',

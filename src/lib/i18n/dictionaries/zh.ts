@@ -109,6 +109,8 @@ export const zh: Dictionary = {
     publicBadge: '公开',
     hiddenBadge: '隐藏',
     headlinePlaceholder: '你做什么？（例如：Pi 应用开发者）',
+    namePlaceholder: '你的名字（可选）',
+    nameHint: '显示在你的 Pi 用户名旁边。',
     save: '保存',
     publish: '发布',
     hide: '隐藏',

@@ -122,6 +122,8 @@ export const ar: Dictionary = {
     publicBadge: 'عامة',
     hiddenBadge: 'مخفية',
     headlinePlaceholder: 'ماذا تعمل؟ (مثال: مطوّر تطبيقات Pi)',
+    namePlaceholder: 'اسمك (اختياري)',
+    nameHint: 'يظهر بجانب اسم حسابك في Pi.',
     save: 'حفظ',
     publish: 'نشر',
     hide: 'إخفاء',

@@ -109,6 +109,8 @@ export const tr: Dictionary = {
     publicBadge: 'Herkese açık',
     hiddenBadge: 'Gizli',
     headlinePlaceholder: 'Ne yapıyorsunuz? (ör. Pi uygulama geliştiricisi)',
+    namePlaceholder: 'Adınız (isteğe bağlı)',
+    nameHint: 'Pi kullanıcı adınızın yanında görünür.',
     save: 'Kaydet',
     publish: 'Yayınla',
     hide: 'Gizle',

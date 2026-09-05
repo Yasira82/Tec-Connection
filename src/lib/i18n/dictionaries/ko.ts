@@ -109,6 +109,8 @@ export const ko: Dictionary = {
     publicBadge: '공개',
     hiddenBadge: '숨김',
     headlinePlaceholder: '무슨 일을 하시나요? (예: Pi 앱 개발자)',
+    namePlaceholder: '이름 (선택)',
+    nameHint: 'Pi 사용자 이름 옆에 표시됩니다.',
     save: '저장',
     publish: '공개',
     hide: '숨기기',

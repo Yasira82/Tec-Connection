@@ -20,6 +20,8 @@ import { C, inkA } from '@/lib-client/palette';
 
 export interface DirectoryCardProfile {
   username:  string;
+  /** Optional self-chosen name. The handle is still printed — see below. */
+  display_name?: string;
   headline:  string;
   category:  string;
   verified:  boolean;
@@ -64,9 +66,16 @@ export function DirectoryCard({
               "sara_builds@". Seen in an RTL screenshot, not in review. <bdi>
               isolates the handle so it always reads "@sara_builds", in any
               language the page is displayed in. */}
-          <bdi style={{ fontSize: 15.5, fontWeight: 800, color: C.text, letterSpacing: '-0.01em' }}>
-            @{profile.username}
+          {/* A display name never REPLACES the handle. The handle is what a
+              follow, a report and a payout are keyed on, and it is the only part
+              nobody else can claim — so when a name is set it leads and the
+              handle follows it, rather than the name standing alone. */}
+          <bdi dir="auto" style={{ fontSize: 15.5, fontWeight: 800, color: C.text, letterSpacing: '-0.01em' }}>
+            {profile.display_name || `@${profile.username}`}
           </bdi>
+          {profile.display_name && (
+            <bdi style={{ fontSize: 12.5, fontWeight: 600, color: inkA(0.45) }}>@{profile.username}</bdi>
+          )}
           {profile.verified && (
             <span className="pub-badge-verified" title={labels.verifiedHint}>✓ {labels.verified}</span>
           )}

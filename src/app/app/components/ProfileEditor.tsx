@@ -19,7 +19,7 @@ const CATEGORIES = ['builder', 'merchant', 'creator', 'investor', 'mentor', 'oth
 type Category = (typeof CATEGORIES)[number];
 
 interface MyProfile {
-  username: string; headline: string; category: string;
+  username: string; display_name?: string; headline: string; category: string;
   published: boolean; verified: boolean; featured: boolean;
   hasAvatar?: boolean;
   /** Whether the public page states this person's follower count (C-107 §14.5). */
@@ -51,6 +51,7 @@ export function ProfileEditor() {
   const { t } = useTranslation();
   const a = t.app;
   const [me, setMe] = useState<MyProfile | null>(null);
+  const [name, setName] = useState('');
   const [headline, setHeadline] = useState('');
   const [cat, setCat] = useState<Category>('builder');
   const [msg, setMsg] = useState('');
@@ -62,6 +63,7 @@ export function ProfileEditor() {
       .then((j: { profile?: MyProfile } | null) => {
         if (!j?.profile) return;
         setMe(j.profile);
+        setName(j.profile.display_name ?? '');
         setHeadline(j.profile.headline ?? '');
         setCat((CATEGORIES as readonly string[]).includes(j.profile.category) ? (j.profile.category as Category) : 'builder');
       })
@@ -84,7 +86,7 @@ export function ProfileEditor() {
         method: 'PUT', credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          headline: headline.trim(), category: cat, published: publish,
+          display_name: name.trim(), headline: headline.trim(), category: cat, published: publish,
           ...(typeof showFollowers === 'boolean' && { show_followers: showFollowers }),
         }),
       });
@@ -122,8 +124,23 @@ export function ProfileEditor() {
           />
         )}
 
-        <input style={field} value={headline} onChange={(e) => setHeadline(e.target.value)}
-          placeholder={a.headlinePlaceholder} maxLength={160} />
+        {/* A display name, not a rename. The Pi username stays the identity —
+            it is what a follow, a report and a payout are keyed on — so the
+            handle is printed under the field and on every surface that shows
+            the name. `maxLength` matches the server's 40-char cap so the field
+            cannot accept text the save would silently truncate. */}
+        <input style={field} value={name} onChange={(e) => setName(e.target.value)}
+          placeholder={a.namePlaceholder} maxLength={40} />
+        {me?.username && (
+          <div style={{ fontSize: 11.5, color: C.subtext, marginTop: 5 }}>
+            {a.nameHint} <span style={{ color: C.text }}>@{me.username}</span>
+          </div>
+        )}
+
+        <div style={{ marginTop: 12 }}>
+          <input style={field} value={headline} onChange={(e) => setHeadline(e.target.value)}
+            placeholder={a.headlinePlaceholder} maxLength={160} />
+        </div>
 
         <div style={{ display: 'flex', gap: 8, marginTop: 12, overflowX: 'auto', paddingBottom: 4 }}>
           {CATEGORIES.map((c) => (

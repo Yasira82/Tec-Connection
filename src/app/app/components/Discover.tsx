@@ -17,7 +17,7 @@ const CATEGORIES = ['builder', 'merchant', 'creator', 'investor', 'mentor', 'oth
 type Category = (typeof CATEGORIES)[number];
 
 interface Card {
-  username: string; headline: string; category: string;
+  username: string; display_name?: string; headline: string; category: string;
   verified: boolean; featured: boolean; followers: number;
   hasAvatar?: boolean;
 }
@@ -135,7 +135,12 @@ export function Discover({ onMessage }: {
               <Avatar username={p.username} size={38} hasPhoto={p.hasAvatar} />
               <a href={`/u/${encodeURIComponent(p.username)}`} style={{ flex: 1, minWidth: 0, textDecoration: 'none' }}>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-                  <bdi style={{ fontSize: 14, fontWeight: 800, color: C.text }}>@{p.username}</bdi>
+                  {/* A name leads, the handle follows it — never replaces it
+                      (the handle is what follow/report/block are keyed on). */}
+                  <bdi dir="auto" style={{ fontSize: 14, fontWeight: 800, color: C.text }}>
+                    {p.display_name || `@${p.username}`}
+                  </bdi>
+                  {p.display_name && <bdi style={{ fontSize: 11.5, fontWeight: 600, color: C.subtext }}>@{p.username}</bdi>}
                   {p.verified && <span style={{ fontSize: 10, fontWeight: 800, color: C.success, background: successA(0.12), border: `1px solid ${successA(0.302)}`, borderRadius: 999, padding: '1px 7px', whiteSpace: 'nowrap' }}>✓ {t.public.verified}</span>}
                 </div>
                 {/* `capitalize` scoped to the category alone — on the whole

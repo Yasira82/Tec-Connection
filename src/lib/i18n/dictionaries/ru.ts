@@ -109,6 +109,8 @@ export const ru: Dictionary = {
     publicBadge: 'Публичная',
     hiddenBadge: 'Скрыта',
     headlinePlaceholder: 'Чем вы занимаетесь? (напр. разработчик приложений Pi)',
+    namePlaceholder: 'Ваше имя (необязательно)',
+    nameHint: 'Показывается рядом с вашим именем пользователя Pi.',
     save: 'Сохранить',
     publish: 'Опубликовать',
     hide: 'Скрыть',

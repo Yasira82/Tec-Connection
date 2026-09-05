@@ -109,6 +109,8 @@ export const vi: Dictionary = {
     publicBadge: 'Công khai',
     hiddenBadge: 'Ẩn',
     headlinePlaceholder: 'Bạn làm gì? (ví dụ: nhà phát triển ứng dụng Pi)',
+    namePlaceholder: 'Tên của bạn (tuỳ chọn)',
+    nameHint: 'Hiển thị bên cạnh tên người dùng Pi của bạn.',
     save: 'Lưu',
     publish: 'Công khai',
     hide: 'Ẩn',
