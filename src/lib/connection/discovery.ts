@@ -52,6 +52,8 @@ export interface MyProfile {
   hasAvatar: boolean;
   /** Whether the public page states this person's follower count. */
   showFollowers: boolean;
+  /** Whether anyone may see this person as online right now. */
+  showOnline: boolean;
 }
 
 // A public shareable profile (published only).
@@ -119,6 +121,10 @@ export async function resolveMyProfile(token: string | null): Promise<MyProfile 
       // send the field yet leaves the switch where the data actually is —
       // rather than showing "off" on a profile whose count is still public.
       showFollowers: Boolean(p.show_followers ?? true),
+      // `?? true` matches the column default for the same reason: an older
+      // backend that does not send the field yet must not read as "hidden" on
+      // a profile whose presence is still visible.
+      showOnline: Boolean(p.show_online ?? true),
     };
   } catch { return null; }
 }
@@ -128,7 +134,8 @@ export async function saveMyProfile(
   token: string | null,
   input: {
     display_name?: string; headline?: string; category?: string;
-    published?: boolean; avatar_key?: string | null; show_followers?: boolean;
+    published?: boolean; avatar_key?: string | null;
+    show_followers?: boolean; show_online?: boolean;
   },
 ): Promise<MyProfile | null> {
   if (!GW || !token) return null;
@@ -143,6 +150,7 @@ export async function saveMyProfile(
       headline: String(p.headline ?? ''), category: String(p.category ?? 'builder'),
       published: Boolean(p.published ?? false), verified: Boolean(p.verified ?? false), featured: Boolean(p.featured ?? false),
       hasAvatar: Boolean(p.has_avatar ?? false), showFollowers: Boolean(p.show_followers ?? true),
+      showOnline: Boolean(p.show_online ?? true),
     } : null;
   } catch { return null; }
 }

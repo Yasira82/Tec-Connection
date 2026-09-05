@@ -34,7 +34,7 @@ export async function PUT(req: NextRequest) {
 
   const body = (await req.json().catch(() => ({}))) as {
     display_name?: unknown; headline?: unknown; category?: unknown;
-    published?: unknown; show_followers?: unknown;
+    published?: unknown; show_followers?: unknown; show_online?: unknown;
   };
   const input = {
     // Same rule as `show_followers`: forwarded only when the client actually
@@ -47,6 +47,9 @@ export async function PUT(req: NextRequest) {
     // alone" upstream, and coercing a missing field here would turn a headline
     // edit into a silent privacy change (C-107 §14.5).
     ...(typeof body.show_followers === 'boolean' && { show_followers: body.show_followers }),
+    // Same rule, and presence is the one where getting it wrong is worst: an
+    // absent field must never be read as "turn it back on".
+    ...(typeof body.show_online === 'boolean' && { show_online: body.show_online }),
   };
   const profile = await saveMyProfile(tok, input);
   if (!profile) return NextResponse.json({ error: 'Could not save your profile.' }, { status: 502 });

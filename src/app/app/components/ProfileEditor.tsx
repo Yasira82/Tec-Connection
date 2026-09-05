@@ -25,6 +25,8 @@ interface MyProfile {
   hasAvatar?: boolean;
   /** Whether the public page states this person's follower count (C-107 §14.5). */
   showFollowers?: boolean;
+  /** Whether anyone may see this person as ONLINE right now (C-107 §13). */
+  showOnline?: boolean;
 }
 
 const card = {
@@ -47,6 +49,46 @@ const chip = (active: boolean): React.CSSProperties => ({
   border: `1px solid ${C.gold}${active ? '' : '33'}`,
   borderRadius: 999, padding: '7px 13px', cursor: 'pointer', textTransform: 'capitalize',
 });
+
+/**
+ * One labelled switch. Extracted the moment there were two: the markup was
+ * eleven lines of inline style repeated verbatim, and a second copy is how the
+ * two drift into looking like different controls.
+ *
+ * `on` is `!== false` at every call site rather than a bare boolean — a field an
+ * older backend does not send yet must read as ON, not as "this person turned
+ * it off".
+ */
+function SwitchRow({ label, hint, on, busy, onToggle }: {
+  label: string; hint: string; on: boolean; busy: boolean; onToggle: () => void;
+}) {
+  return (
+    <div style={{
+      display: 'flex', alignItems: 'center', gap: 12, marginTop: 16,
+      paddingTop: 14, borderTop: `1px solid ${C.border}`,
+    }}>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: 13.5, fontWeight: 700, color: C.text }}>{label}</div>
+        <div style={{ fontSize: 11.5, color: C.subtext, marginTop: 3, lineHeight: 1.5 }}>{hint}</div>
+      </div>
+      <button
+        onClick={onToggle} disabled={busy} aria-pressed={on}
+        style={{
+          width: 46, height: 27, borderRadius: 999, flexShrink: 0, padding: 2,
+          border: `1px solid ${on ? C.gold : C.border}`,
+          background: on ? goldA(0.2) : 'transparent',
+          cursor: busy ? 'not-allowed' : 'pointer',
+          display: 'flex', justifyContent: on ? 'flex-end' : 'flex-start',
+        }}
+      >
+        <span style={{
+          width: 21, height: 21, borderRadius: 999, display: 'block',
+          background: on ? C.gold : C.subtext,
+        }} />
+      </button>
+    </div>
+  );
+}
 
 export function ProfileEditor() {
   const { t } = useTranslation();
@@ -79,7 +121,7 @@ export function ProfileEditor() {
    * along with it. Sending the current value on every save would work today and
    * silently overwrite the stored value the moment the two drift.
    */
-  const save = async (publish: boolean, showFollowers?: boolean) => {
+  const save = async (publish: boolean, showFollowers?: boolean, showOnline?: boolean) => {
     if (saving) return;
     setSaving(true); setMsg('');
     try {
@@ -89,6 +131,7 @@ export function ProfileEditor() {
         body: JSON.stringify({
           display_name: name.trim(), headline: headline.trim(), category: cat, published: publish,
           ...(typeof showFollowers === 'boolean' && { show_followers: showFollowers }),
+          ...(typeof showOnline === 'boolean' && { show_online: showOnline }),
         }),
       });
       const j = (await res.json().catch(() => ({}))) as { profile?: MyProfile; ok?: boolean };
@@ -175,6 +218,20 @@ export function ProfileEditor() {
           </button>
         </div>
 
+        {/* Who can see you as ONLINE right now.
+            NOT gated on `published`, unlike the follower count: the green dot
+            appears to the people in your groups and to whoever follows you,
+            whether or not you are in the public directory. Hiding it behind
+            "publish" would leave the one switch that matters most reachable
+            only by people who had opted into something else. */}
+        <SwitchRow
+          label={a.showOnline}
+          hint={me?.showOnline === false ? a.showOnlineOff : a.showOnlineOn}
+          on={me?.showOnline !== false}
+          busy={saving}
+          onToggle={() => { void save(me?.published ?? false, undefined, me?.showOnline === false); }}
+        />
+
         {/* Who can see the follower count.
             `published` used to be one switch deciding everything a stranger
             could see. A follower count is a fact about the GRAPH, and C-107 §4
@@ -182,34 +239,13 @@ export function ProfileEditor() {
             Shown only once the profile is public, because until then there is
             no page for it to appear on. */}
         {me?.published && (
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: 12, marginTop: 16,
-            paddingTop: 14, borderTop: `1px solid ${C.border}`,
-          }}>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 13.5, fontWeight: 700, color: C.text }}>{a.showFollowers}</div>
-              <div style={{ fontSize: 11.5, color: C.subtext, marginTop: 3, lineHeight: 1.5 }}>
-                {me.showFollowers === false ? a.showFollowersOff : a.showFollowersOn}
-              </div>
-            </div>
-            <button
-              onClick={() => { void save(true, me.showFollowers === false); }}
-              disabled={saving}
-              aria-pressed={me.showFollowers !== false}
-              style={{
-                width: 46, height: 27, borderRadius: 999, flexShrink: 0, padding: 2,
-                border: `1px solid ${me.showFollowers !== false ? C.gold : C.border}`,
-                background: me.showFollowers !== false ? goldA(0.2) : 'transparent',
-                cursor: saving ? 'not-allowed' : 'pointer',
-                display: 'flex', justifyContent: me.showFollowers !== false ? 'flex-end' : 'flex-start',
-              }}
-            >
-              <span style={{
-                width: 21, height: 21, borderRadius: 999, display: 'block',
-                background: me.showFollowers !== false ? C.gold : C.subtext,
-              }} />
-            </button>
-          </div>
+          <SwitchRow
+            label={a.showFollowers}
+            hint={me.showFollowers === false ? a.showFollowersOff : a.showFollowersOn}
+            on={me.showFollowers !== false}
+            busy={saving}
+            onToggle={() => { void save(true, me.showFollowers === false); }}
+          />
         )}
 
         {msg && (
