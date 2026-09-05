@@ -19,6 +19,12 @@ export type Category = (typeof CATEGORIES)[number];
 // Connection Pro (reach only) — never trust.
 export interface DirectoryProfile {
   username:  string;
+  /**
+   * The person's own name. Optional and free-text — the HANDLE stays the
+   * identity, so every surface prints `@username` alongside this, never
+   * instead of it.
+   */
+  display_name?: string;
   headline:  string;
   category:  string;
   verified:  boolean;
@@ -37,6 +43,7 @@ export interface DirectoryProfile {
 // The caller's OWN editable profile.
 export interface MyProfile {
   username:  string;
+  display_name: string;
   headline:  string;
   category:  string;
   published: boolean;
@@ -54,6 +61,7 @@ export interface PublicProfile extends DirectoryProfile {
 
 const toCard = (o: Record<string, unknown>): DirectoryProfile => ({
   username:  String(o.username ?? ''),
+  display_name: String(o.display_name ?? ''),
   headline:  String(o.headline ?? ''),
   category:  String(o.category ?? 'builder'),
   verified:  Boolean(o.verified ?? false),
@@ -100,6 +108,7 @@ export async function resolveMyProfile(token: string | null): Promise<MyProfile 
     if (!p) return null;
     return {
       username:  String(p.username ?? ''),
+      display_name: String(p.display_name ?? ''),
       headline:  String(p.headline ?? ''),
       category:  String(p.category ?? 'builder'),
       published: Boolean(p.published ?? false),
@@ -117,7 +126,10 @@ export async function resolveMyProfile(token: string | null): Promise<MyProfile 
 /** Save the caller's OWN profile (authenticated). Returns the saved profile or null. */
 export async function saveMyProfile(
   token: string | null,
-  input: { headline?: string; category?: string; published?: boolean; avatar_key?: string | null; show_followers?: boolean },
+  input: {
+    display_name?: string; headline?: string; category?: string;
+    published?: boolean; avatar_key?: string | null; show_followers?: boolean;
+  },
 ): Promise<MyProfile | null> {
   if (!GW || !token) return null;
   try {
@@ -127,7 +139,8 @@ export async function saveMyProfile(
     if (!res.ok) return null;
     const p = (await res.json().catch(() => ({})))?.data?.profile;
     return p ? {
-      username: String(p.username ?? ''), headline: String(p.headline ?? ''), category: String(p.category ?? 'builder'),
+      username: String(p.username ?? ''), display_name: String(p.display_name ?? ''),
+      headline: String(p.headline ?? ''), category: String(p.category ?? 'builder'),
       published: Boolean(p.published ?? false), verified: Boolean(p.verified ?? false), featured: Boolean(p.featured ?? false),
       hasAvatar: Boolean(p.has_avatar ?? false), showFollowers: Boolean(p.show_followers ?? true),
     } : null;

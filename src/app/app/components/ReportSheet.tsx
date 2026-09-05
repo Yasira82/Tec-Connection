@@ -1,6 +1,6 @@
 'use client';
 
-// Report — one sheet, three surfaces (a person, a message, a status).
+// Report — one sheet, four surfaces (a person, a message, a status, a group).
 //
 // Two things it says out loud, because a reporting flow that leaves them unsaid
 // misleads the person using it:
@@ -18,7 +18,7 @@ import { C, bgA, errorA, goldA } from '@/lib-client/palette';
 import { useTranslation } from '@/lib/i18n';
 import { useBackButton } from '@/lib-client/connection/useBackButton';
 
-export type ReportKind = 'user' | 'message' | 'story';
+export type ReportKind = 'user' | 'message' | 'story' | 'group';
 
 const REASONS = ['spam', 'scam', 'harassment', 'sexual', 'violence', 'other'] as const;
 type Reason = (typeof REASONS)[number];

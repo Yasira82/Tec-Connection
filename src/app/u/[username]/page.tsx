@@ -96,10 +96,18 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
           {/* <bdi>: a Latin handle inside an RTL page would otherwise render as
               "nour_market@" — the '@' is a bidi-neutral character and resolves
               against the surrounding direction. */}
-          <h1 style={{
+          {/* When a name is set it becomes the heading and the handle moves
+              below it — the handle is never dropped. It is the identity every
+              other surface keys on, and it is the half a stranger can verify. */}
+          <h1 dir="auto" style={{
             fontSize: 'clamp(24px, 7vw, 30px)', fontWeight: 900, letterSpacing: '-0.02em',
             color: C.text, margin: '18px 0 0',
-          }}><bdi>@{p.username}</bdi></h1>
+          }}><bdi>{p.display_name || `@${p.username}`}</bdi></h1>
+          {p.display_name && (
+            <div style={{ fontSize: 14, fontWeight: 600, color: inkA(0.5), marginTop: 4 }}>
+              <bdi>@{p.username}</bdi>
+            </div>
+          )}
 
           <div style={{ display: 'flex', gap: 7, justifyContent: 'center', flexWrap: 'wrap', marginTop: 10 }}>
             {p.verified && (

@@ -1,6 +1,8 @@
 // @vitest-environment node
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { NextRequest } from 'next/server';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 
 // TEC Connection (C-107) — Messaging BFF.
 //
@@ -507,5 +509,38 @@ describe('reports BFF — the reporter is the session, and the queue is not here
     // session in front of it would be one edit away from exposing it.
     const mod = await import('@/app/api/bff/connection/reports/route');
     expect('GET' in mod).toBe(false);
+  });
+});
+
+describe('a member can report the group, not only leave it', () => {
+  const src = (p: string) =>
+    readFileSync(join(process.cwd(), 'src', p), 'utf8')
+      .replace(/\/\*[\s\S]*?\*\//g, '')
+      .replace(/^\s*\/\/.*$/gm, '');
+
+  it('offers Report above Leave in the group sheet', () => {
+    // Telegram's order, and the right one: leaving is the last thing you do,
+    // and a member who can only leave has no way to say WHY.
+    const sheet = src('app/app/components/ChatInfoSheet.tsx');
+    expect(sheet).toMatch(/a\.reportGroup/);
+    expect(sheet.indexOf('a.reportGroup')).toBeLessThan(sheet.indexOf('a.leaveGroup'));
+  });
+
+  it('hides it from the owner rather than showing a row that always fails', () => {
+    // The service refuses a report about your own group.
+    expect(src('app/app/components/ChatInfoSheet.tsx')).toMatch(/onReport && !isOwner/);
+    expect(src('app/app/components/Messages.tsx')).toMatch(/thread\.role !== 'owner'/);
+  });
+
+  it('reports the CONVERSATION, not a message inside it', () => {
+    expect(src('app/app/components/Messages.tsx')).toMatch(/kind="group" target=\{id\}/);
+  });
+
+  it('offers no Block alongside — a group is not a person', () => {
+    // The message sheet pairs report with block because a block ends contact
+    // now. There is nothing to block about a group; leaving is that action.
+    const m = src('app/app/components/Messages.tsx');
+    const groupSheet = m.slice(m.indexOf('kind="group"'), m.indexOf('kind="message"'));
+    expect(groupSheet).not.toMatch(/onBlock/);
   });
 });
