@@ -85,6 +85,26 @@ describe('the client and the server read the same fact separately', () => {
     expect(route).toContain("networkMetadata(req.headers.get('host'))");
   });
 
+  it('the sandbox override is confined to the Testnet host', () => {
+    // `?pi_sandbox=0` exists to test one hypothesis in a tap instead of a
+    // redeploy: the Pi bridge went silent on the Testnet host ("Messaging
+    // promise with id 1 timed out after 120000ms") and this flag is the one
+    // thing that differs there.
+    //
+    // It must NEVER reach the Mainnet host. The ternary is what confines it —
+    // the override is read only inside the `__isTestnetHost` branch, so on
+    // `connection.tecosystem.app` no query param can change what Pi.init runs
+    // with. And it changes only the CLIENT's view: what a payment is approved
+    // against still comes from the BFF's own Host header.
+    expect(layout).toMatch(/__isTestnetHost\s*\n?\s*\?\s*\(__q !== '0'\)/);
+    expect(layout).toContain("get('pi_sandbox')");
+    // The Mainnet arm of that ternary is the build flag, untouched by the URL.
+    expect(layout).toMatch(/:\s*\$\{process\.env\.NEXT_PUBLIC_PI_SANDBOX === 'true'\}/);
+    // …and `__q` is read in exactly one place, so it cannot have grown a second
+    // use on the Mainnet side.
+    expect(layout.match(/__q !== '0'/g) ?? []).toHaveLength(1);
+  });
+
   it('the BFF DROPS whatever the client sent', () => {
     // Removed before the spread, not merely overwritten by it: a later edit
     // that reorders the object must not quietly hand the network back to the

@@ -21,12 +21,31 @@ const getToken = (): string | null =>
   typeof document === 'undefined' ? null :
   document.cookie.match(/(?:^|;\s*)tec_access_token=([^;]*)/)?.[1] ?? null;
 
+/**
+ * Where a Mode-2 payment had got to when it ended.
+ *
+ * The button used to say "Confirm in Pi…" for the whole of `Pi.authenticate` AND
+ * `Pi.createPayment`, and NEITHER of those tells the server anything until the
+ * SDK calls back. So when a payment stalled there was no way — from the browser,
+ * from the Vercel log or from the payment-service log — to tell which of the two
+ * it was sitting in. This names it.
+ */
+export type PaymentStage =
+  | 'authenticating'  // Pi.authenticate called, no callback yet
+  | 'authenticated'   // it returned; about to open the payment
+  | 'opening_pi'      // Pi.createPayment called, waiting for the SDK's first callback
+  | 'approving'       // onReadyForServerApproval fired — our approve is in flight
+  | 'approved'        // approve accepted; waiting for the Pi user to confirm
+  | 'completing';     // onReadyForServerCompletion fired
+
 export interface PaymentResult {
   status:     'completed' | 'cancelled' | 'error';
   success:    boolean;
   paymentId?: string;
   txid?:      string;
   message?:   string;
+  /** The last stage reached. Diagnostic — carried on EVERY outcome, not just failures. */
+  stage?:     PaymentStage;
 }
 
 // APP_SOURCE slug — payment-service resolves PI_API_KEY_CONNECTION from this (C-12 §11).
@@ -92,14 +111,23 @@ export const createPaymentRecord = async (
 /** Step 2 — run the Pi User-to-App payment (Mode 2 / standalone in Pi Browser). */
 export const createU2APayment = async (
   amount: number, memo: string, metadata: Record<string, unknown>, internalId: string,
+  /** Called as the flow advances, so a stalled payment says WHERE it stalled. */
+  onStage?: (stage: PaymentStage) => void,
 ): Promise<PaymentResult> => {
   return new Promise(async (resolve) => {
     if (!window.Pi) { resolve({ status: 'error', success: false, message: 'Pi SDK not ready' }); return; }
     if ((window as any).__TEC_PI_FOREIGN_SESSION) { resolve({ status: 'error', success: false, message: 'foreign_session' }); return; }
 
     let settled = false;
-    const done = (result: PaymentResult) => { if (settled) return; settled = true; clearTimeout(timer); resolve(result); };
+    let stage: PaymentStage = 'authenticating';
+    // Never let a reporting callback break a payment: this runs on the path that
+    // moves real Pi, and a throwing observer must not become a failed purchase.
+    const at = (s: PaymentStage) => { stage = s; try { onStage?.(s); } catch { /* observer only */ } };
+    // The stage rides on EVERY outcome — cancelled and completed too, not only
+    // errors. A success that took the unexpected route is worth seeing as well.
+    const done = (result: PaymentResult) => { if (settled) return; settled = true; clearTimeout(timer); resolve({ ...result, stage }); };
     const timer = setTimeout(() => done({ status: 'error', success: false, message: 'Payment timed out — please try again.' }), 90_000);
+    at('authenticating');
 
     const token = getToken();
     const headers: Record<string, string> = { 'Content-Type': 'application/json', 'x-csrf-token': getCsrfToken() };
@@ -120,17 +148,21 @@ export const createU2APayment = async (
       done({ status: 'error', success: false, message: 'Pi auth failed: ' + (authErr instanceof Error ? authErr.message : String(authErr)) });
       return;
     }
+    at('authenticated');
 
     try {
+      at('opening_pi');
       window.Pi.createPayment(
         { amount, memo, metadata: { ...metadata, internalId } },
         {
           onReadyForServerApproval: async (piPaymentId: string) => {
+            at('approving');
             try {
               const res = await fetch('/api/bff/payment/approve', {
                 method: 'POST', credentials: 'include', headers,
                 body: JSON.stringify({ payment_id: internalId, pi_payment_id: piPaymentId }),
               });
+              if (res.ok) at('approved');
               if (!res.ok) {
                 const err = await res.json().catch(() => ({}));
                 done({ status: 'error', success: false, message: (err as Record<string, unknown>)?.error as string ?? 'Approve failed' });
@@ -138,6 +170,7 @@ export const createU2APayment = async (
             } catch (err) { done({ status: 'error', success: false, message: String(err) }); }
           },
           onReadyForServerCompletion: async (piPaymentId: string, txid: string) => {
+            at('completing');
             try {
               const res  = await fetch('/api/bff/payment/complete', {
                 method: 'POST', credentials: 'include', headers,
@@ -150,7 +183,14 @@ export const createU2APayment = async (
             } catch (err) { done({ status: 'error', success: false, message: String(err) }); }
           },
           onCancel: () => done({ status: 'cancelled', success: false }),
-          onError:  (err: Error) => done({ status: 'error', success: false, message: err.message }),
+          // The SDK is not guaranteed to hand back a real Error — reading
+          // `.message` off `undefined` here would throw INSIDE the callback,
+          // where nothing catches it, and the payment would hang to the timeout
+          // with no message at all: the failure mode this change exists to end.
+          onError:  (err?: unknown) => done({
+            status: 'error', success: false,
+            message: err instanceof Error ? err.message : (err ? String(err) : 'Pi reported an error with no detail.'),
+          }),
         },
       );
     } catch (err) {
