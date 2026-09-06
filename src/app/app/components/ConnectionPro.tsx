@@ -12,7 +12,9 @@ import {
   redirectToHubPayment,
   createPaymentRecord,
   createU2APayment,
+  type PaymentStage,
 } from '@/lib/pi-payment';
+import { isTestnetHost } from '@/lib/pi-network';
 
 const PRICE   = 5;                          // π / month
 const ITEM_ID = 'connection_pro_monthly';
@@ -39,6 +41,39 @@ export function ConnectionPro() {
   const [piReady, setPiReady] = useState(false);
   const [status,  setStatus]  = useState<Status>('idle');
   const [message, setMessage] = useState('');
+
+  const busy = status === 'creating' || status === 'paying';
+
+  // ── Why there is a diagnostic line on a payment card at all ────────────────
+  // A Mode-2 payment can stall inside the Pi SDK, and while it does, NOTHING
+  // reaches a server: no Vercel request, no payment-service log. The screen was
+  // the only witness and it said "Confirm in Pi…" for two different steps. So
+  // the screen has to say which one.
+  //
+  // It is shown only where a real buyer will not meet it: the `*.vercel.app`
+  // host is the paired Testnet app (an internal surface by construction), plus
+  // `?debug=1` for reproducing on the Mainnet host on purpose.
+  const [stage,   setStage]   = useState<PaymentStage | null>(null);
+  const [diag,    setDiag]    = useState(false);
+  const [elapsed, setElapsed] = useState(0);
+  // What `Pi.init` ACTUALLY ran with, read back from the layout rather than
+  // recomputed here — a second copy of the rule could disagree with the first,
+  // and then the diagnostic line would be reporting on itself instead of on Pi.
+  const [sandbox, setSandbox] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    setDiag(isTestnetHost(window.location.hostname)
+            || new URLSearchParams(window.location.search).has('debug'));
+  }, []);
+
+  // Seconds on the clock. Without it a stall and a slow network look identical,
+  // and "it just sat there" is not a report anyone can act on.
+  useEffect(() => {
+    if (!busy) { setElapsed(0); return; }
+    const id = setInterval(() => setElapsed((s) => s + 1), 1000);
+    return () => clearInterval(id);
+  }, [busy]);
 
   // Reflect the real subscription (activated by commerce-service when a Pro payment
   // completes). Pro ONLY while the period is live — no auto-renewal / no downgrade job.
@@ -67,8 +102,13 @@ export function ConnectionPro() {
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    if ((window as { __TEC_PI_READY?: boolean }).__TEC_PI_READY) { setPiReady(true); return; }
-    const h = () => setPiReady(true);
+    // `__TEC_PI_SANDBOX` is stamped by the layout's `load` handler, which can
+    // run AFTER this component mounts — so it is read here, on the same signal
+    // that says Pi is ready, and not in a mount-only effect that would race it.
+    const readSandbox = () =>
+      setSandbox((window as { __TEC_PI_SANDBOX?: boolean }).__TEC_PI_SANDBOX ?? null);
+    if ((window as { __TEC_PI_READY?: boolean }).__TEC_PI_READY) { setPiReady(true); readSandbox(); return; }
+    const h = () => { setPiReady(true); readSandbox(); };
     window.addEventListener('tec-pi-ready', h, { once: true });
     return () => window.removeEventListener('tec-pi-ready', h);
   }, []);
@@ -100,6 +140,7 @@ export function ConnectionPro() {
     // Mode 2 — standalone Pi Browser payment.
     setStatus('creating');
     setMessage('');
+    setStage(null);
     try {
       const internalId = await createPaymentRecord(PRICE, ITEM_ID, MEMO);
       if (!internalId) {
@@ -108,7 +149,8 @@ export function ConnectionPro() {
         return;
       }
       setStatus('paying');
-      const result = await createU2APayment(PRICE, MEMO, { item_id: ITEM_ID, plan: 'connection_pro' }, internalId);
+      const result = await createU2APayment(PRICE, MEMO, { item_id: ITEM_ID, plan: 'connection_pro' }, internalId, setStage);
+      if (result.stage) setStage(result.stage);
       if (result.success && result.status === 'completed') {
         setStatus('success');
       } else if (result.status === 'cancelled') {
@@ -160,8 +202,6 @@ export function ConnectionPro() {
     );
   }
 
-  const busy = status === 'creating' || status === 'paying';
-
   return (
     <div style={card}>
       <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 12 }}>
@@ -206,6 +246,24 @@ export function ConnectionPro() {
 
       {status === 'error' && (
         <div style={{ fontSize: 12, color: C.error, marginTop: 10 }}>{message || a.proNotCompleted}</div>
+      )}
+
+      {/* Machine tokens, not prose — identifiers straight out of the code, the
+          seconds on the clock, and the flag `Pi.init` actually ran with. There
+          is no English word here to translate, and a translated stage name
+          would be useless in a bug report. The i18n guard is satisfied for the
+          real reason, not dodged. */}
+      {diag && (busy || status === 'error') && (
+        <div style={{
+          fontSize: 11, color: C.subtext, marginTop: 8,
+          fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
+        }}>
+          {[
+            `⚙ ${stage ?? (status === 'creating' ? 'create_record' : '?')}`,
+            busy ? `${elapsed}s` : null,
+            `sandbox=${String(sandbox)}`,
+          ].filter(Boolean).join(' · ')}
+        </div>
       )}
     </div>
   );

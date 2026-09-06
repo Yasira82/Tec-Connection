@@ -76,6 +76,25 @@ export default async function RootLayout({
                 } catch(e) {}
                 if (typeof window.Pi !== 'undefined') {
                   try {
+                    var __isTestnetHost = /\\.vercel\\.app$/i.test(location.hostname);
+                    // An OVERRIDE, honoured ONLY on the Testnet host, so a
+                    // Mainnet payment can never be put into sandbox mode by a
+                    // query param. This flag is the CLIENT's view; it does not
+                    // authorise anything. What a payment is approved against is
+                    // still decided server-side from the BFF's own Host header
+                    // (metadata.testnet) and remains unforgeable.
+                    //
+                    // It exists because "Pi auth failed: Messaging promise with
+                    // id 1 timed out after 120000ms" — the Pi bridge never
+                    // answering its FIRST message — was observed on the Testnet
+                    // host, and this flag is the one thing that differs there.
+                    // ?pi_sandbox=0 tests that in one tap instead of a redeploy.
+                    var __q = null;
+                    try { __q = new URLSearchParams(location.search).get('pi_sandbox'); } catch (e) {}
+                    var __sandbox = __isTestnetHost
+                      ? (__q !== '0')
+                      : ${process.env.NEXT_PUBLIC_PI_SANDBOX === 'true'};
+                    window.__TEC_PI_SANDBOX = __sandbox;
                     window.Pi.init({
                       version: '2.0',
                       // The SAME host rule the BFF uses, read here from the
@@ -89,8 +108,7 @@ export default async function RootLayout({
                       // telling the other: the server decides from its Host
                       // header what the payment is approved against, and cannot
                       // be told otherwise by a client.
-                      sandbox: /\\.vercel\\.app$/i.test(location.hostname)
-                               || ${process.env.NEXT_PUBLIC_PI_SANDBOX === 'true'},
+                      sandbox: __sandbox,
                     });
                     window.__TEC_PI_READY = true;
                     window.dispatchEvent(new Event('tec-pi-ready'));
