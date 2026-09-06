@@ -53,8 +53,6 @@ const APP_SOURCE = 'connection';
 
 const HUB_URL = process.env.NEXT_PUBLIC_HUB_URL ?? 'https://hub.tecosystem.app';
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://connection.tecosystem.app';
-
 /**
  * ADR-007: true when the user arrived FROM the Hub (Pi session is foreign).
  * Two signals (C-12 §3): the sessionStorage flag persisted by the SSO landing
@@ -80,7 +78,10 @@ export const redirectToHubPayment = (params: {
     amount:     String(params.amount),
     product_id: params.itemId,
     item:       params.itemId, // back-compat
-    return_url: `${APP_URL}/app`,
+    // Back to the host the buyer left, not to a build-time constant — one build
+    // serves both the Mainnet and the paired Testnet host, and returning a
+    // Testnet visitor to the Mainnet origin strands them on a different session.
+    return_url: `${window.location.origin}/app`,
     ...(params.memo ? { memo: params.memo } : {}),
   });
   window.location.href = `${HUB_URL}/hub?${q.toString()}`;
