@@ -77,22 +77,35 @@ export default async function RootLayout({
                 if (typeof window.Pi !== 'undefined') {
                   try {
                     var __isTestnetHost = /\\.vercel\\.app$/i.test(location.hostname);
-                    // An OVERRIDE, honoured ONLY on the Testnet host, so a
-                    // Mainnet payment can never be put into sandbox mode by a
-                    // query param. This flag is the CLIENT's view; it does not
-                    // authorise anything. What a payment is approved against is
-                    // still decided server-side from the BFF's own Host header
-                    // (metadata.testnet) and remains unforgeable.
+                    // SANDBOX IS NOT TESTNET. They are different axes, and
+                    // conflating them cost a day:
                     //
-                    // It exists because "Pi auth failed: Messaging promise with
-                    // id 1 timed out after 120000ms" — the Pi bridge never
-                    // answering its FIRST message — was observed on the Testnet
-                    // host, and this flag is the one thing that differs there.
-                    // ?pi_sandbox=0 tests that in one tap instead of a redeploy.
+                    //   the HOST   decides which Pi APP the visitor is in, and
+                    //              so which network the server approves against
+                    //   "sandbox"  tells the SDK to talk to Pi's SANDBOX
+                    //              environment, which is a third thing entirely
+                    //
+                    // A paired Testnet app in Pi Browser is a normal app on its
+                    // own domain — NOT the sandbox. Setting sandbox:true there
+                    // left the Pi bridge silent: "Pi auth failed: Messaging
+                    // promise with id 1 timed out after 120000ms", its first
+                    // message never answered. With the same host and the same
+                    // build and only this flag false, the wallet opened and the
+                    // payment reached approve. One clean A/B, one trial.
+                    //
+                    // So the default is FALSE everywhere, and ?pi_sandbox=1 is
+                    // the way back in — honoured only on the Testnet host, so a
+                    // Mainnet payment can never be put into sandbox mode by a
+                    // query param.
+                    //
+                    // Either way this is the CLIENT's view and authorises
+                    // nothing: what a payment is approved against is still
+                    // derived server-side from the BFF's own Host header
+                    // (metadata.testnet) and stays unforgeable.
                     var __q = null;
                     try { __q = new URLSearchParams(location.search).get('pi_sandbox'); } catch (e) {}
                     var __sandbox = __isTestnetHost
-                      ? (__q !== '0')
+                      ? (__q === '1')
                       : ${process.env.NEXT_PUBLIC_PI_SANDBOX === 'true'};
                     window.__TEC_PI_SANDBOX = __sandbox;
                     window.Pi.init({
