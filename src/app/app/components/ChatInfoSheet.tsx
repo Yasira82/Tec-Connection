@@ -21,6 +21,7 @@ import { downscaleImage, AVATAR_MAX_EDGE } from '@/lib-client/connection/downsca
 import { useJoinRequests } from '@/lib-client/connection/useGroupDiscovery';
 import { usePresence } from '@/lib-client/connection/usePresence';
 import { useInvite, inviteUrl } from '@/lib-client/connection/useInvite';
+import { VISUALLY_HIDDEN } from '@/lib-client/visuallyHidden';
 
 /** What a group photo may be. Same three as a profile photo, same 2MB ceiling. */
 const PHOTO_ACCEPT = 'image/jpeg,image/png,image/webp';
@@ -54,13 +55,19 @@ function ActionRow({ label, icon, danger, onClick, disabled }: {
 }
 
 export function ChatInfoSheet({
-  isGroup, title, members, role, me, onClose, convId, visibility, description,
-  admins = [], ownerName, onRemoved,
+  isGroup, title, members, memberNames = {}, role, me, onClose, convId, visibility, description,
+  admins = [], silenced = [], ownerName, onRemoved,
   onAddMember, onLeave, onReport, onSearch, onDelete, onClear,
   muted, onToggleMute, posting, onSetPosting,
   blocked, onBlock, onUnblock, blockBusy, blockError, peerName,
 }: {
   isGroup: boolean;
+  /**
+   * `{ handle: chosen name }` for the members, from the thread payload. Only
+   * the people who set a name appear — a missing entry means the row shows the
+   * handle alone, which is what most rows will always be.
+   */
+  memberNames?: Record<string, string>;
   /** Needed for the group photo, which is keyed by the conversation. */
   convId: string;
   /** PUBLIC means the group is findable — not that its contents are readable. */
@@ -68,6 +75,13 @@ export function ChatInfoSheet({
   description?: string | null;
   /** Who helps run the group. The owner is NOT in here — they are `ownerName`. */
   admins?: string[];
+  /**
+   * Who has been silenced — sent by the service ONLY to somebody who can lift
+   * it, plus the silenced person themselves. Being unable to post is already
+   * visible (they stop writing); a badge on their row for the whole group would
+   * turn a correction into a public sanction, which is a different act.
+   */
+  silenced?: string[];
   ownerName?: string | null;
   /** So the parent can drop the row from its own copy of the member list. */
   onRemoved?: (username: string) => void;
@@ -157,6 +171,8 @@ export function ChatInfoSheet({
   const [armedRemove, setArmedRemove] = useState<string | null>(null);
   const [roster, setRoster] = useState<string[]>(admins ?? []);
   useEffect(() => { setRoster(admins ?? []); }, [admins]);
+  const [quiet, setQuiet] = useState<string[]>(silenced ?? []);
+  useEffect(() => { setQuiet(silenced ?? []); }, [silenced]);
 
   const norm = (u: string) => (u ?? '').trim().replace(/^@+/, '').toLowerCase();
 
@@ -176,6 +192,33 @@ export function ChatInfoSheet({
       // and a reload would collapse it under the thumb that just tapped.
       setRoster((r) => (makeAdmin ? [...r, username] : r.filter((x) => norm(x) !== norm(username))));
     } catch { /* the badge simply does not change */ }
+    finally { setRoleBusy(null); }
+  };
+
+  /**
+   * Stop someone posting, or let them speak again.
+   *
+   * The middle step this sheet had no way to take: until now the only answer to
+   * somebody being out of line was to remove them, which ends the matter rather
+   * than correcting it. One tap, and one tap back — unlike Remove, which is
+   * armed twice because it cannot be undone.
+   */
+  const setSilenced = async (username: string, next: boolean) => {
+    setRoleBusy(username);
+    try {
+      const res = await fetch(
+        `/api/bff/connection/conversations/${encodeURIComponent(convId)}/members/${encodeURIComponent(username)}/silenced`,
+        {
+          method: 'PUT', credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ silenced: next }),
+        },
+      );
+      if (!res.ok) return;
+      // Local, like the admin badge: the sheet is open over the chat and a
+      // refetch would collapse it under the thumb that just tapped.
+      setQuiet((q) => (next ? [...q, username] : q.filter((x) => norm(x) !== norm(username))));
+    } catch { /* the row stays as it was; the next open shows the truth */ }
     finally { setRoleBusy(null); }
   };
 
@@ -338,7 +381,7 @@ export function ChatInfoSheet({
           {isGroup && role === 'owner' && (
             <>
               <input
-                ref={photoRef} type="file" accept={PHOTO_ACCEPT} hidden
+                ref={photoRef} type="file" accept={PHOTO_ACCEPT} style={VISUALLY_HIDDEN} tabIndex={-1} aria-hidden="true"
                 onChange={(e) => {
                   const f = e.target.files?.[0];
                   // Cleared so picking the SAME file again still fires onChange.
@@ -621,6 +664,10 @@ export function ChatInfoSheet({
                 // showing it, because the refusal arrives as a silent failure.
                 const canPromote = isOwner && !mine && !isTheOwner;
                 const canRemove = !mine && !isTheOwner && (isOwner || (isAdmin && !isAnAdmin));
+                // The same reach as Remove, deliberately: silencing is a LESSER
+                // power, so it must not extend further than the greater one.
+                const canSilence = canRemove;
+                const isQuiet = quiet.some((x) => norm(x) === norm(u));
 
                 return (
                   <div key={u} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0' }}>
@@ -640,10 +687,21 @@ export function ChatInfoSheet({
                           }} />
                       )}
                     </div>
+                    {/* A chosen name on top, the handle under it. Two lines
+                        rather than one because this list is where a member is
+                        promoted, removed or recognised, and the handle is what
+                        every one of those acts is keyed on. */}
                     <span style={{
-                      flex: 1, minWidth: 0, fontSize: 13.5, color: C.text,
+                      flex: 1, minWidth: 0,
                       overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                    }}><bdi>@{u}</bdi></span>
+                    }}>
+                      <bdi dir="auto" style={{ display: 'block', fontSize: 13.5, color: C.text }}>
+                        {memberNames[u] || `@${u}`}
+                      </bdi>
+                      {memberNames[u] && (
+                        <bdi style={{ display: 'block', fontSize: 11.5, color: C.subtext }}>@{u}</bdi>
+                      )}
+                    </span>
 
                     {/* The badge says what someone IS; the buttons say what you
                         may do about it. Keeping them separate means a member
@@ -656,6 +714,16 @@ export function ChatInfoSheet({
                         background: isTheOwner ? goldA(0.078) : 'transparent',
                         border: `1px solid ${isTheOwner ? goldA(0.267) : C.border}`,
                       }}>{isTheOwner ? a.roleOwner : a.roleAdmin}</span>
+                    )}
+                    {/* Only the people who can lift it — and the person it is
+                        happening to — are sent this list at all, so the badge
+                        cannot become a public mark. */}
+                    {isQuiet && (
+                      <span style={{
+                        fontSize: 10.5, fontWeight: 800, letterSpacing: 0.3, flexShrink: 0,
+                        textTransform: 'uppercase', borderRadius: 999, padding: '2px 8px',
+                        color: C.error, border: `1px solid ${errorA(0.35)}`,
+                      }}>{a.silencedBadge}</span>
                     )}
                     {mine && (
                       <span style={{ fontSize: 11, color: C.subtext, flexShrink: 0 }}>{a.you}</span>
@@ -672,6 +740,25 @@ export function ChatInfoSheet({
                           flexShrink: 0, whiteSpace: 'nowrap',
                         }}
                       >{isAnAdmin ? a.demoteAdmin : a.makeAdmin}</button>
+                    )}
+                    {/* One tap, and one tap back. Unlike Remove beside it,
+                        which is armed twice because it cannot be undone —
+                        silencing is the reversible answer, and making it feel
+                        as heavy as removal is how people reach for removal. */}
+                    {canSilence && (
+                      <button
+                        onClick={() => { void setSilenced(u, !isQuiet); }}
+                        disabled={roleBusy === u}
+                        title={isQuiet ? a.unsilenceHint : a.silenceHint}
+                        style={{
+                          background: 'none',
+                          border: `1px solid ${isQuiet ? errorA(0.35) : C.border}`,
+                          color: isQuiet ? C.error : C.text, borderRadius: 999,
+                          padding: '4px 10px', fontSize: 11.5, flexShrink: 0,
+                          whiteSpace: 'nowrap',
+                          cursor: roleBusy === u ? 'not-allowed' : 'pointer',
+                        }}
+                      >{isQuiet ? a.unsilence : a.silence}</button>
                     )}
                     {canRemove && (
                       <button

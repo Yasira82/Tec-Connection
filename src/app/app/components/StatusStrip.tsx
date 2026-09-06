@@ -16,9 +16,15 @@ import { useStories, type StoryAuthor, type StoryItem } from '@/lib-client/conne
 import { Avatar as PersonAvatar } from '@/components/public/Avatar';
 import { downscaleImage } from '@/lib-client/connection/downscaleImage';
 import { StatusViewer } from './StatusViewer';
+import { VISUALLY_HIDDEN } from '@/lib-client/visuallyHidden';
+import { useMyName } from '@/lib-client/connection/useMyName';
 
-function Ring({ name, unseen, onClick, label }: {
-  name: string; unseen: boolean; onClick: () => void; label: string;
+function Ring({ name, unseen, onClick, label, caption }: {
+  /** The HANDLE. It keys the photo, so it must never be a chosen name. */
+  name: string;
+  unseen: boolean; onClick: () => void; label: string;
+  /** What to print under the ring. Defaults to the handle. */
+  caption?: string;
 }) {
   return (
     <button
@@ -43,7 +49,7 @@ function Ring({ name, unseen, onClick, label }: {
       <span style={{
         fontSize: 10.5, color: unseen ? C.text : C.subtext,
         maxWidth: 66, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-      }}><bdi>{name}</bdi></span>
+      }}><bdi dir="auto">{caption ?? name}</bdi></span>
     </button>
   );
 }
@@ -57,6 +63,7 @@ export function StatusStrip({ me, onReply }: {
   const { t } = useTranslation();
   const a = t.app;
   const { authors, mine, loading, busy, error, post, markSeen, remove } = useStories(me);
+  const myName = useMyName();
   const fileRef = useRef<HTMLInputElement | null>(null);
   const [viewing, setViewing] = useState<StoryAuthor | null>(null);
   const [composing, setComposing] = useState(false);
@@ -83,7 +90,7 @@ export function StatusStrip({ me, onReply }: {
   return (
     <div style={{ marginBottom: 10 }}>
       <input
-        ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp" hidden
+        ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp" style={VISUALLY_HIDDEN} tabIndex={-1} aria-hidden="true"
         onChange={(e) => {
           const f = e.target.files?.[0];
           e.target.value = '';   // so picking the same file twice still fires
@@ -99,6 +106,9 @@ export function StatusStrip({ me, onReply }: {
         {/* Yours: opens what you posted, or the composer when you have none. */}
         <Ring
           name={mine && mine.stories.length ? me : a.myStatus}
+          // The caption is the only half that becomes a chosen name: `name`
+          // still keys the photo, and a photo is stored against a handle.
+          caption={mine && mine.stories.length ? (myName || me) : a.myStatus}
           unseen={!!mine && !mine.seen}
           label={mine && mine.stories.length ? a.myStatus : a.addStatus}
           onClick={() => (mine && mine.stories.length ? setViewing(mine) : setComposing(true))}

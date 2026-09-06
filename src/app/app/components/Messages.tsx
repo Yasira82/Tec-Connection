@@ -43,6 +43,7 @@ import { useBackButton } from '@/lib-client/connection/useBackButton';
 import { VoiceNote } from './VoiceNote';
 import { downscaleImage } from '@/lib-client/connection/downscaleImage';
 import { useLongPress } from '@/lib-client/connection/useLongPress';
+import { VISUALLY_HIDDEN } from '@/lib-client/visuallyHidden';
 
 /** The service normalizes every username; the session hook does not. */
 const norm = (u: string) => (u ?? '').trim().replace(/^@+/, '').toLowerCase();
@@ -348,7 +349,11 @@ function Chat({ id, me, conversations, onBack }: {
 
   const isGroup = thread?.kind === 'GROUP';
   const peerName = thread?.peer ?? '';
-  const title = isGroup ? (thread?.title ?? '') : `@${peerName}`;
+  // The chosen name leads in the header too, with the handle on the line under
+  // it — where the member count / "Direct message" already sits. Never instead
+  // of the handle: this is the screen you decide to block or report from.
+  const peerChosen = !isGroup ? (thread?.peer_name ?? '') : '';
+  const title = isGroup ? (thread?.title ?? '') : (peerChosen || `@${peerName}`);
   // A blocked thread stays READABLE — a block ends contact, it does not delete
   // the history you already have.
   const peerBlocked = !isGroup && !!peerName && isBlocked(peerName);
@@ -359,6 +364,10 @@ function Chat({ id, me, conversations, onBack }: {
     && thread?.posting === 'ADMINS'
     && thread?.role !== 'owner'
     && thread?.role !== 'admin';
+  // Silenced by a moderator. Checked BEFORE the announcement policy below, the
+  // same order the service uses: a silenced admin is still silenced, and being
+  // told "only admins can post" while you are one would be the wrong sentence.
+  const silencedMe = isGroup && thread?.silenced_me === true;
   const alone = isGroup && (thread?.members.length ?? 0) <= 1;
 
   // Day separators are computed once per render of the transcript rather than
@@ -452,7 +461,9 @@ function Chat({ id, me, conversations, onBack }: {
           <span style={{ fontSize: 11.5, color: typing.length ? C.success : C.subtext }}>
             {typing.length
               ? <bdi dir="auto">{isGroup ? `@${typing[0]} ${a.typingNow}` : a.typingNow}</bdi>
-              : isGroup ? <bdi>{thread?.members.length} {a.membersLabel}</bdi> : a.directLabel}
+              : isGroup ? <bdi>{thread?.members.length} {a.membersLabel}</bdi>
+              : peerChosen ? <bdi>@{peerName}</bdi>
+              : a.directLabel}
           </span>
         </button>
         <button onClick={() => setSearching(true)} aria-label={a.searchMessages} style={{
@@ -767,6 +778,19 @@ function Chat({ id, me, conversations, onBack }: {
           <p style={{ flex: 1, fontSize: 12.5, color: C.subtext, margin: 0, lineHeight: 1.5 }}>{a.blockedNotice}</p>
           <button style={quietBtn} disabled={blockBusy} onClick={() => { void unblock(peerName); }}>{a.unblock}</button>
         </div>
+      ) : silencedMe ? (
+        // Replaced, not disabled — the same reason as the announcement notice
+        // below. A keyboard that opens onto a box whose send button refuses is
+        // a bug as far as the person holding the phone is concerned.
+        //
+        // It says what happened and nothing about who did it. Naming the
+        // moderator turns a group's decision into a quarrel between two people,
+        // and the list in the sheet already tells whoever can lift it.
+        <div style={{ paddingTop: 12, borderTop: `1px solid ${C.border}` }}>
+          <p style={{ fontSize: 12.5, color: C.subtext, margin: 0, lineHeight: 1.5, textAlign: 'center' }}>
+            🤐 {a.youAreSilenced}
+          </p>
+        </div>
       ) : readOnly ? (
         // An announcement group, seen by someone who may not post.
         //
@@ -875,7 +899,7 @@ function Chat({ id, me, conversations, onBack }: {
         {/* `capture` is deliberately absent: without it Android offers BOTH the
             camera and the gallery, which is what people expect from a paperclip. */}
         <input
-          ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp" hidden
+          ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp" style={VISUALLY_HIDDEN} tabIndex={-1} aria-hidden="true"
           onChange={(e) => {
             const f = e.target.files?.[0];
             e.target.value = '';   // so picking the same file twice still fires
@@ -1014,9 +1038,11 @@ function Chat({ id, me, conversations, onBack }: {
           visibility={thread?.visibility}
           description={thread?.description}
           admins={thread?.admins ?? []}
+          silenced={thread?.silenced ?? []}
           ownerName={thread?.owner ?? null}
           title={title}
           members={thread.members}
+          memberNames={thread.member_names ?? {}}
           role={thread.role}
           me={meNorm}
           peerName={peerName}
@@ -1066,7 +1092,12 @@ function dayLabel(iso: string, a: Record<string, string>): string {
 // ── the chat list ───────────────────────────────────────────────────────────
 function Row({ c, onOpen, a }: { c: Summary; onOpen: () => void; a: Record<string, string> }) {
   const isGroup = c.kind === 'GROUP';
-  const name = isGroup ? (c.title ?? '') : `@${c.peer ?? ''}`;
+  // A chosen name leads and the handle goes under it — never instead of it.
+  // The handle is what a block, a report and a payout are keyed on, and it is
+  // the half nobody else can claim. A group has a title and no handle.
+  const handle = c.peer ? `@${c.peer}` : '';
+  const chosen = !isGroup ? (c.peer_name ?? '') : '';
+  const name = isGroup ? (c.title ?? '') : (chosen || handle);
   return (
     <button onClick={onOpen} style={{
       width: '100%', textAlign: 'start', display: 'flex', alignItems: 'center', gap: 12,
@@ -1077,6 +1108,9 @@ function Row({ c, onOpen, a }: { c: Summary; onOpen: () => void; a: Record<strin
         <span style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
           <span style={{ flex: 1, minWidth: 0, fontSize: 15, fontWeight: 700, color: C.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             <bdi dir="auto">{name}</bdi>
+            {chosen && (
+              <bdi style={{ fontSize: 12, fontWeight: 600, color: C.subtext, marginInlineStart: 6 }}>{handle}</bdi>
+            )}
           </span>
           {/* Muted, and it has to be visible HERE. A muted thread still shows a
               count, so without this mark the only difference between "quiet

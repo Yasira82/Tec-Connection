@@ -20,6 +20,13 @@ export interface Summary {
   kind: 'DIRECT' | 'GROUP';
   title: string | null;
   peer: string | null;
+  /**
+   * The peer's chosen name, when they set one. NULL means "no name" — the
+   * handle is then the whole of who they are on screen. It is deliberately not
+   * back-filled with the handle, so a row can print both lines when there is a
+   * name and one line when there is not.
+   */
+  peer_name?: string | null;
   members: number;
   unread: number;
   /**
@@ -80,9 +87,23 @@ export interface Thread {
   role: 'owner' | 'admin' | 'member';
   /** GROUP only — who helps run it. The OWNER is `owner`, and is not in here. */
   admins?: string[];
+  /**
+   * GROUP only — who has been silenced by a moderator.
+   *
+   * Sent ONLY to somebody who can lift it, plus the silenced person themselves.
+   * Being unable to post is already visible; a badge for the whole group would
+   * turn a correction into a public sanction.
+   */
+  silenced?: string[];
+  /** GROUP only — whether the CALLER is silenced, so the composer can say why. */
+  silenced_me?: boolean;
   /** Whether older messages exist above the ones in this payload. */
   hasMore?: boolean;
   peer: string | null;
+  /** DIRECT only — the peer's chosen name, or null. See Summary.peer_name. */
+  peer_name?: string | null;
+  /** `{ handle: name }` for everyone on screen. Only those who set one appear. */
+  member_names?: Record<string, string>;
   members: string[];
   /**
    * DIRECT only — when the other person last read this thread. A group reports

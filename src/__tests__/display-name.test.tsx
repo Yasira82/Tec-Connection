@@ -143,3 +143,63 @@ describe('saving without publishing', () => {
     });
   });
 });
+
+// "Show when I'm online" — the sharpest disclosure on this profile.
+//
+// A follower count is a fact about the past; presence says where somebody is at
+// this second. Two properties matter and both are easy to lose in a tidy-up:
+// the switch must be reachable WITHOUT publishing, and toggling it must not
+// carry any other change along with it.
+describe('the online switch', () => {
+  const profile = (over: Record<string, unknown> = {}) => ({
+    ...PROFILE, display_name: '', published: false, showFollowers: true, showOnline: true, ...over,
+  });
+
+  const stub = (p: Record<string, unknown>) => {
+    vi.stubGlobal('fetch', vi.fn(async (url: string, init?: RequestInit) => ({
+      ok: true,
+      json: async () => (init?.method === 'PUT' ? { ok: true, profile: p } : { profile: p, isPro: false }),
+    })) as unknown as typeof fetch);
+  };
+  const put = () => (fetch as unknown as ReturnType<typeof vi.fn>).mock.calls
+    .find((c) => (c[1] as RequestInit | undefined)?.method === 'PUT');
+
+  afterEach(() => { vi.unstubAllGlobals(); cleanup(); });
+
+  it('is offered even to an UNLISTED profile', async () => {
+    // The green dot shows to your groups and your followers whether or not you
+    // are in the public directory. Gating this on "publish" would put the one
+    // switch that matters most behind opting into something else.
+    stub(profile({ published: false }));
+    render(<LocaleProvider><ProfileEditor /></LocaleProvider>);
+    await waitFor(() => expect(screen.getByText("Show when I'm online")).toBeTruthy());
+    // The follower switch, by contrast, has no page to appear on yet.
+    expect(screen.queryByText('Show my follower count')).toBeNull();
+  });
+
+  it('turning it off sends show_online:false and NOTHING about publishing', async () => {
+    stub(profile({ published: false }));
+    render(<LocaleProvider><ProfileEditor /></LocaleProvider>);
+    await waitFor(() => expect(screen.getByText("Show when I'm online")).toBeTruthy());
+
+    fireEvent.click(screen.getByRole('button', { pressed: true }));
+    await waitFor(() => {
+      const body = JSON.parse(String((put()![1] as RequestInit).body));
+      expect(body.show_online).toBe(false);
+      expect(body.published).toBe(false);
+      // Absent, not false: an unrelated switch must never ride along on a save.
+      expect(body).not.toHaveProperty('show_followers');
+    });
+  });
+
+  it('reads OFF as off, and offers to turn it back on', async () => {
+    stub(profile({ showOnline: false }));
+    render(<LocaleProvider><ProfileEditor /></LocaleProvider>);
+    await waitFor(() => expect(screen.getByText(/Nobody sees you as online/)).toBeTruthy());
+
+    fireEvent.click(screen.getByRole('button', { pressed: false }));
+    await waitFor(() => {
+      expect(JSON.parse(String((put()![1] as RequestInit).body)).show_online).toBe(true);
+    });
+  });
+});

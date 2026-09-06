@@ -76,3 +76,35 @@ describe('presence in a group', () => {
     expect(result.current.online.size).toBe(0);
   });
 });
+
+// Silencing — the middle step a group had no way to take.
+//
+// Until now the only answer to somebody being out of line was to REMOVE them,
+// which ends the matter rather than correcting it and cannot be undone from the
+// group's side once they are gone. Three properties are asserted here, and each
+// one is a rule that would be easy to lose in a later tidy-up.
+describe('silencing a member', () => {
+  it('reaches exactly as far as Remove — never further', () => {
+    // Silencing is the LESSER power. If its reach were computed separately it
+    // could drift wider than removal, which is the one direction that must
+    // never happen: an admin could then silence an admin they cannot remove.
+    expect(src).toContain('const canSilence = canRemove;');
+  });
+
+  it('is one tap each way, unlike Remove', () => {
+    // Remove is armed twice because it cannot be undone. Making the reversible
+    // action feel as heavy as the irreversible one is how people reach for the
+    // irreversible one.
+    expect(src).toContain('void setSilenced(u, !isQuiet)');
+    expect(src).not.toMatch(/armedSilence/);
+  });
+
+  it('the composer is REPLACED for a silenced member, not disabled', () => {
+    // A keyboard that opens onto a box whose send button refuses is a bug as
+    // far as the person holding the phone is concerned.
+    expect(messages).toContain('a.youAreSilenced');
+    // And checked BEFORE the announcement policy: a silenced admin is still
+    // silenced, and "only admins can post" is the wrong sentence to show one.
+    expect(messages.indexOf('silencedMe ?')).toBeLessThan(messages.indexOf('readOnly ?'));
+  });
+});
