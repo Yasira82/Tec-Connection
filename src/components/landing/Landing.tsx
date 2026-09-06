@@ -66,7 +66,28 @@ export function Landing({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoading, isAuthenticated, router]);
 
-  const handleLogin = () => ssoRedirect(HUB_URL, `${APP_URL}${target()}`);
+  /**
+   * Come back to the host the visitor is ACTUALLY on.
+   *
+   * This used to be `${APP_URL}${target()}` — a build-time constant. One build
+   * serves two Pi apps on two hosts (`connection.tecosystem.app` is the Mainnet
+   * app, `tec-connection.vercel.app` the paired Testnet one), so a signed-in
+   * visitor on the Testnet host was handed to the Hub with the MAINNET host as
+   * the return address. The Hub logged them in correctly and returned them to
+   * the other origin — where the cookies then lived. The Testnet host never got
+   * a session, and the app on it kept saying "Unauthorized" with no error
+   * anywhere to explain it.
+   *
+   * `FollowCta` already did this correctly; only the login did not.
+   *
+   * Setting `NEXT_PUBLIC_APP_URL` per host is not the fix — there is one build
+   * and one value, so pointing it at either host breaks the other. Nothing is
+   * weakened by reading the origin: it is the origin this page was served from,
+   * which a visitor cannot forge, and the Hub validates the target against its
+   * own ALLOWED_TARGETS regardless.
+   */
+  const handleLogin = () =>
+    ssoRedirect(HUB_URL, `${typeof window === 'undefined' ? APP_URL : window.location.origin}${target()}`);
 
   const steps = [
     { n: '1', title: t.step1Title, body: t.step1Body },

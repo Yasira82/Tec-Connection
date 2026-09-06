@@ -150,7 +150,13 @@ describe('the login redirect keeps the invite', () => {
     // person arrived signed in, on the right app, nowhere near the group.
     const landing = readFileSync(join(process.cwd(), 'src/components/landing/Landing.tsx'), 'utf8');
     expect(landing).toMatch(/searchParams\.get\('redirect'\)/);
-    expect(landing).toMatch(/ssoRedirect\(HUB_URL, `\$\{APP_URL\}\$\{target\(\)\}`\)/);
+    // The origin half of this moved: it is now read from `window.location.origin`
+    // so a visitor on the paired Testnet host comes back to the host they were
+    // on (see return-to-same-origin.test.ts). What THIS test is about is the
+    // other half — that `target()` is still what decides the path, so an invite
+    // is not thrown away here. Pin that, and let the origin be pinned where it
+    // belongs.
+    expect(landing).toMatch(/ssoRedirect\(HUB_URL,[\s\S]{0,200}\$\{target\(\)\}`\)/);
     expect(landing).toMatch(/router\.replace\(target\(\)\)/);
   });
 
