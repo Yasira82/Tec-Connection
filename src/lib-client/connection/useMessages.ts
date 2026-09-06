@@ -87,6 +87,16 @@ export interface Thread {
   role: 'owner' | 'admin' | 'member';
   /** GROUP only — who helps run it. The OWNER is `owner`, and is not in here. */
   admins?: string[];
+  /**
+   * GROUP only — who has been silenced by a moderator.
+   *
+   * Sent ONLY to somebody who can lift it, plus the silenced person themselves.
+   * Being unable to post is already visible; a badge for the whole group would
+   * turn a correction into a public sanction.
+   */
+  silenced?: string[];
+  /** GROUP only — whether the CALLER is silenced, so the composer can say why. */
+  silenced_me?: boolean;
   /** Whether older messages exist above the ones in this payload. */
   hasMore?: boolean;
   peer: string | null;

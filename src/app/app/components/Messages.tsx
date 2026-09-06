@@ -364,6 +364,10 @@ function Chat({ id, me, conversations, onBack }: {
     && thread?.posting === 'ADMINS'
     && thread?.role !== 'owner'
     && thread?.role !== 'admin';
+  // Silenced by a moderator. Checked BEFORE the announcement policy below, the
+  // same order the service uses: a silenced admin is still silenced, and being
+  // told "only admins can post" while you are one would be the wrong sentence.
+  const silencedMe = isGroup && thread?.silenced_me === true;
   const alone = isGroup && (thread?.members.length ?? 0) <= 1;
 
   // Day separators are computed once per render of the transcript rather than
@@ -774,6 +778,19 @@ function Chat({ id, me, conversations, onBack }: {
           <p style={{ flex: 1, fontSize: 12.5, color: C.subtext, margin: 0, lineHeight: 1.5 }}>{a.blockedNotice}</p>
           <button style={quietBtn} disabled={blockBusy} onClick={() => { void unblock(peerName); }}>{a.unblock}</button>
         </div>
+      ) : silencedMe ? (
+        // Replaced, not disabled — the same reason as the announcement notice
+        // below. A keyboard that opens onto a box whose send button refuses is
+        // a bug as far as the person holding the phone is concerned.
+        //
+        // It says what happened and nothing about who did it. Naming the
+        // moderator turns a group's decision into a quarrel between two people,
+        // and the list in the sheet already tells whoever can lift it.
+        <div style={{ paddingTop: 12, borderTop: `1px solid ${C.border}` }}>
+          <p style={{ fontSize: 12.5, color: C.subtext, margin: 0, lineHeight: 1.5, textAlign: 'center' }}>
+            🤐 {a.youAreSilenced}
+          </p>
+        </div>
       ) : readOnly ? (
         // An announcement group, seen by someone who may not post.
         //
@@ -1021,6 +1038,7 @@ function Chat({ id, me, conversations, onBack }: {
           visibility={thread?.visibility}
           description={thread?.description}
           admins={thread?.admins ?? []}
+          silenced={thread?.silenced ?? []}
           ownerName={thread?.owner ?? null}
           title={title}
           members={thread.members}
