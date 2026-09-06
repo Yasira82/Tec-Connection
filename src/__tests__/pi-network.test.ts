@@ -85,24 +85,28 @@ describe('the client and the server read the same fact separately', () => {
     expect(route).toContain("networkMetadata(req.headers.get('host'))");
   });
 
-  it('the sandbox override is confined to the Testnet host', () => {
-    // `?pi_sandbox=0` exists to test one hypothesis in a tap instead of a
-    // redeploy: the Pi bridge went silent on the Testnet host ("Messaging
-    // promise with id 1 timed out after 120000ms") and this flag is the one
-    // thing that differs there.
+  it('the Testnet host gets sandbox=FALSE — sandbox is not testnet', () => {
+    // Measured, not assumed. With sandbox:true on `*.vercel.app` the Pi bridge
+    // never answered its first message ("Messaging promise with id 1 timed out
+    // after 120000ms"). Same host, same build, that flag false: the wallet
+    // opened and the payment reached approve.
     //
-    // It must NEVER reach the Mainnet host. The ternary is what confines it —
-    // the override is read only inside the `__isTestnetHost` branch, so on
-    // `connection.tecosystem.app` no query param can change what Pi.init runs
-    // with. And it changes only the CLIENT's view: what a payment is approved
-    // against still comes from the BFF's own Host header.
-    expect(layout).toMatch(/__isTestnetHost\s*\n?\s*\?\s*\(__q !== '0'\)/);
+    // They are different axes. The HOST decides which Pi app the visitor is in
+    // (and so which network the server approves against); `sandbox` points the
+    // SDK at Pi's Sandbox ENVIRONMENT, a third thing. A paired Testnet app is a
+    // normal app on its own domain, not the sandbox.
+    expect(layout).toMatch(/__isTestnetHost\s*\n?\s*\?\s*\(__q === '1'\)/);
+    // The opposite default must not creep back.
+    expect(layout).not.toMatch(/__q !== '0'/);
+  });
+
+  it('the sandbox override is confined to the Testnet host', () => {
     expect(layout).toContain("get('pi_sandbox')");
     // The Mainnet arm of that ternary is the build flag, untouched by the URL.
     expect(layout).toMatch(/:\s*\$\{process\.env\.NEXT_PUBLIC_PI_SANDBOX === 'true'\}/);
     // …and `__q` is read in exactly one place, so it cannot have grown a second
     // use on the Mainnet side.
-    expect(layout.match(/__q !== '0'/g) ?? []).toHaveLength(1);
+    expect(layout.match(/__q === '1'/g) ?? []).toHaveLength(1);
   });
 
   it('the BFF DROPS whatever the client sent', () => {
