@@ -78,7 +78,19 @@ export default async function RootLayout({
                   try {
                     window.Pi.init({
                       version: '2.0',
-                      sandbox: ${process.env.NEXT_PUBLIC_PI_SANDBOX === 'true'},
+                      // The SAME host rule the BFF uses, read here from the
+                      // browser's own location. A .pi domain needs a Pi app,
+                      // and Pi issues every app twice — a Mainnet one and a
+                      // paired Testnet one, both pointing at THIS deployment on
+                      // different hosts. One build serves both, so the build-time
+                      // flag alone cannot answer which app the visitor is in.
+                      //
+                      // Two independent reads of one fact, rather than one side
+                      // telling the other: the server decides from its Host
+                      // header what the payment is approved against, and cannot
+                      // be told otherwise by a client.
+                      sandbox: /\\.vercel\\.app$/i.test(location.hostname)
+                               || ${process.env.NEXT_PUBLIC_PI_SANDBOX === 'true'},
                     });
                     window.__TEC_PI_READY = true;
                     window.dispatchEvent(new Event('tec-pi-ready'));
