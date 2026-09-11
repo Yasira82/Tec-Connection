@@ -89,7 +89,8 @@ export default async function RootLayout({
                 } catch(e) {}
                 if (typeof window.Pi !== 'undefined') {
                   try {
-                    var __isTestnetHost = /\\.vercel\\.app$/i.test(location.hostname);
+                    var __isTestnetHost = /\\.vercel\\.app$/i.test(location.hostname)
+                      || /-test\\.tecosystem\\.app$/i.test(location.hostname);
                     // SANDBOX IS NOT TESTNET. They are different axes, and
                     // conflating them cost a day:
                     //
