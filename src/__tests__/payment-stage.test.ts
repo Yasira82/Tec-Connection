@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { createU2APayment, type PaymentStage } from '@/lib/pi-payment';
+import { piSession } from '@/lib/pi/pi-session';
 
 /**
  * A Mode-2 payment that stalls inside the Pi SDK reaches NO server: no Vercel
@@ -28,6 +29,13 @@ beforeEach(() => {
   vi.useFakeTimers();
   stages   = [];
   captured = null;
+  // The Pi session is now module state shared by the warm-up and the tap (it
+  // exists so the two can never run two concurrent Pi.authenticate calls).
+  // Module state survives between tests: without this, the first case leaves
+  // the session authenticated and every later case skips the handshake, so the
+  // stage sequence under test never happens. Reset it, do not weaken the
+  // assertions — the sequence is the contract.
+  piSession.reset();
   // A 201 for approve/complete — these tests are about the SDK half.
   vi.stubGlobal('fetch', vi.fn(async () => ({ ok: true, json: async () => ({}) })));
   (globalThis as Record<string, unknown>).window = globalThis;

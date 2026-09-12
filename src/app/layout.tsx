@@ -1,8 +1,10 @@
+import { PiWarmup } from '@/components/pi/PiWarmup';
 import { RefCapture } from '@/components/referral/RefCapture';
 import { RefApply } from '@/components/referral/RefApply';
 import { LocaleProvider } from '@/lib/i18n';
 import { THEME_BOOT_SCRIPT } from '@/lib-client/theme';
 import { getI18n } from '@/lib/i18n/server';
+import { HUB_HOSTS } from '@/lib/pi-network';
 import type { Metadata } from 'next';
 import '@/styles/tec-design-tokens.css';
 // App-owned polish for the three public surfaces (landing · /discover · /u/<handle>).
@@ -53,10 +55,8 @@ export default async function RootLayout({
             snaps to light on every load — a flash worse than not offering the
             choice at all. */}
         <script dangerouslySetInnerHTML={{ __html: THEME_BOOT_SCRIPT }} />
-        <script
-          src="https://sdk.minepi.com/pi-sdk.js"
-          async
-        />
+        {/* The Pi SDK is NOT loaded here. It is injected below, and ONLY when
+            this is not a Hub-owned session — see the note in that script. */}
         <script
           dangerouslySetInnerHTML={{
             __html: `
@@ -65,18 +65,42 @@ export default async function RootLayout({
                 // session — never Pi.init() here (it poisons the session and
                 // breaks the Hub PaymentModal). The SSO landing persists the
                 // flag; referrer covers direct hops.
+                //
+                // BOTH Hub hosts. The list is interpolated from
+                // lib/pi-network.ts (HUB_HOSTS) because this script runs before
+                // any module and cannot import — but it must not become a
+                // second, drifting copy of the answer. It named only the
+                // Mainnet Hub, so a hop from the Testnet Hub ran Pi.init() into
+                // a session the Hub owns and every later Pi call went silent.
+                var __hubHosts = ${JSON.stringify(HUB_HOSTS)};
+                var __fromHub = false;
                 try {
-                  if (sessionStorage.getItem('__tec_hub_entry') === '1' ||
-                      document.referrer.toLowerCase().indexOf('hub.tecosystem.app') !== -1) {
+                  __fromHub = !!document.referrer &&
+                    __hubHosts.indexOf(new URL(document.referrer).hostname.toLowerCase()) !== -1;
+                } catch (e) {}
+                try {
+                  if (sessionStorage.getItem('__tec_hub_entry') === '1' || __fromHub) {
                     window.__TEC_PI_FOREIGN_SESSION = true;
                     window.__TEC_PI_READY = true;
                     window.dispatchEvent(new Event('tec-pi-ready'));
                     return;
                   }
                 } catch(e) {}
-                if (typeof window.Pi !== 'undefined') {
+                // Standalone session — load the SDK now, then init it. In a
+                // Hub-owned session it is not merely left un-init'd, it is NOT
+                // LOADED AT ALL: pulling pi-sdk.js opens Pi's bridge on this
+                // origin regardless of init, and ADR-007 says an app in a
+                // Hub-owned session must not touch Pi. Loading its SDK is
+                // touching it.
+                var __boot = function () {
+                  if (typeof window.Pi === 'undefined') {
+                    window.__TEC_PI_ERROR = true;
+                    window.dispatchEvent(new Event('tec-pi-error'));
+                    return;
+                  }
                   try {
-                    var __isTestnetHost = /\\.vercel\\.app$/i.test(location.hostname);
+                    var __isTestnetHost = /\\.vercel\\.app$/i.test(location.hostname)
+                      || /-test\\.tecosystem\\.app$/i.test(location.hostname);
                     // SANDBOX IS NOT TESTNET. They are different axes, and
                     // conflating them cost a day:
                     //
@@ -129,13 +153,25 @@ export default async function RootLayout({
                     window.__TEC_PI_ERROR = true;
                     window.dispatchEvent(new Event('tec-pi-error'));
                   }
-                }
+                };
+
+                if (typeof window.Pi !== 'undefined') { __boot(); return; }
+                var __s = document.createElement('script');
+                __s.src   = 'https://sdk.minepi.com/pi-sdk.js';
+                __s.async = true;
+                __s.onload  = __boot;
+                __s.onerror = function () {
+                  window.__TEC_PI_ERROR = true;
+                  window.dispatchEvent(new Event('tec-pi-error'));
+                };
+                document.head.appendChild(__s);
               });
             `,
           }}
         />
       </head>
       <body>
+        <PiWarmup />
         <LocaleProvider initialLocale={locale}>
           <RefCapture />
           <RefApply />
