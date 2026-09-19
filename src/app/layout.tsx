@@ -11,6 +11,7 @@ import '@/styles/tec-design-tokens.css';
 // Kept out of tec-design-tokens.css on purpose: that file is synced with the tec-ui
 // package across the fleet, so app-specific rules there become drift.
 import '@/styles/public-surface.css';
+import { ArrivalReport } from '@/components/pioneer/ArrivalReport';
 
 export const metadata: Metadata = {
   title:       'TEC Connection',
@@ -172,6 +173,7 @@ export default async function RootLayout({
       </head>
       <body>
         <PiWarmup />
+        <ArrivalReport />
         <LocaleProvider initialLocale={locale}>
           <RefCapture />
           <RefApply />
