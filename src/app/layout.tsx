@@ -12,6 +12,7 @@ import '@/styles/tec-design-tokens.css';
 // package across the fleet, so app-specific rules there become drift.
 import '@/styles/public-surface.css';
 import { ArrivalReport } from '@/components/pioneer/ArrivalReport';
+import { QuestReturn } from '@/components/pioneer/QuestReturn';
 
 export const metadata: Metadata = {
   title:       'TEC Connection',
@@ -174,6 +175,7 @@ export default async function RootLayout({
       <body>
         <PiWarmup />
         <ArrivalReport />
+        <QuestReturn />
         <LocaleProvider initialLocale={locale}>
           <RefCapture />
           <RefApply />
