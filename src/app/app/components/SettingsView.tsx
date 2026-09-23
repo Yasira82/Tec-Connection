@@ -128,7 +128,7 @@ export function SettingsView() {
             <div style={{ fontSize: 18, fontWeight: 800, color: C.text }}>
               {myName ? <bdi dir="auto">{myName}</bdi>
                       : username ? <bdi>@{username}</bdi>
-                      : signedIn ? s.member : s.notSignedIn}
+                      : signedIn ? s.member : me.loading ? '…' : s.notSignedIn}
             </div>
             {myName && username && (
               <div style={{ fontSize: 13, color: C.subtext, marginTop: 1 }}><bdi>@{username}</bdi></div>
