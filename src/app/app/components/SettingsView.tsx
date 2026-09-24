@@ -128,7 +128,15 @@ export function SettingsView() {
             <div style={{ fontSize: 18, fontWeight: 800, color: C.text }}>
               {myName ? <bdi dir="auto">{myName}</bdi>
                       : username ? <bdi>@{username}</bdi>
-                      : signedIn ? s.member : s.notSignedIn}
+                      : signedIn ? s.member : me.loading ? '…' : s.notSignedIn}
+              {/* Why — the word `/me` answered with, small and only when it said
+                  no. Signed-out on a device that is signed in is the one case
+                  this app cannot diagnose from anywhere else. */}
+              {!myName && !username && !signedIn && !me.loading && me.reason && (
+                <span style={{ fontSize: 11, fontWeight: 600, color: C.subtext, marginInlineStart: 8 }}>
+                  · {me.reason}
+                </span>
+              )}
             </div>
             {myName && username && (
               <div style={{ fontSize: 13, color: C.subtext, marginTop: 1 }}><bdi>@{username}</bdi></div>
