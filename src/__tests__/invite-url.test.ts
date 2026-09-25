@@ -131,7 +131,7 @@ describe('the invite waits for the session before it is spent', () => {
 
 describe('the login redirect keeps the invite', () => {
   const mw = () =>
-    readFileSync(join(process.cwd(), 'middleware.ts'), 'utf8')
+    readFileSync(join(process.cwd(), 'src', 'middleware.ts'), 'utf8')
       .replace(/\/\*[\s\S]*?\*\//g, '')
       .replace(/^\s*\/\/.*$/gm, '');
 
@@ -167,9 +167,11 @@ describe('the login redirect keeps the invite', () => {
     expect(landing).toMatch(/!raw\.startsWith\('\/\/'\)/);
   });
 
-  it('still sends them to the landing, not somewhere a caller chose', () => {
-    // The destination is ours; only the return path is taken from the request,
-    // and sso-callback refuses anything that is not a same-origin absolute path.
-    expect(mw()).toMatch(/new URL\('\/', req\.url\)/);
+  it('still sends them somewhere WE chose, not somewhere a caller chose', () => {
+    // The destination is the Hub's SSO (ours, C-123 §11); only the return path
+    // is taken from the request, on THIS origin — and the Hub checks it against
+    // ALLOWED_TARGETS, and sso-callback refuses anything not same-origin.
+    expect(mw()).toMatch(/new URL\('\/api\/auth\/sso', HUB_URL\)/);
+    expect(mw()).toMatch(/req\.nextUrl\.origin/);
   });
 });

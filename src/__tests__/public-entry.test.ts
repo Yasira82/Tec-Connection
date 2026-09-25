@@ -13,7 +13,7 @@
 // PROTECTED_ROUTES — or letting the redirect swallow them — closes the door again,
 // silently, and that is exactly the failure this file exists to make loud.
 import { describe, it, expect } from 'vitest';
-import { middleware } from '../../middleware';
+import { middleware } from '../middleware';
 import { NextRequest } from 'next/server';
 
 const get = (path: string) =>
@@ -26,7 +26,7 @@ describe('public entry surfaces are reachable with NO session', () => {
   for (const path of PUBLIC) {
     it(`${path} is not redirected to login`, () => {
       const res = get(path);
-      // A guard redirect is a 307 to '/?redirect=…'. Anything else (the pass-through
+      // A guard redirect is a 307 to the Hub's SSO. Anything else (the pass-through
       // NextResponse.next(), 200) means the request was allowed through.
       expect(res.headers.get('location')).toBeNull();
       expect(res.status).toBe(200);
@@ -41,9 +41,11 @@ describe('the personal graph stays behind the session (P6)', () => {
       const location = res.headers.get('location');
       expect(location).not.toBeNull();
       const url = new URL(location as string);
-      expect(url.pathname).toBe('/');
-      // The originally requested path is preserved so login can return the user to it.
-      expect(url.searchParams.get('redirect')).toBe(path);
+      // Straight into the Hub's SSO (C-123 §11), which returns to the SAME path.
+      expect(url.pathname).toBe('/api/auth/sso');
+      const back = new URL(url.searchParams.get('target') as string);
+      expect(back.origin).toBe('https://connection.tecosystem.app');
+      expect(back.pathname).toBe(path);
     });
   }
 });

@@ -3,6 +3,16 @@ import { NextRequest, NextResponse } from 'next/server';
 // ── Per-app config — adjust for the new app ──────────────────────────
 const PROTECTED_ROUTES  = ['/app', '/dashboard', '/profile', '/settings'];
 const CSRF_SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
+
+// Where a session-less guarded page goes to sign in. A real https URL or the
+// Mainnet Hub — a placeholder such as `C_HUB_URL` once became the redirect
+// target and 404'd login across the fleet. Login is NOT network-routed: the
+// Mainnet Hub signs sessions for Testnet hosts too (lib/pi-network.ts).
+const HUB_URL = /^https?:\/\//i.test((process.env.NEXT_PUBLIC_HUB_URL ?? '').trim())
+  ? (process.env.NEXT_PUBLIC_HUB_URL as string).trim()
+  : 'https://hub.tecosystem.app';
+// Marks the one SSO round trip a guarded page may start (see the guard).
+const SSO_TRIED = '__sso';
 const CSRF_PROTECTED    = [
   '/api/auth/logout',
   '/api/auth/pi-login', // a sign-in is a state change too (login CSRF)
@@ -76,24 +86,26 @@ export function middleware(req: NextRequest) {
     // doubt about identity, do not proceed as if there were one).
     const user  = req.cookies.get('tec_user')?.value;
     if (!token || token.trim() === '' || !user || user.trim() === '') {
-      const loginUrl = new URL('/', req.url);
-      // The QUERY comes too.
+      // No session in THIS context → through the Hub's SSO, straight away (C-123 §3, §11).
       //
-      // This sent back `pathname` alone, so `/app?invite=CODE` became `/app` —
-      // the invite was destroyed before the page it was meant for ever ran.
-      // Anyone who had not signed into THIS app before (the session is
-      // per-origin) tapped a perfectly good link, signed in, and arrived
-      // nowhere near the group, with nothing left to explain why. Someone who
-      // already had a session skipped this branch entirely, which is exactly
-      // why it worked for one account and not the other.
+      // This guard sat at the repo root beside `src/app`, where Next.js never
+      // loads a middleware — so for the whole life of the app it did not run,
+      // `/app` opened for anyone, and a visit from the Quest (standalone, §9)
+      // showed "Not signed in" instead of signing in. It used to send the
+      // visitor to `/`, which only offers a button; the Hub's SSO is silent when
+      // the Hub is signed in in this context, and asks when it is not.
       //
-      // `sso-callback` already refuses anything that is not a same-origin
-      // absolute path, and a query string does not change that.
-      return NextResponse.redirect(
-        Object.assign(loginUrl, {
-          search: new URLSearchParams({ redirect: pathname + req.nextUrl.search }).toString(),
-        }),
-      );
+      // `__sso=1` rides the round trip so it happens ONCE: if the landing comes
+      // back and the context still refused the cookies (LAW 3), the page opens
+      // as it is (§7) instead of bouncing between here and the Hub.
+      //
+      // The QUERY comes too, as before: `/app?invite=CODE` must survive sign-in.
+      if (req.nextUrl.searchParams.get(SSO_TRIED) === '1') return NextResponse.next();
+      const back = new URL(req.nextUrl.pathname + req.nextUrl.search, req.nextUrl.origin);
+      back.searchParams.set(SSO_TRIED, '1');
+      const sso = new URL('/api/auth/sso', HUB_URL);
+      sso.searchParams.set('target', back.toString());
+      return NextResponse.redirect(sso);
     }
   }
 

@@ -3,7 +3,8 @@ import { log } from '@/lib/observability/logger';
 import { arrivedSessionCookies } from '@/lib/auth/session-cookies';
 
 // A refused request says WHICH session cookies it carried (names only) — see
-// session-cookies.ts, and the session bridge it led to (C-123 §11).
+// session-cookies.ts. It is how C-123 §11 was found: `cookies: none` on a page
+// that "only a session could open" meant the guard was not running.
 function refuse(req: NextRequest, reason: string) {
   const cookies = arrivedSessionCookies(req);
   log.warn('auth.me_refused', {
