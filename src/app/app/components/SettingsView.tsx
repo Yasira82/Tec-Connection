@@ -134,7 +134,7 @@ export function SettingsView() {
                   this app cannot diagnose from anywhere else. */}
               {!myName && !username && !signedIn && !me.loading && me.reason && (
                 <span style={{ fontSize: 11, fontWeight: 600, color: C.subtext, marginInlineStart: 8 }}>
-                  · {me.reason}{me.signIn ? ` · ${me.signIn}` : ''}{me.cookies ? ` · got:${me.cookies}` : ''}{me.bridged ? ' · bridged' : ''}
+                  · {me.reason}{me.signIn ? ` · ${me.signIn}` : ''}{me.cookies ? ` · got:${me.cookies}` : ''}
                 </span>
               )}
             </div>
