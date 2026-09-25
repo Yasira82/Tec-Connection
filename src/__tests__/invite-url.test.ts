@@ -129,21 +129,7 @@ describe('the invite waits for the session before it is spent', () => {
   });
 });
 
-describe('the login redirect keeps the invite', () => {
-  const mw = () =>
-    readFileSync(join(process.cwd(), 'src', 'middleware.ts'), 'utf8')
-      .replace(/\/\*[\s\S]*?\*\//g, '')
-      .replace(/^\s*\/\/.*$/gm, '');
-
-  it('carries the QUERY, not just the path', () => {
-    // `/app` is protected, and the guard sent back `pathname` alone — so
-    // `/app?invite=CODE` became `/app` and the invite was destroyed before the
-    // page it was meant for ever ran. Someone who already had a session for
-    // THIS origin skipped the branch entirely, which is exactly why it worked
-    // for one account and not the other.
-    expect(mw()).toMatch(/pathname \+ req\.nextUrl\.search/);
-  });
-
+describe('the sign-in round trip keeps the invite', () => {
   it('is READ by the landing, not dropped a second time', () => {
     // The middleware fix is inert on its own: handleLogin hard-coded `/app`, so
     // an invite that survived the bounce was thrown away here instead — and the
@@ -167,11 +153,4 @@ describe('the login redirect keeps the invite', () => {
     expect(landing).toMatch(/!raw\.startsWith\('\/\/'\)/);
   });
 
-  it('still sends them somewhere WE chose, not somewhere a caller chose', () => {
-    // The destination is the Hub's SSO (ours, C-123 §11); only the return path
-    // is taken from the request, on THIS origin — and the Hub checks it against
-    // ALLOWED_TARGETS, and sso-callback refuses anything not same-origin.
-    expect(mw()).toMatch(/new URL\('\/api\/auth\/sso', HUB_URL\)/);
-    expect(mw()).toMatch(/req\.nextUrl\.origin/);
-  });
 });

@@ -26,7 +26,7 @@ describe('public entry surfaces are reachable with NO session', () => {
   for (const path of PUBLIC) {
     it(`${path} is not redirected to login`, () => {
       const res = get(path);
-      // A guard redirect is a 307 to the Hub's SSO. Anything else (the pass-through
+      // There is no guard redirect any more. Anything else (the pass-through
       // NextResponse.next(), 200) means the request was allowed through.
       expect(res.headers.get('location')).toBeNull();
       expect(res.status).toBe(200);
@@ -34,18 +34,12 @@ describe('public entry surfaces are reachable with NO session', () => {
   }
 });
 
-describe('the personal graph stays behind the session (P6)', () => {
+describe('guarded pages are not redirected either (C-123 §11)', () => {
+  // The personal graph is protected where the data is — every BFF route needs
+  // the session (P6) — not by sending a session-less visit off the origin.
   for (const path of PRIVATE) {
-    it(`${path} redirects to login when no token cookie is present`, () => {
-      const res = get(path);
-      const location = res.headers.get('location');
-      expect(location).not.toBeNull();
-      const url = new URL(location as string);
-      // Straight into the Hub's SSO (C-123 §11), which returns to the SAME path.
-      expect(url.pathname).toBe('/api/auth/sso');
-      const back = new URL(url.searchParams.get('target') as string);
-      expect(back.origin).toBe('https://connection.tecosystem.app');
-      expect(back.pathname).toBe(path);
+    it(`${path} opens with no session`, () => {
+      expect(get(path).headers.get('location')).toBeNull();
     });
   }
 });
