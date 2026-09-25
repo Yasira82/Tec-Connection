@@ -6,6 +6,7 @@
 // Pi username never appears ("TEC Member" / "Not signed in"). /api/auth/me reads the
 // request cookie server-side and returns the actual user. Fail closed (P6).
 import { useEffect, useState } from 'react';
+import { selfSignInStep, SELF_SIGNIN_EVENT } from '@/lib/pi/self-sign-in';
 
 interface Me {
   username: string | null;
@@ -23,10 +24,25 @@ interface Me {
    * from this page, can say what it was told.
    */
   reason: string | null;
+  /**
+   * How far this tab's own Pi sign-in got (self-sign-in.ts): `pi_waiting`,
+   * `pi_auth_failed`, `login_http_401`, `landing_no_cookie`, … Live — it moves
+   * while the page is open. Only worth showing next to a `reason`.
+   */
+  signIn: string | null;
 }
 
 export function useMe(): Me {
-  const [me, setMe] = useState<Me>({ username: null, authenticated: false, loading: true, reason: null });
+  const [me, setMe] = useState<Omit<Me, 'signIn'>>({ username: null, authenticated: false, loading: true, reason: null });
+  const [signIn, setSignIn] = useState<string | null>(null);
+
+  useEffect(() => {
+    const read = () => setSignIn(selfSignInStep());
+    read();
+    const events = [SELF_SIGNIN_EVENT, 'tec-pi-ready', 'tec-pi-error'];
+    events.forEach((e) => window.addEventListener(e, read));
+    return () => events.forEach((e) => window.removeEventListener(e, read));
+  }, []);
 
   useEffect(() => {
     let alive = true;
@@ -48,5 +64,5 @@ export function useMe(): Me {
     return () => { alive = false; };
   }, []);
 
-  return me;
+  return { ...me, signIn };
 }
