@@ -1,4 +1,34 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { log } from '@/lib/observability/logger';
+
+// WHICH of the three session cookies this request carried — names from this
+// fixed list only, never a value, a length or any other cookie.
+//
+// Why: Vercel's logs (2026-09-25) showed `/app` served 200 — the page guard
+// only does that when the navigation carried BOTH tec_access_token and
+// tec_user — and then this route, fetched by that same page a moment later,
+// answered `no_token`. The navigation had the session; the page's own request
+// did not. Whether the fetch arrived with NO cookies or with some of them is
+// the next thing to know, and only the request that failed can say.
+const SESSION_COOKIES = ['tec_access_token', 'tec_user', 'tec_csrf'] as const;
+
+function arrived(req: NextRequest): string {
+  const got = SESSION_COOKIES.filter((n) => req.cookies.has(n)).map((n) => n.slice(4));
+  return got.length ? got.join('+') : 'none';
+}
+
+function refuse(req: NextRequest, reason: string) {
+  const cookies = arrived(req);
+  log.warn('auth.me_refused', {
+    reason,
+    cookies,
+    cookieCount:   req.cookies.getAll().length,
+    fetchSite:     req.headers.get('sec-fetch-site'),
+    fetchMode:     req.headers.get('sec-fetch-mode'),
+    storageAccess: req.headers.get('sec-fetch-storage-access'),
+  });
+  return NextResponse.json({ authenticated: false, user: null, reason, cookies }, { status: 401 });
+}
 
 // Server-side session resolver (C-123 §3). Fail closed: no session → 401 (P6).
 export async function GET(req: NextRequest) {
@@ -11,10 +41,10 @@ export async function GET(req: NextRequest) {
   // token from a cookie Pi Browser did not send in this context is to ask the
   // browser that failed. Open this URL on the phone the moment it happens.
   if (!token || token.trim() === '') {
-    return NextResponse.json({ authenticated: false, user: null, reason: 'no_token' }, { status: 401 });
+    return refuse(req, 'no_token');
   }
   if (!userRaw) {
-    return NextResponse.json({ authenticated: false, user: null, reason: 'no_user' }, { status: 401 });
+    return refuse(req, 'no_user');
   }
 
   try {
@@ -26,6 +56,6 @@ export async function GET(req: NextRequest) {
     }
     return NextResponse.json({ authenticated: true, user });
   } catch {
-    return NextResponse.json({ authenticated: false, user: null, reason: 'bad_user' }, { status: 401 });
+    return refuse(req, 'bad_user');
   }
 }

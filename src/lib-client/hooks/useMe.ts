@@ -30,10 +30,12 @@ interface Me {
    * while the page is open. Only worth showing next to a `reason`.
    */
   signIn: string | null;
+  /** Which session cookies the refused `/me` request carried: `none`, `user+csrf`, … */
+  cookies: string | null;
 }
 
 export function useMe(): Me {
-  const [me, setMe] = useState<Omit<Me, 'signIn'>>({ username: null, authenticated: false, loading: true, reason: null });
+  const [me, setMe] = useState<Omit<Me, 'signIn'>>({ username: null, authenticated: false, loading: true, reason: null, cookies: null });
   const [signIn, setSignIn] = useState<string | null>(null);
 
   useEffect(() => {
@@ -58,6 +60,7 @@ export function useMe(): Me {
           authenticated: r.ok && d?.authenticated === true,
           loading: false,
           reason: r.ok ? null : said ?? `http_${r.status}`,
+          cookies: !r.ok && typeof d?.cookies === 'string' && /^[a-z+]{1,32}$/.test(d.cookies) ? d.cookies : null,
         });
       })
       .catch(() => { if (alive) setMe((p) => ({ ...p, loading: false, reason: 'network' })); });
