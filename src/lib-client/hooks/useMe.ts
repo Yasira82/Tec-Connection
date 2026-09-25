@@ -7,6 +7,7 @@
 // request cookie server-side and returns the actual user. Fail closed (P6).
 import { useEffect, useState } from 'react';
 import { selfSignInStep, SELF_SIGNIN_EVENT } from '@/lib/pi/self-sign-in';
+import { bridgeSession, bridgedRecently } from '@/lib/auth/session-bridge';
 
 interface Me {
   username: string | null;
@@ -32,10 +33,12 @@ interface Me {
   signIn: string | null;
   /** Which session cookies the refused `/me` request carried: `none`, `user+csrf`, … */
   cookies: string | null;
+  /** This tab already ran the session bridge and `/me` still said no. */
+  bridged: boolean;
 }
 
 export function useMe(): Me {
-  const [me, setMe] = useState<Omit<Me, 'signIn'>>({ username: null, authenticated: false, loading: true, reason: null, cookies: null });
+  const [me, setMe] = useState<Omit<Me, 'signIn'>>({ username: null, authenticated: false, loading: true, reason: null, cookies: null, bridged: false });
   const [signIn, setSignIn] = useState<string | null>(null);
 
   useEffect(() => {
@@ -55,12 +58,17 @@ export function useMe(): Me {
         const u = (r.ok ? d?.user ?? null : null) as Record<string, unknown> | null;
         const raw = u?.piUsername ?? u?.username ?? null;
         const said = typeof d?.reason === 'string' && /^[a-z_]{1,24}$/.test(d.reason) ? d.reason : null;
+        // A guarded page with no session in its OWN requests: copy the session
+        // into the store they use (session-bridge.ts). While that navigation
+        // runs, stay "loading" — no "Not signed in" flash on the way.
+        if (!r.ok && bridgeSession(said) === 'navigating') return;
         setMe({
           username: typeof raw === 'string' && raw ? raw : null,
           authenticated: r.ok && d?.authenticated === true,
           loading: false,
           reason: r.ok ? null : said ?? `http_${r.status}`,
           cookies: !r.ok && typeof d?.cookies === 'string' && /^[a-z+]{1,32}$/.test(d.cookies) ? d.cookies : null,
+          bridged: !r.ok && bridgedRecently(),
         });
       })
       .catch(() => { if (alive) setMe((p) => ({ ...p, loading: false, reason: 'network' })); });

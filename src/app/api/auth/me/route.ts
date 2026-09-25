@@ -1,24 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { log } from '@/lib/observability/logger';
+import { arrivedSessionCookies } from '@/lib/auth/session-cookies';
 
-// WHICH of the three session cookies this request carried — names from this
-// fixed list only, never a value, a length or any other cookie.
-//
-// Why: Vercel's logs (2026-09-25) showed `/app` served 200 — the page guard
-// only does that when the navigation carried BOTH tec_access_token and
-// tec_user — and then this route, fetched by that same page a moment later,
-// answered `no_token`. The navigation had the session; the page's own request
-// did not. Whether the fetch arrived with NO cookies or with some of them is
-// the next thing to know, and only the request that failed can say.
-const SESSION_COOKIES = ['tec_access_token', 'tec_user', 'tec_csrf'] as const;
-
-function arrived(req: NextRequest): string {
-  const got = SESSION_COOKIES.filter((n) => req.cookies.has(n)).map((n) => n.slice(4));
-  return got.length ? got.join('+') : 'none';
-}
-
+// A refused request says WHICH session cookies it carried (names only) — see
+// session-cookies.ts, and the session bridge it led to (C-123 §11).
 function refuse(req: NextRequest, reason: string) {
-  const cookies = arrived(req);
+  const cookies = arrivedSessionCookies(req);
   log.warn('auth.me_refused', {
     reason,
     cookies,
