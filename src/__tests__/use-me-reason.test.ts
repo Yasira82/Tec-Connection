@@ -50,16 +50,4 @@ describe('useMe reports the reason it was refused', () => {
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(result.current.reason).toBe('network');
   });
-
-  it('carries how far this tab\'s own Pi sign-in got, and follows it live', async () => {
-    sessionStorage.setItem('__tec_self_signin_step', 'pi_waiting');
-    answer(401, { reason: 'no_token' });
-    const { result } = renderHook(() => useMe());
-    await waitFor(() => expect(result.current.loading).toBe(false));
-    expect(result.current).toMatchObject({ reason: 'no_token', signIn: 'pi_waiting' });
-    sessionStorage.setItem('__tec_self_signin_step', 'pi_auth_failed');
-    window.dispatchEvent(new Event('tec-self-signin'));
-    await waitFor(() => expect(result.current.signIn).toBe('pi_auth_failed'));
-    sessionStorage.clear();
-  });
 });

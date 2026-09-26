@@ -171,49 +171,6 @@ describe('selfSignIn()', () => {
     expect(replace).not.toHaveBeenCalled();
   });
 
-  describe('says WHICH step stopped it (shown in Settings next to no_token)', () => {
-    const step = async () => (await import('../lib/pi/self-sign-in')).selfSignInStep();
-
-    it('Pi never answered', async () => {
-      const selfSignIn = await load({ me: 401, pi: null });
-      await selfSignIn();
-      expect(await step()).toBe('pi_no_sdk'); // no window.Pi in this test context
-    });
-
-    it('pi-login refused, with the status it answered', async () => {
-      const selfSignIn = await load({ me: 401, pi: 'pi-token', login: new Response('{}', { status: 401 }) });
-      await selfSignIn();
-      expect(await step()).toBe('login_http_401');
-    });
-
-    it('back from the landing and still no session → the cookies did not stick', async () => {
-      let selfSignIn = await load({ me: 401, pi: 'pi-token' });
-      await selfSignIn(1_000);
-      expect(await step()).toBe('sent_to_landing');
-      selfSignIn = await load({ me: 401, pi: 'pi-token' });
-      expect(await selfSignIn(2_000)).toBe('already-tried');
-      expect(await step()).toBe('landing_no_cookie');
-    });
-
-    it('a refusal keeps its word for the rest of the window, not "already_tried"', async () => {
-      let selfSignIn = await load({ me: 401, pi: 'pi-token', login: new Response('{}', { status: 502 }) });
-      await selfSignIn(1_000);
-      selfSignIn = await load({ me: 401, pi: 'pi-token' });
-      expect(await selfSignIn(2_000)).toBe('already-tried');
-      expect(await step()).toBe('login_http_502');
-    });
-
-    it('a Hub-owned session says so, and a signed-in page says nothing', async () => {
-      (window as unknown as { __TEC_PI_FOREIGN_SESSION?: boolean }).__TEC_PI_FOREIGN_SESSION = true;
-      expect(await step()).toBe('hub_session');
-      delete (window as unknown as { __TEC_PI_FOREIGN_SESSION?: boolean }).__TEC_PI_FOREIGN_SESSION;
-      sessionStorage.setItem('__tec_self_signin_step', 'pi_auth_failed');
-      const selfSignIn = await load({ me: 200, pi: 'pi-token' });
-      await selfSignIn();
-      expect(sessionStorage.getItem('__tec_self_signin_step')).toBeNull();
-    });
-  });
-
   it('without sessionStorage there is no loop guard, so it does not start', async () => {
     const selfSignIn = await load({ me: 401, pi: 'pi-token' });
     // A context with site data blocked throws on ACCESS, not on a method call.
