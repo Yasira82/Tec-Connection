@@ -39,15 +39,21 @@ export async function callConnection(
   if (!token || !userId) return { status: 401, data: { error: 'Unauthorized' } };
 
   const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
     Authorization:  `Bearer ${token}`,
     'x-request-id': crypto.randomUUID(),
     'x-user-id':    userId,
   };
   if (process.env.INTERNAL_SECRET) headers['x-internal-key'] = process.env.INTERNAL_SECRET;
 
+  // Content-Type ONLY when there is a body. identity-service's Fastify refuses a
+  // JSON content type with nothing in it (FST_ERR_CTP_EMPTY_JSON_BODY → 400), so
+  // sending it on every call made every body-less action fail — "Delete for
+  // everyone" among them (Railway logs, 2026-09-28).
   const init: RequestInit = { method, headers, cache: 'no-store' };
-  if (body !== undefined) init.body = JSON.stringify(body);
+  if (body !== undefined) {
+    headers['Content-Type'] = 'application/json';
+    init.body = JSON.stringify(body);
+  }
 
   try {
     const res  = await fetch(`${GW}${gatewayPath}`, init);

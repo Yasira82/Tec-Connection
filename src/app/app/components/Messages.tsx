@@ -43,6 +43,7 @@ import { useBackButton } from '@/lib-client/connection/useBackButton';
 import { VoiceNote } from './VoiceNote';
 import { downscaleImage } from '@/lib-client/connection/downscaleImage';
 import { useLongPress } from '@/lib-client/connection/useLongPress';
+import { canModerateMessage } from '@/lib-client/connection/moderation';
 import { VISUALLY_HIDDEN } from '@/lib-client/visuallyHidden';
 
 /** The service normalizes every username; the session hook does not. */
@@ -1009,6 +1010,7 @@ function Chat({ id, me, conversations, onBack }: {
         return (
           <MessageActions
             mine={target.mine} deleted={!!target.m.deleted}
+            canModerate={!target.mine && canModerateMessage(thread, target.m.by)}
             onReply={() => { setReplyTo(target.m); setMenuFor(null); }}
             onDelete={(scope) => { void deleteMessage(menuFor, scope); }}
             onReport={() => setReporting({ id: target.m.id, by: target.m.by })}

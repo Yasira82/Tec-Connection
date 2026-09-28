@@ -51,9 +51,16 @@ const REACTIONS = ['👍', '❤️', '😂', '😮', '😢', '🙏'] as const;
 export function MessageActions({
   mine, deleted, onReply, onDelete, onReport, onClose,
   onReact, myReactions = [], canEdit, onEdit, onForward, canPin, pinned, onPin, onCopy,
+  canModerate = false,
 }: {
-  /** Only the sender may clear a message for both sides. */
+  /** The sender may clear a message for both sides — and so may a moderator (below). */
   mine: boolean;
+  /**
+   * A group's owner or admin looking at someone else's message
+   * (`canModerateMessage`). Offers "Delete for everyone" on it; the service
+   * enforces who may take down whose.
+   */
+  canModerate?: boolean;
   /** A tombstone can still be removed from your own copy. */
   deleted: boolean;
   /** Answer this specific message. Absent on a tombstone — there is nothing to quote. */
@@ -195,7 +202,7 @@ export function MessageActions({
 
         {/* Absent, not disabled: an option you can never take should not be on
             the menu explaining why. */}
-        {mine && !deleted && (
+        {(mine || canModerate) && !deleted && (
           <div style={{ borderTop: `1px solid ${C.border}` }}>
             <Choice
               label={a.deleteForEveryone} hint={a.deleteForEveryoneHint}
