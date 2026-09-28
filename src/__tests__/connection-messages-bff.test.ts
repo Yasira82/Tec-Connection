@@ -72,3 +72,38 @@ describe('POST /api/bff/connection/conversations/[id]/messages', () => {
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 });
+
+// Railway, 2026-09-28: identity-service logged `FST_ERR_CTP_EMPTY_JSON_BODY —
+// Body cannot be empty when content-type is set to 'application/json'` on every
+// body-less call this BFF made. The helper sent `Content-Type: application/json`
+// whether or not there was a body, and the service's Fastify refuses a JSON
+// content type with nothing in it — so "Delete for everyone" (and every other
+// action with no body) failed with a 400 the screen could only call "failed".
+describe('callConnection — a request with no body carries no JSON content type', () => {
+  it('DELETE message: no Content-Type, no body', async () => {
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(ok({ deleted: true, scope: 'everyone', mediaKey: null }));
+    const { DELETE } = await import('@/app/api/bff/connection/conversations/[id]/messages/[messageId]/route');
+    const res = await DELETE(
+      makeReq('http://localhost/api/bff/connection/conversations/c1/messages/m1?scope=everyone', 'DELETE'),
+      { params: Promise.resolve({ id: 'c1', messageId: 'm1' }) },
+    );
+    expect(res.status).toBe(200);
+    const [url, init] = fetchSpy.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe(`${GW}/api/identity/connection/conversations/c1/messages/m1?scope=everyone`);
+    const headers = init.headers as Record<string, string>;
+    expect(Object.keys(headers).map((k) => k.toLowerCase())).not.toContain('content-type');
+    expect(init.body).toBeUndefined();
+    expect(headers.Authorization).toBe('Bearer tok');
+  });
+
+  it('a request WITH a body still says it is JSON', async () => {
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(ok({ id: 'm2' }));
+    const { POST } = await import('@/app/api/bff/connection/conversations/[id]/messages/route');
+    await POST(
+      makeReq('http://localhost/api/bff/connection/conversations/c1/messages', 'POST', { body: 'hi' }),
+      { params: Promise.resolve({ id: 'c1' }) },
+    );
+    const [, init] = fetchSpy.mock.calls[0] as [string, RequestInit];
+    expect((init.headers as Record<string, string>)['Content-Type']).toBe('application/json');
+  });
+});
