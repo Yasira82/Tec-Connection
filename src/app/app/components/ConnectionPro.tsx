@@ -15,6 +15,7 @@ import {
   type PaymentStage,
 } from '@/lib/pi-payment';
 import { isTestnetHost } from '@/lib/pi-network';
+import { CancelProButton } from '@/components/pro/CancelProButton';
 
 const PRICE   = 5;                          // π / month
 const ITEM_ID = 'connection_pro_monthly';
@@ -187,6 +188,7 @@ export function ConnectionPro() {
             {daysRemaining <= 7 ? ` — ${a.proRenewNote}` : '.'}
           </div>
         )}
+        <CancelProButton />
       </div>
     );
   }

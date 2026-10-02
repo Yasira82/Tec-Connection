@@ -3,6 +3,8 @@
 // PUBLIC (no session) so they work as a Pi-community surface outside a login;
 // the caller's own profile + featured sync are authenticated. NEW-A: the gateway
 // URL is server-only (API_GATEWAY_URL) — never shipped to the client.
+import { APP_SOURCE } from '@/lib/app-source';
+
 const GW = process.env.API_GATEWAY_URL ?? '';
 
 const gwHeaders = (token?: string | null) => ({
@@ -161,7 +163,7 @@ export async function saveMyProfile(
 export async function resolveProStatus(token: string | null): Promise<boolean> {
   if (!GW || !token) return false;
   try {
-    const res = await fetch(`${GW}/api/commerce/subscriptions/status`, { headers: gwHeaders(token), cache: 'no-store' });
+    const res = await fetch(`${GW}/api/commerce/subscriptions/status?app=${encodeURIComponent(APP_SOURCE)}`, { headers: gwHeaders(token), cache: 'no-store' });
     if (!res.ok) return false;
     const d = (await res.json().catch(() => ({}))) as Record<string, unknown>;
     const root = (d.data ?? d) as Record<string, unknown>;
