@@ -60,6 +60,11 @@ export async function GET(req: NextRequest) {
           'x-request-id': crypto.randomUUID(),
           'x-internal-key': process.env.INTERNAL_SECRET,
         },
+        // An EMPTY body with `Content-Type: application/json` is refused by the
+        // gateway/identity Fastify parser ("Body cannot be empty when
+        // content-type is set to 'application/json'"). identity-service logged
+        // exactly that every night at 03:37 UTC — the sweep had never run once.
+        body: '{}',
         cache: 'no-store',
       },
     );
