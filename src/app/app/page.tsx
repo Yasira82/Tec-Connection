@@ -1,5 +1,7 @@
 'use client';
 
+import { SignInGate } from '@/components/pi/SignInGate';
+
 // TEC Connection — System of Record (Relationships). C-107.
 //
 // ── The information architecture, and why it changed ─────────────────────────
@@ -44,7 +46,7 @@ import { joinByInvite } from '@/lib-client/connection/useInvite';
  */
 const PENDING_INVITE = '__tec_pending_invite';
 
-export default function ConnectionHome() {
+function ConnectionHome() {
   const { user, isLoading } = usePiAuth();
   const me = useMe(); // server-resolved Pi username (Pi Browser hides tec_user from client JS — C-123 §3)
   const { t } = useTranslation();
@@ -294,4 +296,11 @@ export default function ConnectionHome() {
       <BottomNav active={tab} onSelect={setTab} badges={{ messages: convo.unreadTotal }} />
     </main>
   );
+}
+
+// The door: a sign-in button before any screen when there is no session
+// (SignInGate — C-123 §10; owner, 2026-10-06). A visit from the Hub arrives
+// signed in (§12) and goes straight through.
+export default function ConnectionHomeGated() {
+  return <SignInGate><ConnectionHome /></SignInGate>;
 }
