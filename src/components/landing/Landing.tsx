@@ -61,7 +61,17 @@ export function Landing({
   };
 
   useEffect(() => {
-    if (!isLoading && isAuthenticated) router.replace(target());
+    if (isLoading) return;
+    if (isAuthenticated) { router.replace(target()); return; }
+    // The browser's copy of `tec_user` is not the session — the server is (C-123
+    // §3, the same answer the /app door asks). A copy the browser cannot read
+    // (one encoded twice, as every SSO landing wrote it until 2026-10-10) left a
+    // signed-in member on this page with the sign-in button, while /app opened.
+    let live = true;
+    fetch('/api/auth/me', { credentials: 'include', cache: 'no-store' })
+      .then((r) => { if (live && r.ok) router.replace(target()); })
+      .catch(() => { /* ignore — the button below still signs in */ });
+    return () => { live = false; };
     // `target` reads the URL at call time; the deps that matter are the auth ones.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoading, isAuthenticated, router]);
