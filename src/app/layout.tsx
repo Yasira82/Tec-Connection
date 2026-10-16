@@ -13,6 +13,7 @@ import '@/styles/tec-design-tokens.css';
 import '@/styles/public-surface.css';
 import { ArrivalReport } from '@/components/pioneer/ArrivalReport';
 import { QuestReturn } from '@/components/pioneer/QuestReturn';
+import { SessionExpiredNotice } from '@/components/session/SessionExpiredNotice';
 
 export const metadata: Metadata = {
   title:       'TEC Connection',
@@ -176,6 +177,7 @@ export default async function RootLayout({
         <PiWarmup />
         <ArrivalReport />
         <QuestReturn />
+        <SessionExpiredNotice />
         <LocaleProvider initialLocale={locale}>
           <RefCapture />
           <RefApply />
