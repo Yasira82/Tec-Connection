@@ -96,7 +96,7 @@ export function StatusViewer({ group, isMine, onSeen, onDelete, onReply, onClose
         // screen — a half-visible page underneath makes it look like a bug.
         background: C.bg,
         display: 'flex', flexDirection: 'column',
-        paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)',
+        paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'max(env(safe-area-inset-bottom), var(--tec-safe-bottom-fallback, 0px))',
       }}
     >
       {/* segmented progress — one bar per status, filled up to where you are */}

@@ -182,7 +182,7 @@ function ConnectionHome() {
 
   return (
     <main style={{ minHeight: '100vh', background: C.bg, color: C.text, fontFamily: 'system-ui, -apple-system, sans-serif' }}>
-      <div style={{ maxWidth: 760, margin: '0 auto', padding: '28px 20px calc(96px + env(safe-area-inset-bottom))' }}>
+      <div style={{ maxWidth: 760, margin: '0 auto', padding: '28px 20px calc(96px + max(env(safe-area-inset-bottom), var(--tec-safe-bottom-fallback, 0px)))' }}>
         {/* Arriving on an invite link. Said out loud, because a link that opens
             the app and then appears to do nothing reads as a broken link — and
             a revoked one has to say so rather than leaving someone waiting. */}

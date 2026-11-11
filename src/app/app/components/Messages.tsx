@@ -440,7 +440,7 @@ function Chat({ id, me, conversations, onBack }: {
       display: 'flex', flexDirection: 'column',
       // Matches the page wrapper's own padding (28px top, 96px bottom + safe
       // area). Guessing at this is what slid the composer under the nav bar.
-      height: 'calc(100vh - 124px - env(safe-area-inset-bottom))',
+      height: 'calc(100vh - 124px - max(env(safe-area-inset-bottom), var(--tec-safe-bottom-fallback, 0px)))',
     }}>
       {/* header */}
       <div style={{
@@ -894,7 +894,7 @@ function Chat({ id, me, conversations, onBack }: {
           reason the band above does. */}
       <div style={{
         display: 'flex', gap: 6, alignItems: 'center',
-        margin: '0 -20px', padding: '10px 20px calc(10px + env(safe-area-inset-bottom))',
+        margin: '0 -20px', padding: '10px 20px calc(10px + max(env(safe-area-inset-bottom), var(--tec-safe-bottom-fallback, 0px)))',
         background: C.surface, borderTop: `1px solid ${C.border}`,
       }}>
         {/* `capture` is deliberately absent: without it Android offers BOTH the

@@ -14,6 +14,7 @@ import '@/styles/public-surface.css';
 import { ArrivalReport } from '@/components/pioneer/ArrivalReport';
 import { QuestReturn } from '@/components/pioneer/QuestReturn';
 import { SessionExpiredNotice } from '@/components/session/SessionExpiredNotice';
+import { SAFE_BOTTOM_BOOT_SCRIPT } from '@/lib/safe-bottom';
 
 export const metadata: Metadata = {
   title:       'TEC Connection',
@@ -38,6 +39,8 @@ export default async function RootLayout({
     // on every load — so the mismatch it causes is expected and only here.
     <html lang={locale} dir={dir} suppressHydrationWarning>
       <head>
+        {/* Room under the bottom bar for Android's buttons when Pi Browser reports none (lib/safe-bottom). */}
+        <script dangerouslySetInnerHTML={{ __html: SAFE_BOTTOM_BOOT_SCRIPT }} />
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
         {/* One theme-color per scheme, so the browser chrome above the page
             matches the page. A single dark value leaves a black bar sitting on

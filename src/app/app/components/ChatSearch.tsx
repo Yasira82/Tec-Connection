@@ -87,7 +87,7 @@ export function ChatSearch({ conversationId, onOpen, onClose }: {
         />
       </div>
 
-      <div style={{ flex: 1, overflowY: 'auto', paddingBottom: 'calc(env(safe-area-inset-bottom) + 20px)' }}>
+      <div style={{ flex: 1, overflowY: 'auto', paddingBottom: 'calc(max(env(safe-area-inset-bottom), var(--tec-safe-bottom-fallback, 0px)) + 20px)' }}>
         {q.trim().length < MIN_QUERY ? (
           <p style={{ padding: 16, fontSize: 13, color: C.subtext, lineHeight: 1.6 }}>{a.searchMessagesHint}</p>
         ) : searching ? (

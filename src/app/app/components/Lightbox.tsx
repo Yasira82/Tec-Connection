@@ -123,7 +123,7 @@ export function Lightbox({ src, alt, onClose }: { src: string; alt: string; onCl
         position: 'fixed', inset: 0, zIndex: 1000,
         background: bgA(0.96),
         display: 'grid', placeItems: 'center', overflow: 'hidden',
-        padding: 'env(safe-area-inset-top) 12px env(safe-area-inset-bottom)',
+        padding: 'env(safe-area-inset-top) 12px max(env(safe-area-inset-bottom), var(--tec-safe-bottom-fallback, 0px))',
         // The browser must not claim the gesture before this component sees it.
         touchAction: 'none',
       }}
@@ -151,7 +151,7 @@ export function Lightbox({ src, alt, onClose }: { src: string; alt: string; onCl
         <button
           onClick={(e) => { e.stopPropagation(); reset(); }}
           style={{
-            position: 'absolute', bottom: 'calc(env(safe-area-inset-bottom) + 18px)',
+            position: 'absolute', bottom: 'calc(max(env(safe-area-inset-bottom), var(--tec-safe-bottom-fallback, 0px)) + 18px)',
             insetInlineStart: '50%', transform: 'translateX(-50%)',
             background: inkA(0.1), border: `1px solid ${C.border}`,
             color: C.text, borderRadius: 999, padding: '8px 18px',
