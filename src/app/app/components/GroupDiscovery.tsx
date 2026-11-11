@@ -157,7 +157,7 @@ export function GroupDiscovery({ onClose }: { onClose: () => void }) {
         )}
       </div>
 
-      <div style={{ flex: 1, overflowY: 'auto', paddingBottom: 'calc(env(safe-area-inset-bottom) + 20px)' }}>
+      <div style={{ flex: 1, overflowY: 'auto', paddingBottom: 'calc(max(env(safe-area-inset-bottom), var(--tec-safe-bottom-fallback, 0px)) + 20px)' }}>
         {loading ? (
           <p style={{ padding: '16px', fontSize: 13, color: C.subtext }}>{a.loading}</p>
         ) : failed ? (

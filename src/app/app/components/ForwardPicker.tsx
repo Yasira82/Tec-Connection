@@ -62,7 +62,7 @@ export function ForwardPicker({ conversations, exceptId, onPick, onClose }: {
           background: C.surface,
           borderStartStartRadius: 20, borderStartEndRadius: 20,
           border: `1px solid ${C.border}`, borderBottom: 'none',
-          paddingBottom: 'calc(env(safe-area-inset-bottom) + 10px)',
+          paddingBottom: 'calc(max(env(safe-area-inset-bottom), var(--tec-safe-bottom-fallback, 0px)) + 10px)',
         }}
       >
         <div style={{ display: 'grid', placeItems: 'center', padding: '10px 0 6px' }}>

@@ -54,7 +54,7 @@ export function SessionExpiredNotice() {
   const t = COPY[lang];
   return (
     <div role="alert" style={{
-      position: 'fixed', insetInline: 12, bottom: 'calc(84px + env(safe-area-inset-bottom))', zIndex: 1000,
+      position: 'fixed', insetInline: 12, bottom: 'calc(84px + max(env(safe-area-inset-bottom), var(--tec-safe-bottom-fallback, 0px)))', zIndex: 1000,
       background: 'var(--tec-surface-1)', border: '1px solid var(--tec-border)', borderRadius: 14, padding: '14px 16px',
       color: 'var(--tec-text-1)',
     }}>

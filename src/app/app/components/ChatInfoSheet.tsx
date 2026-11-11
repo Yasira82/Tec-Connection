@@ -349,7 +349,7 @@ export function ChatInfoSheet({
           background: C.surface,
           borderStartStartRadius: 20, borderStartEndRadius: 20,
           border: `1px solid ${C.border}`, borderBottom: 'none',
-          paddingBottom: 'calc(env(safe-area-inset-bottom) + 12px)',
+          paddingBottom: 'calc(max(env(safe-area-inset-bottom), var(--tec-safe-bottom-fallback, 0px)) + 12px)',
         }}
       >
         {/* the grab handle: says "this pulls down" without a word */}

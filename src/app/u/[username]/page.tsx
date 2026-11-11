@@ -81,7 +81,7 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
     }}>
       <div style={{
         maxWidth: 480, margin: '0 auto',
-        padding: 'calc(34px + env(safe-area-inset-top)) 22px calc(56px + env(safe-area-inset-bottom))',
+        padding: 'calc(34px + env(safe-area-inset-top)) 22px calc(56px + max(env(safe-area-inset-bottom), var(--tec-safe-bottom-fallback, 0px)))',
       }}>
 
         <Link href="/discover" className="pub-eyebrow" style={{ textDecoration: 'none', display: 'inline-block' }}>

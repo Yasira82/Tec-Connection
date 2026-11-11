@@ -78,7 +78,7 @@ export function ReportSheet({ kind, target, author, onClose, onBlock }: {
           background: C.surface,
           borderStartStartRadius: 20, borderStartEndRadius: 20,
           border: `1px solid ${C.border}`, borderBottom: 'none',
-          paddingBottom: 'calc(env(safe-area-inset-bottom) + 14px)',
+          paddingBottom: 'calc(max(env(safe-area-inset-bottom), var(--tec-safe-bottom-fallback, 0px)) + 14px)',
         }}
       >
         <div style={{ display: 'grid', placeItems: 'center', padding: '10px 0 6px' }}>

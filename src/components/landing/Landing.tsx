@@ -114,7 +114,7 @@ export function Landing({
     }}>
       <div style={{
         maxWidth: 600, margin: '0 auto',
-        padding: 'calc(56px + env(safe-area-inset-top)) 22px calc(56px + env(safe-area-inset-bottom))',
+        padding: 'calc(56px + env(safe-area-inset-top)) 22px calc(56px + max(env(safe-area-inset-bottom), var(--tec-safe-bottom-fallback, 0px)))',
       }}>
 
         {/* ── Hero ───────────────────────────────────────────────────── */}
