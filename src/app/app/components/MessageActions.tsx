@@ -105,16 +105,17 @@ export function MessageActions({
   }, [onClose]);
 
   return (
+    // The backdrop closes on a click that lands on IT; the sheet is the dialog.
     <div
-      onClick={onClose}
-      role="dialog" aria-modal="true" aria-label={a.deleteMessage}
+      role="presentation"
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
       style={{
         position: 'fixed', inset: 0, zIndex: 950,
         background: bgA(0.72), display: 'flex', alignItems: 'flex-end',
       }}
     >
       <div
-        onClick={(e) => e.stopPropagation()}
+        role="dialog" aria-modal="true" aria-label={a.deleteMessage}
         style={{
           width: '100%', background: C.surface,
           borderStartStartRadius: 20, borderStartEndRadius: 20,
