@@ -6,6 +6,7 @@ import { THEME_BOOT_SCRIPT } from '@/lib-client/theme';
 import { getI18n } from '@/lib/i18n/server';
 import { HUB_HOSTS } from '@/lib/pi-network';
 import type { Metadata } from 'next';
+import { APP_META } from '@/lib/app-meta';
 import '@/styles/tec-design-tokens.css';
 // App-owned polish for the three public surfaces (landing · /discover · /u/<handle>).
 // Kept out of tec-design-tokens.css on purpose: that file is synced with the tec-ui
@@ -19,6 +20,9 @@ import { SAFE_BOTTOM_BOOT_SCRIPT } from '@/lib/safe-bottom';
 export const metadata: Metadata = {
   title:       'TEC Connection',
   description: 'TEC Connection — your economic relationship graph on Pi Network',
+  // The share card (Open Graph) and the installable manifest read lib/app-meta (E11).
+  openGraph:   { title: APP_META.name, description: APP_META.description, siteName: APP_META.name, type: 'website' },
+  twitter:     { card: 'summary', title: APP_META.name, description: APP_META.description },
 };
 
 export default async function RootLayout({
