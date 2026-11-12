@@ -24,8 +24,8 @@ const PRIVATE = ['/app', '/settings', '/profile', '/dashboard'];
 
 describe('public entry surfaces are reachable with NO session', () => {
   for (const path of PUBLIC) {
-    it(`${path} is not redirected to login`, () => {
-      const res = get(path);
+    it(`${path} is not redirected to login`, async () => {
+      const res = await get(path);
       // There is no guard redirect any more. Anything else (the pass-through
       // NextResponse.next(), 200) means the request was allowed through.
       expect(res.headers.get('location')).toBeNull();
@@ -38,8 +38,8 @@ describe('guarded pages are not redirected either (C-123 §11)', () => {
   // The personal graph is protected where the data is — every BFF route needs
   // the session (P6) — not by sending a session-less visit off the origin.
   for (const path of PRIVATE) {
-    it(`${path} opens with no session`, () => {
-      expect(get(path).headers.get('location')).toBeNull();
+    it(`${path} opens with no session`, async () => {
+      expect((await get(path)).headers.get('location')).toBeNull();
     });
   }
 });
