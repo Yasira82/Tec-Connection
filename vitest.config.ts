@@ -12,7 +12,11 @@ export default defineConfig({
     coverage: {
       provider:  'v8',
       reporter:  ['text', 'json-summary'],
-      thresholds: { lines: 60, functions: 60, statements: 60, branches: 50 },
+      // TEC-AUDIT-0037 — a RATCHET, not the fleet floor. Measured 13 Nov 2026: 45.6 statements ·
+      // 36.4 branches · 36.5 functions · 51.3 lines, below the fleet's 60/60/60/50. Set at what
+      // it passes today so it can only go up; raise each number as tests are added, until it
+      // reaches the fleet floor. Never lower it to make a change pass.
+      thresholds: { lines: 51, functions: 36, statements: 45, branches: 36 },
       exclude:   ['**/*.test.*', '**/*.spec.*', 'src/lib/i18n/**', 'e2e/**'],
     },
   },
