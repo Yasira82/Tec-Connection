@@ -4,6 +4,7 @@
 // the caller's own profile + featured sync are authenticated. NEW-A: the gateway
 // URL is server-only (API_GATEWAY_URL) — never shipped to the client.
 import { APP_SOURCE } from '@/lib/app-source';
+import { gatewayFetch } from '@/lib/gateway-fetch';
 
 const GW = process.env.API_GATEWAY_URL ?? '';
 
@@ -83,7 +84,7 @@ export async function resolveDirectory(args: { query?: string; category?: string
   if (args.query?.trim())    qs.set('q', args.query.trim());
   if (args.category?.trim()) qs.set('category', args.category.trim());
   try {
-    const res = await fetch(`${GW}/api/identity/connection/discover?${qs.toString()}`, { headers: gwHeaders(), cache: 'no-store' });
+    const res = await gatewayFetch(`${GW}/api/identity/connection/discover?${qs.toString()}`, { headers: gwHeaders(), cache: 'no-store' });
     if (!res.ok) return [];
     const rows = (await res.json().catch(() => ({})))?.data?.profiles;
     return Array.isArray(rows) ? rows.map((r) => toCard(r as Record<string, unknown>)) : [];
@@ -94,7 +95,7 @@ export async function resolveDirectory(args: { query?: string; category?: string
 export async function resolvePublicProfile(username: string): Promise<PublicProfile | null> {
   if (!GW || !username) return null;
   try {
-    const res = await fetch(`${GW}/api/identity/connection/profile/${encodeURIComponent(username)}`, { headers: gwHeaders(), cache: 'no-store' });
+    const res = await gatewayFetch(`${GW}/api/identity/connection/profile/${encodeURIComponent(username)}`, { headers: gwHeaders(), cache: 'no-store' });
     if (!res.ok) return null;
     const p = (await res.json().catch(() => ({})))?.data?.profile;
     if (!p) return null;
@@ -106,7 +107,7 @@ export async function resolvePublicProfile(username: string): Promise<PublicProf
 export async function resolveMyProfile(token: string | null): Promise<MyProfile | null> {
   if (!GW || !token) return null;
   try {
-    const res = await fetch(`${GW}/api/identity/connection/profile/me`, { headers: gwHeaders(token), cache: 'no-store' });
+    const res = await gatewayFetch(`${GW}/api/identity/connection/profile/me`, { headers: gwHeaders(token), cache: 'no-store' });
     if (!res.ok) return null;
     const p = (await res.json().catch(() => ({})))?.data?.profile;
     if (!p) return null;
@@ -142,7 +143,7 @@ export async function saveMyProfile(
 ): Promise<MyProfile | null> {
   if (!GW || !token) return null;
   try {
-    const res = await fetch(`${GW}/api/identity/connection/profile/me`, {
+    const res = await gatewayFetch(`${GW}/api/identity/connection/profile/me`, {
       method: 'PUT', headers: gwHeaders(token), body: JSON.stringify(input), cache: 'no-store',
     });
     if (!res.ok) return null;
@@ -163,7 +164,7 @@ export async function saveMyProfile(
 export async function resolveProStatus(token: string | null): Promise<boolean> {
   if (!GW || !token) return false;
   try {
-    const res = await fetch(`${GW}/api/commerce/subscriptions/status?app=${encodeURIComponent(APP_SOURCE)}`, { headers: gwHeaders(token), cache: 'no-store' });
+    const res = await gatewayFetch(`${GW}/api/commerce/subscriptions/status?app=${encodeURIComponent(APP_SOURCE)}`, { headers: gwHeaders(token), cache: 'no-store' });
     if (!res.ok) return false;
     const d = (await res.json().catch(() => ({}))) as Record<string, unknown>;
     const root = (d.data ?? d) as Record<string, unknown>;
@@ -185,7 +186,7 @@ export interface Follower { username: string; since?: string; mutual: boolean; }
 export async function resolveFollowers(token: string | null): Promise<{ count: number; followers: Follower[] }> {
   if (!GW || !token) return { count: 0, followers: [] };
   try {
-    const res = await fetch(`${GW}/api/identity/connection/followers`, { headers: gwHeaders(token), cache: 'no-store' });
+    const res = await gatewayFetch(`${GW}/api/identity/connection/followers`, { headers: gwHeaders(token), cache: 'no-store' });
     if (!res.ok) return { count: 0, followers: [] };
     const d = (await res.json().catch(() => ({})))?.data ?? {};
     const followers = Array.isArray(d.followers)
@@ -199,7 +200,7 @@ export async function resolveFollowers(token: string | null): Promise<{ count: n
 export async function setDirectoryFeatured(token: string | null, on: boolean): Promise<boolean> {
   if (!GW || !token) return false;
   try {
-    const res = await fetch(`${GW}/api/identity/connection/directory/featured`, {
+    const res = await gatewayFetch(`${GW}/api/identity/connection/directory/featured`, {
       method: 'PATCH', headers: gwHeaders(token), body: JSON.stringify({ featured: on }), cache: 'no-store',
     });
     return res.ok;

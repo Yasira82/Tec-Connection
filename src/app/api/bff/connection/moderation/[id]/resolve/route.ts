@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { isModerator, moderationConfigured, sessionUsername } from '@/lib/connection/moderators';
+import { gatewayFetch } from '@/lib/gateway-fetch';
 
 // POST /api/bff/connection/moderation/<id>/resolve  { status, resolution? }
 //
@@ -46,7 +47,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
   const resolution = [`by @${me}`, typed].filter(Boolean).join(' — ');
 
   try {
-    const res = await fetch(
+    const res = await gatewayFetch(
       `${GW}/api/identity/connection/reports/${encodeURIComponent(id)}/resolve`,
       {
         method: 'POST',

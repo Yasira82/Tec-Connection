@@ -3,6 +3,7 @@ import { resolveGroupAvatar, CHAT_FOLDER } from '@/lib/connection/chat-media';
 import { callConnection } from '@/lib/bff/connectionGateway';
 import { purgeObjects, takeMediaKeys } from '@/lib/connection/purge';
 import { AVATAR_MAX_BYTES, isAllowedAvatar } from '@/lib/connection/avatar';
+import { gatewayFetch } from '@/lib/gateway-fetch';
 
 // A group's photo.
 //
@@ -76,7 +77,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
   };
 
   try {
-    const signRes = await fetch(`${GW}/api/storage/upload-url`, {
+    const signRes = await gatewayFetch(`${GW}/api/storage/upload-url`, {
       method: 'POST', headers, cache: 'no-store',
       // CHAT_FOLDER, not `avatars/`, and the reason is a hard constraint rather
       // than a preference: storage refuses to DELETE anything under `avatars/`

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { AVATAR_FOLDER, AVATAR_MAX_BYTES, isAllowedAvatar } from '@/lib/connection/avatar';
 import { resolveMyProfile, saveMyProfile } from '@/lib/connection/discovery';
+import { gatewayFetch } from '@/lib/gateway-fetch';
 
 // POST /api/bff/connection/avatar/upload — the whole upload, server-side.
 //
@@ -69,7 +70,7 @@ export async function POST(req: NextRequest) {
     // 1. Presign. The uploader's identity is never sent — storage derives it
     //    from the session token and embeds it in the key, which is what makes
     //    ownership provable when the key is attached (tec-core-backend #237).
-    const signRes = await fetch(`${GW}/api/storage/upload-url`, {
+    const signRes = await gatewayFetch(`${GW}/api/storage/upload-url`, {
       method: 'POST', headers, cache: 'no-store',
       body: JSON.stringify({
         filename: `avatar.${ext}`, mimeType, size: bytes.byteLength, folder: AVATAR_FOLDER,
