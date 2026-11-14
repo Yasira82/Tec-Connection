@@ -1,3 +1,4 @@
+import { gatewayFetch } from '@/lib/gateway-fetch';
 import 'server-only';
 
 // Profile photos (C-107), server side.
@@ -29,7 +30,7 @@ const internalHeaders = () => ({
 export async function resolveAvatarKey(username: string): Promise<string | null> {
   if (!GW || !username) return null;
   try {
-    const res = await fetch(`${GW}/api/identity/connection/internal/avatar-key`, {
+    const res = await gatewayFetch(`${GW}/api/identity/connection/internal/avatar-key`, {
       method: 'POST', headers: internalHeaders(),
       body: JSON.stringify({ username }), cache: 'no-store',
     });
@@ -77,7 +78,7 @@ export async function resolveAvatarBytes(username: string): Promise<AvatarBytes 
  *  conditional request from the key ALONE, without pulling the image. */
 export async function fetchAvatarBytes(key: string): Promise<AvatarBytes | null> {
   try {
-    const res = await fetch(`${GW}/api/storage/internal/public-object`, {
+    const res = await gatewayFetch(`${GW}/api/storage/internal/public-object`, {
       method: 'POST', headers: internalHeaders(),
       body: JSON.stringify({ key }), cache: 'no-store',
     });

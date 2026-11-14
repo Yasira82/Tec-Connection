@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { purgeObjects } from '@/lib/connection/purge';
+import { gatewayFetch } from '@/lib/gateway-fetch';
 
 // GET /api/cron/purge-stories — sweep lapsed statuses and the photos behind them.
 //
@@ -51,7 +52,7 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const res = await fetch(
+    const res = await gatewayFetch(
       `${GW}/api/identity/connection/stories/purge-expired?limit=${BATCH}`,
       {
         method: 'POST',

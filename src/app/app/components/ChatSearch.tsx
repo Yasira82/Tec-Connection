@@ -9,6 +9,7 @@
 // Tapping a result closes the panel and scrolls to that message — but only when
 // it is actually loaded. A result whose message is above what has been fetched
 // does nothing rather than jumping to the wrong place, and it says why.
+import { useEffect, useRef } from 'react';
 import { C } from '@/lib-client/palette';
 import { useTranslation } from '@/lib/i18n';
 import { useBackButton } from '@/lib-client/connection/useBackButton';
@@ -50,6 +51,11 @@ export function ChatSearch({ conversationId, onOpen, onClose }: {
   const a = t.app;
   const { q, setQ, hits, searching, failed } = useChatSearch(conversationId);
   useBackButton(true, onClose);
+  // The panel opens on a tap of the search button, so the field takes focus then —
+  // in an effect rather than `autoFocus`, which also fires on a page load nobody
+  // asked for (jsx-a11y/no-autofocus).
+  const field = useRef<HTMLInputElement>(null);
+  useEffect(() => { field.current?.focus(); }, []);
 
   return (
     <div style={{
@@ -73,7 +79,7 @@ export function ChatSearch({ conversationId, onOpen, onClose }: {
         <input
           value={q} onChange={(e) => setQ(e.target.value)}
           placeholder={a.searchMessagesPlaceholder} maxLength={200} dir="auto"
-          autoFocus autoCapitalize="none" autoCorrect="off"
+          ref={field} autoCapitalize="none" autoCorrect="off"
           style={{
             // border-box, for the reason written down in
             // full-width-input-boxsizing.test.ts: this project has no global

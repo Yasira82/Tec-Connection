@@ -4,11 +4,11 @@
  * A cookie whose `Domain` does not cover the request host is REJECTED by the
  * browser — silently, with no error on either side.
  *
- * One build serves two Pi apps on two hosts: `connection.tecosystem.app` (the
- * Mainnet app) and `tec-connection.vercel.app` (the paired Testnet one). With
- * `COOKIE_DOMAIN=.tecosystem.app` every session cookie was dropped on the
- * second, and the app told a visitor who had just signed in successfully that
- * they were "Unauthorized". `vercel.app` is also on the Public Suffix List, so
+ * One build serves two Pi apps on two hosts: `<app>.tecosystem.app` (the
+ * Mainnet app) and `tec-<app>.vercel.app` (the paired Testnet one). With
+ * `COOKIE_DOMAIN=.tecosystem.app` every session cookie is dropped on the
+ * second, and the app tells a visitor who has just signed in successfully that
+ * they are "Unauthorized". `vercel.app` is also on the Public Suffix List, so
  * no wildcard cookie could be set there in any case.
  *
  * Host-only is not a downgrade in that situation. The alternative is not a

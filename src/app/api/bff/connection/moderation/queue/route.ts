@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { isModerator, moderationConfigured, sessionUsername } from '@/lib/connection/moderators';
+import { gatewayFetch } from '@/lib/gateway-fetch';
 
 // GET /api/bff/connection/moderation/queue?status=OPEN
 //
@@ -42,7 +43,7 @@ export async function GET(req: NextRequest) {
     ? `?status=${status}` : '';
 
   try {
-    const res = await fetch(`${GW}/api/identity/connection/reports/queue${q}`, {
+    const res = await gatewayFetch(`${GW}/api/identity/connection/reports/queue${q}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',

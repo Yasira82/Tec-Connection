@@ -1,5 +1,6 @@
 import 'server-only';
 import { kindOf } from './chat-media';
+import { gatewayFetch } from '@/lib/gateway-fetch';
 
 // Status photos (C-107), server side.
 //
@@ -47,7 +48,7 @@ export async function resolveStoryMedia(token: string, storyId: string): Promise
     ...(process.env.INTERNAL_SECRET && { 'x-internal-key': process.env.INTERNAL_SECRET }),
   };
   try {
-    const keyRes = await fetch(
+    const keyRes = await gatewayFetch(
       `${GW}/api/identity/connection/stories/${encodeURIComponent(storyId)}/media-key`,
       { method: 'GET', headers, cache: 'no-store' },
     );
@@ -55,7 +56,7 @@ export async function resolveStoryMedia(token: string, storyId: string): Promise
     const key = (await keyRes.json().catch(() => ({})))?.data?.key;
     if (typeof key !== 'string' || !key) return null;
 
-    const res = await fetch(`${GW}/api/storage/internal/public-object`, {
+    const res = await gatewayFetch(`${GW}/api/storage/internal/public-object`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

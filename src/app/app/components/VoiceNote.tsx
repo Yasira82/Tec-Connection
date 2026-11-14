@@ -64,6 +64,8 @@ export function VoiceNote({ src, durationMs, mine }: { src: string; durationMs?:
 
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 190, padding: '2px 0' }}>
+      {/* A voice note is a recording with no transcript, so there is no caption track to give it. */}
+      {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
       <audio ref={ref} src={src} preload="none" />
       <button
         onClick={toggle} aria-label={playing ? a.pauseVoice : a.playVoice}

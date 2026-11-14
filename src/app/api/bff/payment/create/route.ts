@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
+import { APP_SOURCE } from '@/lib/app-source';
 import { networkMetadata } from '@/lib/pi-network';
+import { gatewayFetch } from '@/lib/gateway-fetch';
 
 // ── ADR-009 canonical payment contract — identical across all TEC apps ──
 //   gateway path:  ${GW}/api/payment/create  (gateway rewrites ^/api/payment → /payments)
@@ -10,15 +12,10 @@ import { networkMetadata } from '@/lib/pi-network';
 // ⚠️ DO NOT add a CSRF check here — it 403's legit Mode-2 payments in Pi Browser. (KB C-12 §11)
 const GW = process.env.API_GATEWAY_URL ?? '';
 
-// App slug — tags the payment in tec-payment-service so approve/complete use
-// PI_API_KEY_CONNECTION (approving under the default Hub key → 502). Must match
-// the client APP_SOURCE in src/lib/pi-payment.ts.
-const APP_SOURCE = 'connection';
-
 const CreateSchema = z.object({
   amount:   z.coerce.number().positive(),
   memo:     z.string().optional(),
-  metadata: z.record(z.unknown()).optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
 });
 
 const getUserId = (req: NextRequest): string => {
@@ -57,7 +54,7 @@ export async function POST(req: NextRequest) {
   if (process.env.INTERNAL_SECRET) gwHeaders['x-internal-key'] = process.env.INTERNAL_SECRET;
 
   try {
-    const res = await fetch(`${GW}/api/payment/create`, {
+    const res = await gatewayFetch(`${GW}/api/payment/create`, {
       method:  'POST',
       headers: gwHeaders,
       body: JSON.stringify({

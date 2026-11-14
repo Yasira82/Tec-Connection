@@ -3,6 +3,11 @@ import { resolveGroupAvatar, CHAT_FOLDER } from '@/lib/connection/chat-media';
 import { callConnection } from '@/lib/bff/connectionGateway';
 import { purgeObjects, takeMediaKeys } from '@/lib/connection/purge';
 import { AVATAR_MAX_BYTES, isAllowedAvatar } from '@/lib/connection/avatar';
+import { gatewayFetch } from '@/lib/gateway-fetch';
+
+// The upload goes to object storage, not the gateway; it still needs a deadline,
+// or a stalled PUT holds the function until the platform kills it (TEC-AUDIT-0033).
+const UPLOAD_TIMEOUT_MS = 60_000;
 
 // A group's photo.
 //
@@ -76,7 +81,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
   };
 
   try {
-    const signRes = await fetch(`${GW}/api/storage/upload-url`, {
+    const signRes = await gatewayFetch(`${GW}/api/storage/upload-url`, {
       method: 'POST', headers, cache: 'no-store',
       // CHAT_FOLDER, not `avatars/`, and the reason is a hard constraint rather
       // than a preference: storage refuses to DELETE anything under `avatars/`
@@ -97,6 +102,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
 
     // Content-Type must match what the URL was signed for or R2 rejects it.
     const put = await fetch(uploadUrl, {
+      signal: AbortSignal.timeout(UPLOAD_TIMEOUT_MS),
       method: 'PUT', body: bytes, headers: { 'Content-Type': mimeType },
     });
     if (!put.ok) return NextResponse.json({ error: 'UPLOAD_FAILED', step: 'put' }, { status: 502 });

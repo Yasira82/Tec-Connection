@@ -47,16 +47,19 @@ export function ForwardPicker({ conversations, exceptId, onPick, onClose }: {
   };
 
   return (
+    // The backdrop closes on a click that lands on IT; the sheet is the dialog. (A
+    // click handler on the dialog itself, to stop clicks bubbling out, is what
+    // jsx-a11y flags — and a target check does the same job with no handler there.)
     <div
-      onClick={onClose}
-      role="dialog" aria-modal="true" aria-label={a.forward}
+      role="presentation"
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
       style={{
         position: 'fixed', inset: 0, zIndex: 955,
         background: bgA(0.72), display: 'flex', alignItems: 'flex-end',
       }}
     >
       <div
-        onClick={(e) => e.stopPropagation()}
+        role="dialog" aria-modal="true" aria-label={a.forward}
         style={{
           width: '100%', maxHeight: '70vh', overflowY: 'auto',
           background: C.surface,
