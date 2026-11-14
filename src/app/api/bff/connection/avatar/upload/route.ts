@@ -3,6 +3,10 @@ import { AVATAR_FOLDER, AVATAR_MAX_BYTES, isAllowedAvatar } from '@/lib/connecti
 import { resolveMyProfile, saveMyProfile } from '@/lib/connection/discovery';
 import { gatewayFetch } from '@/lib/gateway-fetch';
 
+// The upload goes to object storage, not the gateway; it still needs a deadline,
+// or a stalled PUT holds the function until the platform kills it (TEC-AUDIT-0033).
+const UPLOAD_TIMEOUT_MS = 60_000;
+
 // POST /api/bff/connection/avatar/upload — the whole upload, server-side.
 //
 // ── Why this replaced the browser→R2 direct PUT ──────────────────────────────
@@ -91,6 +95,7 @@ export async function POST(req: NextRequest) {
     // 2. PUT the bytes server-side. Content-Type must match what the URL was
     //    signed for or R2 rejects the signature.
     const put = await fetch(uploadUrl, {
+      signal: AbortSignal.timeout(UPLOAD_TIMEOUT_MS),
       method: 'PUT', body: bytes, headers: { 'Content-Type': mimeType },
     });
     if (!put.ok) {

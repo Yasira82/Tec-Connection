@@ -5,6 +5,10 @@ import { purgeObjects, takeMediaKeys } from '@/lib/connection/purge';
 import { AVATAR_MAX_BYTES, isAllowedAvatar } from '@/lib/connection/avatar';
 import { gatewayFetch } from '@/lib/gateway-fetch';
 
+// The upload goes to object storage, not the gateway; it still needs a deadline,
+// or a stalled PUT holds the function until the platform kills it (TEC-AUDIT-0033).
+const UPLOAD_TIMEOUT_MS = 60_000;
+
 // A group's photo.
 //
 //   GET    → the bytes, streamed same-origin (what <img src> points at)
@@ -98,6 +102,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
 
     // Content-Type must match what the URL was signed for or R2 rejects it.
     const put = await fetch(uploadUrl, {
+      signal: AbortSignal.timeout(UPLOAD_TIMEOUT_MS),
       method: 'PUT', body: bytes, headers: { 'Content-Type': mimeType },
     });
     if (!put.ok) return NextResponse.json({ error: 'UPLOAD_FAILED', step: 'put' }, { status: 502 });

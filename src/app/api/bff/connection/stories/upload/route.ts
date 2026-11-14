@@ -5,6 +5,10 @@ import {
 import { extOf } from '@/lib/connection/chat-media';
 import { gatewayFetch } from '@/lib/gateway-fetch';
 
+// The upload goes to object storage, not the gateway; it still needs a deadline,
+// or a stalled PUT holds the function until the platform kills it (TEC-AUDIT-0033).
+const UPLOAD_TIMEOUT_MS = 60_000;
+
 // POST /api/bff/connection/stories/upload
 //
 // A status WITH a photo, server-side end to end: validate → presign → PUT to R2
@@ -65,7 +69,8 @@ export async function POST(req: NextRequest) {
 
     // 2. PUT server-side. Content-Type must match what the URL was signed for
     //    or R2 rejects the signature.
-    const put = await fetch(uploadUrl, { method: 'PUT', body: bytes, headers: { 'Content-Type': mime } });
+    const put = await fetch(uploadUrl, {
+      signal: AbortSignal.timeout(UPLOAD_TIMEOUT_MS), method: 'PUT', body: bytes, headers: { 'Content-Type': mime } });
     if (!put.ok) return NextResponse.json({ error: 'UPLOAD_FAILED', step: 'put' }, { status: 502 });
 
     // 3. Post the status. The author is the session there, as it is for every
