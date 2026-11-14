@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
+import { APP_SOURCE } from '@/lib/app-source';
 import { networkMetadata } from '@/lib/pi-network';
 import { gatewayFetch } from '@/lib/gateway-fetch';
 
@@ -10,11 +11,6 @@ import { gatewayFetch } from '@/lib/gateway-fetch';
 // CSRF is enforced ONCE in middleware (double-submit OR first-party Origin).
 // ⚠️ DO NOT add a CSRF check here — it 403's legit Mode-2 payments in Pi Browser. (KB C-12 §11)
 const GW = process.env.API_GATEWAY_URL ?? '';
-
-// App slug — tags the payment in tec-payment-service so approve/complete use
-// PI_API_KEY_CONNECTION (approving under the default Hub key → 502). Must match
-// the client APP_SOURCE in src/lib/pi-payment.ts.
-const APP_SOURCE = 'connection';
 
 const CreateSchema = z.object({
   amount:   z.coerce.number().positive(),
