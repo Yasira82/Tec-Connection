@@ -1,3 +1,4 @@
+import { gatewayFetch } from '@/lib/gateway-fetch';
 import 'server-only';
 
 // Chat attachments (C-107), server side.
@@ -84,7 +85,7 @@ export async function resolveChatMedia(
 ): Promise<MediaBytes | null> {
   if (!GW || !token || !conversationId || !messageId) return null;
   try {
-    const keyRes = await fetch(
+    const keyRes = await gatewayFetch(
       `${GW}/api/identity/connection/conversations/${encodeURIComponent(conversationId)}/media/${encodeURIComponent(messageId)}`,
       { method: 'GET', headers: internalHeaders(token), cache: 'no-store' },
     );
@@ -92,7 +93,7 @@ export async function resolveChatMedia(
     const key = (await keyRes.json().catch(() => ({})))?.data?.key;
     if (typeof key !== 'string' || !key) return null;
 
-    const res = await fetch(`${GW}/api/storage/internal/public-object`, {
+    const res = await gatewayFetch(`${GW}/api/storage/internal/public-object`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -130,7 +131,7 @@ export async function resolveGroupAvatar(
 ): Promise<MediaBytes | null> {
   if (!GW || !token || !conversationId) return null;
   try {
-    const keyRes = await fetch(
+    const keyRes = await gatewayFetch(
       `${GW}/api/identity/connection/conversations/${encodeURIComponent(conversationId)}/avatar`,
       { method: 'GET', headers: internalHeaders(token), cache: 'no-store' },
     );
@@ -138,7 +139,7 @@ export async function resolveGroupAvatar(
     const key = (await keyRes.json().catch(() => ({})))?.data?.key;
     if (typeof key !== 'string' || !key) return null;
 
-    const res = await fetch(`${GW}/api/storage/internal/public-object`, {
+    const res = await gatewayFetch(`${GW}/api/storage/internal/public-object`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

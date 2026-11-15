@@ -63,16 +63,17 @@ export function ReportSheet({ kind, target, author, onClose, onBlock }: {
   };
 
   return (
+    // The backdrop closes on a click that lands on IT; the sheet is the dialog.
     <div
-      onClick={onClose}
-      role="dialog" aria-modal="true" aria-label={a.report}
+      role="presentation"
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
       style={{
         position: 'fixed', inset: 0, zIndex: 960,
         background: bgA(0.72), display: 'flex', alignItems: 'flex-end',
       }}
     >
       <div
-        onClick={(e) => e.stopPropagation()}
+        role="dialog" aria-modal="true" aria-label={a.report}
         style={{
           width: '100%', maxHeight: '86vh', overflowY: 'auto',
           background: C.surface,

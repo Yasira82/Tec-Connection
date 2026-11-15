@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { AVATAR_FOLDER, AVATAR_MAX_BYTES, isAllowedAvatar } from '@/lib/connection/avatar';
 import { resolveMyProfile, saveMyProfile } from '@/lib/connection/discovery';
+import { gatewayFetch } from '@/lib/gateway-fetch';
+
+// The upload goes to object storage, not the gateway; it still needs a deadline,
+// or a stalled PUT holds the function until the platform kills it (TEC-AUDIT-0033).
+const UPLOAD_TIMEOUT_MS = 60_000;
 
 // POST /api/bff/connection/avatar/upload — the whole upload, server-side.
 //
@@ -69,7 +74,7 @@ export async function POST(req: NextRequest) {
     // 1. Presign. The uploader's identity is never sent — storage derives it
     //    from the session token and embeds it in the key, which is what makes
     //    ownership provable when the key is attached (tec-core-backend #237).
-    const signRes = await fetch(`${GW}/api/storage/upload-url`, {
+    const signRes = await gatewayFetch(`${GW}/api/storage/upload-url`, {
       method: 'POST', headers, cache: 'no-store',
       body: JSON.stringify({
         filename: `avatar.${ext}`, mimeType, size: bytes.byteLength, folder: AVATAR_FOLDER,
@@ -90,6 +95,7 @@ export async function POST(req: NextRequest) {
     // 2. PUT the bytes server-side. Content-Type must match what the URL was
     //    signed for or R2 rejects the signature.
     const put = await fetch(uploadUrl, {
+      signal: AbortSignal.timeout(UPLOAD_TIMEOUT_MS),
       method: 'PUT', body: bytes, headers: { 'Content-Type': mimeType },
     });
     if (!put.ok) {

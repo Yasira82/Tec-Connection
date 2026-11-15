@@ -1,3 +1,4 @@
+import { gatewayFetch } from '@/lib/gateway-fetch';
 import 'server-only';
 
 // Purging the OBJECT behind a deleted row.
@@ -47,7 +48,7 @@ export async function purgeObjects(keys: (string | null | undefined)[]): Promise
   for (let i = 0; i < clean.length; i += MAX_PER_CALL) {
     const batch = clean.slice(i, i + MAX_PER_CALL);
     try {
-      const res = await fetch(`${GW}/api/storage/internal/purge-objects`, {
+      const res = await gatewayFetch(`${GW}/api/storage/internal/purge-objects`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

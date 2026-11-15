@@ -3,6 +3,11 @@ import {
   STORY_FOLDER, STORY_MAX_BYTES, MAX_CAPTION, isAllowedStoryImage,
 } from '@/lib/connection/story-media';
 import { extOf } from '@/lib/connection/chat-media';
+import { gatewayFetch } from '@/lib/gateway-fetch';
+
+// The upload goes to object storage, not the gateway; it still needs a deadline,
+// or a stalled PUT holds the function until the platform kills it (TEC-AUDIT-0033).
+const UPLOAD_TIMEOUT_MS = 60_000;
 
 // POST /api/bff/connection/stories/upload
 //
@@ -49,7 +54,7 @@ export async function POST(req: NextRequest) {
   try {
     // 1. Presign. Storage derives the uploader from the session token and puts
     //    it in the key, so the key itself records who uploaded it.
-    const signRes = await fetch(`${GW}/api/storage/upload-url`, {
+    const signRes = await gatewayFetch(`${GW}/api/storage/upload-url`, {
       method: 'POST', headers, cache: 'no-store',
       body: JSON.stringify({
         filename: `status.${extOf(mime)}`, mimeType: mime,
@@ -64,13 +69,14 @@ export async function POST(req: NextRequest) {
 
     // 2. PUT server-side. Content-Type must match what the URL was signed for
     //    or R2 rejects the signature.
-    const put = await fetch(uploadUrl, { method: 'PUT', body: bytes, headers: { 'Content-Type': mime } });
+    const put = await fetch(uploadUrl, {
+      signal: AbortSignal.timeout(UPLOAD_TIMEOUT_MS), method: 'PUT', body: bytes, headers: { 'Content-Type': mime } });
     if (!put.ok) return NextResponse.json({ error: 'UPLOAD_FAILED', step: 'put' }, { status: 502 });
 
     // 3. Post the status. The author is the session there, as it is for every
     //    other write — an upload that succeeds still produces no status if the
     //    author cannot be established.
-    const res = await fetch(`${GW}/api/identity/connection/stories`, {
+    const res = await gatewayFetch(`${GW}/api/identity/connection/stories`, {
       method: 'POST', headers, cache: 'no-store',
       body: JSON.stringify({ caption, media_key: key, media_mime: mime }),
     });

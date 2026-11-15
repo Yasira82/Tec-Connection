@@ -1164,6 +1164,10 @@ export function Messages({ me, conversations, loading, openDirect, createGroup, 
   const a = t.app;
   const [composing, setComposing] = useState<null | 'direct' | 'group'>(null);
   const [groupTitle, setGroupTitle] = useState('');
+  // The field the person just opened with a tap takes focus — in an effect, not `autoFocus`,
+  // which also fires on a page load nobody asked for (jsx-a11y/no-autofocus).
+  const groupTitleField = useRef<HTMLInputElement>(null);
+  useEffect(() => { if (composing === 'group') groupTitleField.current?.focus(); }, [composing]);
   const [pickError, setPickError] = useState<string | null>(null);
   const [discovering, setDiscovering] = useState(false);
 
@@ -1223,7 +1227,7 @@ export function Messages({ me, conversations, loading, openDirect, createGroup, 
       {composing === 'group' ? (
         <div style={{ display: 'flex', gap: 8, marginBottom: 6 }}>
           <input
-            autoFocus style={input} value={groupTitle} onChange={(e) => setGroupTitle(e.target.value)}
+            ref={groupTitleField} style={input} value={groupTitle} onChange={(e) => setGroupTitle(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') startGroup(); }}
             placeholder={a.groupTitlePlaceholder} maxLength={120} dir="auto"
           />

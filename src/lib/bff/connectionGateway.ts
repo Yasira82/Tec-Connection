@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { gatewayFetch } from '@/lib/gateway-fetch';
 
 // Server-only proxy to tec-identity-service (Connection store) through the API
 // Gateway.
@@ -56,7 +57,7 @@ export async function callConnection(
   }
 
   try {
-    const res  = await fetch(`${GW}${gatewayPath}`, init);
+    const res  = await gatewayFetch(`${GW}${gatewayPath}`, init);
     const data = await res.json().catch(() => ({}));
     if (!res.ok) console.error('[bff/connection] gateway error:', res.status, method, gatewayPath);
     return { status: res.status, data: (data ?? {}) as Record<string, unknown> };

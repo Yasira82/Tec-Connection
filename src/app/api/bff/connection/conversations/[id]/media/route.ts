@@ -3,6 +3,11 @@ import {
   CHAT_FOLDER, extOf, isAllowedAttachment, kindOf,
   IMAGE_MAX_BYTES, AUDIO_MAX_BYTES,
 } from '@/lib/connection/chat-media';
+import { gatewayFetch } from '@/lib/gateway-fetch';
+
+// The upload goes to object storage, not the gateway; it still needs a deadline,
+// or a stalled PUT holds the function until the platform kills it (TEC-AUDIT-0033).
+const UPLOAD_TIMEOUT_MS = 60_000;
 
 // POST /api/bff/connection/conversations/<id>/media
 //
@@ -54,7 +59,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
   try {
     // 1. Presign. Storage derives the uploader from the session token and puts
     //    it in the key, so the key itself records who uploaded it.
-    const signRes = await fetch(`${GW}/api/storage/upload-url`, {
+    const signRes = await gatewayFetch(`${GW}/api/storage/upload-url`, {
       method: 'POST', headers, cache: 'no-store',
       body: JSON.stringify({
         filename: `attachment.${extOf(mime)}`, mimeType: mime,
@@ -69,13 +74,14 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
 
     // 2. PUT server-side. Content-Type must match what the URL was signed for
     //    or R2 rejects the signature.
-    const put = await fetch(uploadUrl, { method: 'PUT', body: bytes, headers: { 'Content-Type': mime } });
+    const put = await fetch(uploadUrl, {
+      signal: AbortSignal.timeout(UPLOAD_TIMEOUT_MS), method: 'PUT', body: bytes, headers: { 'Content-Type': mime } });
     if (!put.ok) return NextResponse.json({ error: 'UPLOAD_FAILED', step: 'put' }, { status: 502 });
 
     // 3. Post the message. Membership is checked there, as it is for every
     //    other write — an upload that succeeds into a conversation you do not
     //    belong to still produces no message.
-    const msgRes = await fetch(
+    const msgRes = await gatewayFetch(
       `${GW}/api/identity/connection/conversations/${encodeURIComponent(id)}/messages`,
       {
         method: 'POST', headers, cache: 'no-store',

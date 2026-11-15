@@ -9,7 +9,7 @@
 //
 // It sits above the chat list rather than in a tab of its own: a status is worth
 // a glance on the way to a conversation, not a destination.
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { C } from '@/lib-client/palette';
 import { useTranslation } from '@/lib/i18n';
 import { useStories, type StoryAuthor, type StoryItem } from '@/lib-client/connection/useStories';
@@ -67,6 +67,10 @@ export function StatusStrip({ me, onReply }: {
   const fileRef = useRef<HTMLInputElement | null>(null);
   const [viewing, setViewing] = useState<StoryAuthor | null>(null);
   const [composing, setComposing] = useState(false);
+  // The field the person just opened with a tap takes focus — in an effect, not `autoFocus`,
+  // which also fires on a page load nobody asked for (jsx-a11y/no-autofocus).
+  const captionField = useRef<HTMLInputElement>(null);
+  useEffect(() => { if (composing) captionField.current?.focus(); }, [composing]);
   const [caption, setCaption] = useState('');
   const meNorm = (me ?? '').trim().replace(/^@+/, '').toLowerCase();
 
@@ -142,7 +146,7 @@ export function StatusStrip({ me, onReply }: {
             {a.statusHint}
           </p>
           <input
-            autoFocus value={caption} onChange={(e) => setCaption(e.target.value)}
+            ref={captionField} value={caption} onChange={(e) => setCaption(e.target.value)}
             placeholder={a.statusPlaceholder} maxLength={300} dir="auto"
             style={{
               background: C.bg, color: C.text, fontSize: 14,

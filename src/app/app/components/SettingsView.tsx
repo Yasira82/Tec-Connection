@@ -16,6 +16,7 @@ import { ProfileEditor } from './ProfileEditor';
 import { ConnectionPro } from './ConnectionPro';
 import { ModerationQueue } from './ModerationQueue';
 import { useMyName } from '@/lib-client/connection/useMyName';
+import { readProState } from '@/lib/subscription/read-pro-state';
 
 const cardStyle = {
   background: C.surface, border: `1px solid ${C.border}`, borderRadius: 16,
@@ -94,10 +95,9 @@ export function SettingsView() {
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
         if (!alive || !d) return;
-        const sub = ((d?.subscription ?? d) ?? {}) as Record<string, unknown>;
-        const plan = String(sub.plan ?? '').toUpperCase();
-        const active = sub.isActive === true || sub.status === 'ACTIVE';
-        if (active && plan && plan !== 'FREE') setIsPro(true);
+        // One reading, fail-closed (TEC-AUDIT-0044). This read `d.subscription` without
+        // unwrapping `data` first, so commerce's envelope always looked FREE here.
+        if (readProState(d).pro) setIsPro(true);
       })
       .catch(() => { /* fail closed to Free */ });
     return () => { alive = false; };

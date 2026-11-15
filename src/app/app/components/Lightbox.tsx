@@ -108,6 +108,9 @@ export function Lightbox({ src, alt, onClose }: { src: string; alt: string; onCl
   const onTouchEnd = () => { pinchStart.current = 0; panStart.current = null; };
 
   return (
+    // A touch surface: pinch, pan, and a tap on the backdrop to close. A keyboard closes it
+    // with Escape (the window listener above), so the click needs no key handler of its own.
+    // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-noninteractive-element-interactions
     <div
       // Tapping the backdrop closes — but ONLY at 1×. While zoomed, a tap is
       // part of looking at the photo, and closing on it would make the viewer

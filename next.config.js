@@ -40,7 +40,17 @@ const nextConfig = {
             value: [
               "default-src 'self'",
               "script-src 'self' 'unsafe-inline' 'unsafe-eval' sdk.minepi.com *.minepi.com",
-              "connect-src 'self' https: wss:",
+              // Named hosts only — never `https: wss:` (any host). tec_access_token is readable
+              // by script by decision (ADR-001), so this list is what keeps an injected script
+              // from posting it anywhere (TEC-AUDIT-0018). The browser reaches: its own BFF,
+              // the Pi SDK, sibling TEC apps, Sentry. Server-side calls are not limited by CSP.
+              // An app that calls another host from the browser adds it here, with its reason.
+              [
+                "connect-src 'self'",
+                'https://*.minepi.com https://minepi.com wss://*.minepi.com',             // Pi SDK
+                'https://*.tecosystem.app',                                               // Hub + sibling apps
+                'https://*.ingest.sentry.io https://*.ingest.us.sentry.io https://*.ingest.de.sentry.io', // Sentry
+              ].join(' '),
               "img-src 'self' data: blob: *.railway.app *.vercel.app",
               "style-src 'self' 'unsafe-inline'",
               "font-src 'self' data:",

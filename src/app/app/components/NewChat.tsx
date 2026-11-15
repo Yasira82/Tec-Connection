@@ -12,7 +12,7 @@
 // starts with the people you already follow, which is who you are most likely to
 // be writing to. Typing an exact handle still works — the last row offers it
 // explicitly — so nothing that worked before stops working.
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { C, goldA } from '@/lib-client/palette';
 import { useTranslation } from '@/lib/i18n';
 import { useBackButton } from '@/lib-client/connection/useBackButton';
@@ -51,6 +51,10 @@ export function NewChat({ onPick, onCancel, error }: {
 }) {
   // Back returns to the conversation list rather than out of the app.
   useBackButton(true, onCancel);
+  // The field takes focus when this screen opens on a tap — in an effect, not `autoFocus`,
+  // which also fires on a page load nobody asked for (jsx-a11y/no-autofocus).
+  const searchField = useRef<HTMLInputElement>(null);
+  useEffect(() => { searchField.current?.focus(); }, []);
   const { t } = useTranslation();
   const a = t.app;
   const [q, setQ] = useState('');
@@ -109,7 +113,7 @@ export function NewChat({ onPick, onCancel, error }: {
     <section style={{ display: 'flex', flexDirection: 'column' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
         <input
-          autoFocus
+          ref={searchField}
           value={q}
           onChange={(e) => setQ(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter' && term) onPick(term); }}
