@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { C } from '@/lib-client/palette';
-import { CONTACT_EMAIL, CONTACT_PHONE } from '@/lib/contact';
+import { CONTACT_EMAIL } from '@/lib/contact';
 
 const APP     = 'TEC Connection';
 const DOMAIN  = 'connection.tecosystem.app';
@@ -65,7 +65,7 @@ export default function TermsPage() {
       <p>{/* TODO(new app): set governing-law jurisdiction. */}These Terms are governed by the laws of the applicable jurisdiction of TEC.</p>
 
       <h2 style={h2}>13. Contact</h2>
-      <p>Questions about these Terms: <a href={`mailto:${CONTACT_EMAIL}`} style={link}>{CONTACT_EMAIL}</a>. Phone / WhatsApp: <a href={`tel:${CONTACT_PHONE}`} style={link} dir="ltr">{CONTACT_PHONE}</a>.</p>
+      <p>Questions about these Terms: <a href={`mailto:${CONTACT_EMAIL}`} style={link}>{CONTACT_EMAIL}</a>.</p>
 
       <p style={{ marginTop: 40 }}>
         <Link href="/privacy" style={link}>Privacy Policy</Link>{'  ·  '}
