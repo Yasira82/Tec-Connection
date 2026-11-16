@@ -2,7 +2,7 @@ import type { Dictionary } from './en';
 
 export const vi: Dictionary = {
   common: {
-    appName: 'TEC', tagline: 'Liên minh Tinh hoa', login: 'Đăng nhập bằng Pi', logout: 'Đăng xuất',
+    appName: 'TEC', tagline: 'TEC Ecosystem', login: 'Đăng nhập bằng Pi', logout: 'Đăng xuất',
     loading: 'Đang tải…', comingSoon: 'Sắp ra mắt', live: 'Đang hoạt động', language: 'Ngôn ngữ',
   },
   dashboard: {

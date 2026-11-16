@@ -2,7 +2,7 @@ import type { Dictionary } from './en';
 
 export const zh: Dictionary = {
   common: {
-    appName: 'TEC', tagline: '精英联盟', login: '使用 Pi 登录', logout: '退出',
+    appName: 'TEC', tagline: 'TEC Ecosystem', login: '使用 Pi 登录', logout: '退出',
     loading: '加载中…', comingSoon: '即将推出', live: '运行中', language: '语言',
   },
   dashboard: {
