@@ -3,7 +3,7 @@ import type { Dictionary } from './en';
 export const ar: Dictionary = {
   common: {
     appName:  'TEC',
-    tagline:  'تحالف النخبة',
+    tagline:  'TEC Ecosystem',
     login:    'تسجيل الدخول بـ Pi',
     logout:   'خروج',
     loading:  'جاري التحميل...',

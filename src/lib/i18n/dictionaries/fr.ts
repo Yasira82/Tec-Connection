@@ -2,7 +2,7 @@ import type { Dictionary } from './en';
 
 export const fr: Dictionary = {
   common: {
-    appName: 'TEC', tagline: 'Le Consortium d’Élite', login: 'Se connecter avec Pi', logout: 'Déconnexion',
+    appName: 'TEC', tagline: 'TEC Ecosystem', login: 'Se connecter avec Pi', logout: 'Déconnexion',
     loading: 'Chargement…', comingSoon: 'Bientôt disponible', live: 'Actif', language: 'Langue',
   },
   dashboard: {

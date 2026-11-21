@@ -2,7 +2,7 @@ import type { Dictionary } from './en';
 
 export const ko: Dictionary = {
   common: {
-    appName: 'TEC', tagline: '엘리트 컨소시엄', login: 'Pi로 로그인', logout: '로그아웃',
+    appName: 'TEC', tagline: 'TEC Ecosystem', login: 'Pi로 로그인', logout: '로그아웃',
     loading: '불러오는 중…', comingSoon: '곧 출시', live: '운영 중', language: '언어',
   },
   dashboard: {
